@@ -1,6 +1,6 @@
 #! Hello World example
 
 (include std.io)
-(include std.math)
+(include std.string)
 
-(println (sum 1 2))
+(println (removeAll '\'' "'Hello World!'"))

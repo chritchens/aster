@@ -518,7 +518,7 @@ mod tests {
         use crate::token::TokenKind;
         use std::path::Path;
 
-        let path = Path::new("./examples/hello_world.sp");
+        let path = Path::new("./examples/sum.sp");
 
         let res = Tokens::from_file(path);
 
