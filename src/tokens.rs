@@ -282,6 +282,48 @@ impl Tokens {
                         }));
                     }
                 }
+                '\"' => {
+                    let mut token = Token::new_string_literal();
+
+                    let mut is_string = false;
+                    let mut escape_idx = 0;
+
+                    let prev_idx = idx;
+
+                    idx += 1;
+
+                    while idx < len && !is_string {
+                        chunk = chunks[idx].clone();
+
+                        if chunk.content == '\\' {
+                            if escape_idx == idx - 1 {
+                                escape_idx = 0;
+                            } else {
+                                escape_idx = idx;
+                            }
+                        }
+
+                        if chunk.content == '"' && !(escape_idx == idx - 1) {
+                            is_string = true;
+                            break;
+                        }
+
+                        idx += 1;
+
+                        token.push(chunk.clone());
+                    }
+
+                    if is_string {
+                        tokens.push(token);
+
+                        idx += 1;
+                    } else {
+                        return Err(Error::Syntax(SyntaxError {
+                            loc: chunks[prev_idx].loc.clone(),
+                            desc: "expected a string".into(),
+                        }));
+                    }
+                }
                 'A'..='z' => {
                     let mut token = Token::new_symbol();
                     token.push(chunk.clone());
@@ -475,6 +517,22 @@ mod tests {
     }
 
     #[test]
+    fn string_literal_tokens() {
+        use super::Tokens;
+        use crate::token::TokenKind;
+
+        let s = "\"this is a str\\\"ing\" \"string\"";
+
+        let tokens = Tokens::from_str(s).unwrap();
+
+        println!("tokens: {:?}", tokens);
+
+        assert_eq!(tokens.len(), 2);
+        assert_eq!(tokens[0].kind, TokenKind::StringLiteral);
+        assert_eq!(tokens[1].kind, TokenKind::StringLiteral);
+    }
+
+    #[test]
     fn symbol_literal_tokens() {
         use super::Tokens;
         use crate::token::TokenKind;
@@ -550,7 +608,7 @@ mod tests {
         use crate::token::TokenKind;
         use std::path::Path;
 
-        let path = Path::new("./examples/sum.sp");
+        let path = Path::new("./examples/hello_world.sp");
 
         let res = Tokens::from_file(path);
 
@@ -558,11 +616,11 @@ mod tests {
 
         let tokens = res.unwrap();
 
-        assert_eq!(tokens.len(), 17);
+        assert_eq!(tokens.len(), 16);
         assert_eq!(tokens[0].kind, TokenKind::DocComment);
         assert_eq!(tokens[1].kind, TokenKind::FormStart);
         assert_eq!(tokens[2].kind, TokenKind::Keyword);
         assert_eq!(tokens[3].kind, TokenKind::Symbol);
-        assert_eq!(tokens[14].kind, TokenKind::UIntLiteral);
+        assert_eq!(tokens[13].kind, TokenKind::StringLiteral);
     }
 }
