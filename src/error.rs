@@ -12,7 +12,7 @@ pub struct SyntaxError {
 
 impl fmt::Display for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let file = self.loc.file.clone().unwrap_or("none".into());
+        let file = self.loc.file.clone().unwrap_or_else(|| "none".into());
 
         write!(
             f,
@@ -32,7 +32,7 @@ pub struct ParsingError {
 
 impl fmt::Display for ParsingError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let file = self.loc.file.clone().unwrap_or("none".into());
+        let file = self.loc.file.clone().unwrap_or_else(|| "none".into());
 
         write!(
             f,

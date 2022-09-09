@@ -5,6 +5,7 @@ use crate::keyword::{COMMENT_MARK, COMMENT_MARK_POSTFIX};
 use crate::keyword::{FORM_END, FORM_START};
 use crate::result::Result;
 use crate::token::Token;
+use std::convert;
 use std::fs;
 use std::iter;
 use std::ops;
@@ -24,6 +25,10 @@ impl Tokens {
 
     pub fn len(&self) -> usize {
         self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn push(&mut self, token: Token) {
@@ -91,7 +96,7 @@ impl Tokens {
 
                         let chars: String = (0..klen).map(|i| chunks[idx + i].content).collect();
 
-                        if keyword != &&chars {
+                        if keyword != &chars {
                             continue;
                         }
 
@@ -282,12 +287,8 @@ impl Tokens {
 
                     chunk = chunks[idx].clone();
 
-                    if chunk.content == '\\' {
-                        if idx + 2 < len {
-                            if chunks[idx + 2].content == '\'' {
-                                idx += 1;
-                            }
-                        }
+                    if chunk.content == '\\' && idx + 2 < len && chunks[idx + 2].content == '\'' {
+                        idx += 1;
                     }
 
                     token.push(chunk);
@@ -324,7 +325,7 @@ impl Tokens {
                             }
                         }
 
-                        if chunk.content == '"' && !(escape_idx == idx - 1) {
+                        if chunk.content == '"' && escape_idx != idx - 1 {
                             is_string = true;
                             break;
                         }
@@ -480,6 +481,28 @@ impl iter::FromIterator<Token> for Tokens {
     }
 }
 
+impl convert::From<Vec<Token>> for Tokens {
+    fn from(tokens: Vec<Token>) -> Self {
+        Tokens(tokens)
+    }
+}
+
+impl std::str::FromStr for Tokens {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Tokens::from_str(s)
+    }
+}
+
+impl convert::TryFrom<String> for Tokens {
+    type Error = Error;
+
+    fn try_from(s: String) -> Result<Self> {
+        Tokens::from_string(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -584,9 +607,10 @@ mod tests {
         let tokens = Tokens::from_str(s).unwrap();
 
         assert_eq!(tokens.len(), 3);
-        assert_eq!(tokens[0].kind, TokenKind::CharLiteral);
-        assert_eq!(tokens[1].kind, TokenKind::CharLiteral);
-        assert_eq!(tokens[2].kind, TokenKind::CharLiteral);
+
+        for token in tokens.into_iter() {
+            assert_eq!(token.kind, TokenKind::CharLiteral);
+        }
     }
 
     #[test]

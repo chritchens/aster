@@ -119,7 +119,7 @@ impl Token {
     }
 
     pub fn push(&mut self, chunk: Chunk) {
-        let mut chunks = self.chunks.clone().unwrap_or(Chunks::new());
+        let mut chunks = self.chunks.clone().unwrap_or_default();
         chunks.push(chunk);
         self.chunks.replace(chunks);
     }

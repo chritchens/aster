@@ -1,5 +1,7 @@
 use crate::chunk::Chunk;
 use crate::loc::Loc;
+use std::convert;
+use std::iter;
 use std::ops;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
@@ -14,18 +16,12 @@ impl Chunks {
         Chunks::default()
     }
 
-    pub fn from_chunk(chunk: Chunk) -> Self {
-        Chunks {
-            files: chunk
-                .loc
-                .file
-                .clone()
-                .map(|file| vec![file])
-                .or_else(|| Some(vec![]))
-                .unwrap(),
-            lines: chunk.loc.line,
-            content: vec![chunk],
-        }
+    pub fn len(&self) -> usize {
+        self.content.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn push(&mut self, chunk: Chunk) {
@@ -33,11 +29,12 @@ impl Chunks {
             .files
             .iter()
             .find(|file| {
-                if let Some(ref chunk_file) = chunk.loc.file {
-                    &chunk_file == file
-                } else {
-                    false
-                }
+                chunk
+                    .loc
+                    .file
+                    .as_ref()
+                    .map(|chunk_file| &chunk_file == file)
+                    .unwrap_or(false)
             })
             .is_none()
         {
@@ -51,6 +48,20 @@ impl Chunks {
         }
 
         self.content.push(chunk)
+    }
+
+    pub fn from_chunk(chunk: Chunk) -> Self {
+        Chunks {
+            files: chunk
+                .loc
+                .file
+                .clone()
+                .map(|file| vec![file])
+                .or_else(|| Some(vec![]))
+                .unwrap(),
+            lines: chunk.loc.line,
+            content: vec![chunk],
+        }
     }
 
     pub fn from_str(s: &str) -> Self {
@@ -86,8 +97,8 @@ impl Chunks {
         }
     }
 
-    pub fn len(&self) -> usize {
-        self.content.len()
+    pub fn from_string(s: String) -> Self {
+        Self::from_str(&s)
     }
 }
 
@@ -96,6 +107,45 @@ impl ops::Index<usize> for Chunks {
 
     fn index(&self, idx: usize) -> &Self::Output {
         &self.content[idx]
+    }
+}
+
+impl iter::IntoIterator for Chunks {
+    type Item = Chunk;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.content.into_iter()
+    }
+}
+
+impl iter::FromIterator<Chunk> for Chunks {
+    fn from_iter<I: iter::IntoIterator<Item = Chunk>>(iter: I) -> Self {
+        let mut chunks = Chunks::new();
+
+        for chunk in iter {
+            chunks.push(chunk);
+        }
+
+        chunks
+    }
+}
+
+impl convert::From<Vec<Chunk>> for Chunks {
+    fn from(vchunks: Vec<Chunk>) -> Self {
+        let mut chunks = Chunks::new();
+
+        for chunk in vchunks {
+            chunks.push(chunk);
+        }
+
+        chunks
+    }
+}
+
+impl convert::From<String> for Chunks {
+    fn from(s: String) -> Self {
+        Chunks::from_string(s)
     }
 }
 

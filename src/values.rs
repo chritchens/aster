@@ -3,8 +3,11 @@ use crate::result::Result;
 use crate::token::TokenKind;
 use crate::tokens::Tokens;
 use crate::value::Value;
+use std::convert;
+use std::iter;
+use std::ops;
 
-#[derive(Debug, Eq, PartialEq, Default)]
+#[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Values(Vec<Value>);
 
 impl Values {
@@ -14,6 +17,10 @@ impl Values {
 
     pub fn len(&self) -> usize {
         self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn push(&mut self, value: Value) {
@@ -50,6 +57,61 @@ impl Values {
 
         Ok(values)
     }
+
+    pub fn from_string(s: String) -> Result<Self> {
+        Self::from_str(&s)
+    }
+}
+
+impl ops::Index<usize> for Values {
+    type Output = Value;
+
+    fn index(&self, idx: usize) -> &Self::Output {
+        &self.0[idx]
+    }
+}
+
+impl iter::IntoIterator for Values {
+    type Item = Value;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl iter::FromIterator<Value> for Values {
+    fn from_iter<I: iter::IntoIterator<Item = Value>>(iter: I) -> Self {
+        let mut values = Values::new();
+
+        for value in iter {
+            values.push(value);
+        }
+
+        values
+    }
+}
+
+impl convert::From<Vec<Value>> for Values {
+    fn from(values: Vec<Value>) -> Self {
+        Values(values)
+    }
+}
+
+impl std::str::FromStr for Values {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Values::from_str(s)
+    }
+}
+
+impl convert::TryFrom<String> for Values {
+    type Error = Error;
+
+    fn try_from(s: String) -> Result<Self> {
+        Values::from_string(s)
+    }
 }
 
 #[cfg(test)]
@@ -62,6 +124,6 @@ mod tests {
 
         let values = Values::from_str(s).unwrap();
 
-        assert_eq!(values.len(), 0);
+        assert!(values.is_empty());
     }
 }
