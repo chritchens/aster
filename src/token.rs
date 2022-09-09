@@ -6,6 +6,7 @@ pub enum TokenKind {
     Comment,
     DocComment,
     Keyword,
+    EmptyLiteral,
     UIntLiteral,
     IntLiteral,
     FloatLiteral,
@@ -50,6 +51,13 @@ impl Token {
     pub fn new_keyword() -> Self {
         Token {
             kind: TokenKind::Keyword,
+            chunks: None,
+        }
+    }
+
+    pub fn new_empty_literal() -> Self {
+        Token {
+            kind: TokenKind::EmptyLiteral,
             chunks: None,
         }
     }

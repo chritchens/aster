@@ -372,9 +372,29 @@ impl Tokens {
                 FORM_START => {
                     forms_count += 1;
                     open_form_idxs.push(idx);
+                    let mut is_empty = false;
 
-                    let mut token = Token::new_form_start();
+                    if idx + 1 < len && chunks[idx + 1].content == ')' {
+                        is_empty = true;
+                    }
+
+                    let mut token = if is_empty {
+                        Token::new_empty_literal()
+                    } else {
+                        Token::new_form_start()
+                    };
+
                     token.push(chunk.clone());
+
+                    if is_empty {
+                        idx += 1;
+
+                        forms_count -= 1;
+                        open_form_idxs.pop();
+                        close_form_idxs.push(idx);
+
+                        token.push(chunks[idx].clone());
+                    }
 
                     tokens.push(token);
 
@@ -478,6 +498,19 @@ mod tests {
 
         assert_eq!(tokens.len(), 1);
         assert_eq!(tokens[0].kind, TokenKind::Keyword);
+    }
+
+    #[test]
+    fn empty_literal_tokens() {
+        use super::Tokens;
+        use crate::token::TokenKind;
+
+        let s = "()";
+
+        let tokens = Tokens::from_str(s).unwrap();
+
+        assert_eq!(tokens.len(), 1);
+        assert_eq!(tokens[0].kind, TokenKind::EmptyLiteral);
     }
 
     #[test]
