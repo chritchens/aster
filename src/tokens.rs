@@ -267,6 +267,21 @@ impl Tokens {
                         _ => idx += 1,
                     }
                 }
+                '\'' => {
+                    let mut token = Token::new_char_literal();
+                    token.push(chunks[idx + 1].clone());
+
+                    if chunks[idx + 2].content == '\'' {
+                        tokens.push(token);
+
+                        idx += 3;
+                    } else {
+                        return Err(Error::Syntax(SyntaxError {
+                            loc: chunks[idx].loc.clone(),
+                            desc: "expected a char".into(),
+                        }));
+                    }
+                }
                 'A'..='z' => {
                     let mut token = Token::new_symbol();
                     token.push(chunk.clone());
@@ -440,6 +455,23 @@ mod tests {
 
         assert_eq!(tokens.len(), 1);
         assert_eq!(tokens[0].kind, TokenKind::FloatLiteral);
+    }
+
+    #[test]
+    fn char_literal_tokens() {
+        use super::Tokens;
+        use crate::token::TokenKind;
+
+        let s = "'\"' '\'' 'a'";
+
+        let tokens = Tokens::from_str(s).unwrap();
+
+        println!("tokens: {:?}", tokens);
+
+        assert_eq!(tokens.len(), 3);
+        assert_eq!(tokens[0].kind, TokenKind::CharLiteral);
+        assert_eq!(tokens[1].kind, TokenKind::CharLiteral);
+        assert_eq!(tokens[2].kind, TokenKind::CharLiteral);
     }
 
     #[test]

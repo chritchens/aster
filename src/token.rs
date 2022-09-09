@@ -75,6 +75,13 @@ impl Token {
         }
     }
 
+    pub fn new_char_literal() -> Self {
+        Token {
+            kind: TokenKind::CharLiteral,
+            chunks: None,
+        }
+    }
+
     pub fn new_symbol() -> Self {
         Token {
             kind: TokenKind::Symbol,
