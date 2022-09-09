@@ -508,8 +508,6 @@ mod tests {
 
         let tokens = Tokens::from_str(s).unwrap();
 
-        println!("tokens: {:?}", tokens);
-
         assert_eq!(tokens.len(), 3);
         assert_eq!(tokens[0].kind, TokenKind::CharLiteral);
         assert_eq!(tokens[1].kind, TokenKind::CharLiteral);
@@ -524,8 +522,6 @@ mod tests {
         let s = "\"this is a str\\\"ing\" \"string\"";
 
         let tokens = Tokens::from_str(s).unwrap();
-
-        println!("tokens: {:?}", tokens);
 
         assert_eq!(tokens.len(), 2);
         assert_eq!(tokens[0].kind, TokenKind::StringLiteral);
