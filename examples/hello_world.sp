@@ -3,4 +3,4 @@
 (include std.io)
 (include std.string)
 
-(println (removeAll '\'' "Hello World!"))
+(println (removeAll '\'' "Hello' 'World!"))
