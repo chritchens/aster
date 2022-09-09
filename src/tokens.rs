@@ -421,7 +421,7 @@ impl ops::Index<usize> for Tokens {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn sl_comment_tokens() {
+    fn comment_tokens() {
         use super::Tokens;
         use crate::token::TokenKind;
 
@@ -434,7 +434,7 @@ mod tests {
     }
 
     #[test]
-    fn sl_doc_comment_tokens() {
+    fn doc_comment_tokens() {
         use super::Tokens;
         use crate::token::TokenKind;
 
@@ -529,7 +529,7 @@ mod tests {
     }
 
     #[test]
-    fn symbol_literal_tokens() {
+    fn symbol_tokens() {
         use super::Tokens;
         use crate::token::TokenKind;
 
