@@ -31,7 +31,6 @@ impl Tokens {
 
     pub fn from_str(s: &str) -> Result<Self> {
         let chunks = Chunks::from_str(s);
-        println!("chunks: {:?}", chunks);
         let len = chunks.len();
         let mut idx = 0;
 
