@@ -6,10 +6,11 @@ use crate::keyword::{FORM_END, FORM_START};
 use crate::result::Result;
 use crate::token::Token;
 use std::fs;
+use std::iter;
 use std::ops;
 use std::path::Path;
 
-#[derive(Debug, Eq, PartialEq, Default)]
+#[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Tokens(Vec<Token>);
 
 impl Tokens {
@@ -455,6 +456,27 @@ impl ops::Index<usize> for Tokens {
 
     fn index(&self, idx: usize) -> &Self::Output {
         &self.0[idx]
+    }
+}
+
+impl iter::IntoIterator for Tokens {
+    type Item = Token;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl iter::FromIterator<Token> for Tokens {
+    fn from_iter<I: iter::IntoIterator<Item = Token>>(iter: I) -> Self {
+        let mut tokens = Tokens::new();
+
+        for token in iter {
+            tokens.push(token);
+        }
+
+        tokens
     }
 }
 
