@@ -31,6 +31,7 @@ impl Tokens {
 
     pub fn from_str(s: &str) -> Result<Self> {
         let chunks = Chunks::from_str(s);
+        println!("chunks: {:?}", chunks);
         let len = chunks.len();
         let mut idx = 0;
 
@@ -269,12 +270,32 @@ impl Tokens {
                 }
                 '\'' => {
                     let mut token = Token::new_char_literal();
-                    token.push(chunks[idx + 1].clone());
 
-                    if chunks[idx + 2].content == '\'' {
+                    if idx + 2 >= len {
+                        return Err(Error::Syntax(SyntaxError {
+                            loc: chunks[idx].loc.clone(),
+                            desc: "expected a char".into(),
+                        }));
+                    }
+
+                    idx += 1;
+
+                    chunk = chunks[idx].clone();
+
+                    if chunk.content == '\\' {
+                        if idx + 2 < len {
+                            if chunks[idx + 2].content == '\'' {
+                                idx += 1;
+                            }
+                        }
+                    }
+
+                    token.push(chunk);
+
+                    if chunks[idx + 1].content == '\'' {
                         tokens.push(token);
 
-                        idx += 3;
+                        idx += 2;
                     } else {
                         return Err(Error::Syntax(SyntaxError {
                             loc: chunks[idx].loc.clone(),
@@ -612,11 +633,12 @@ mod tests {
 
         let tokens = res.unwrap();
 
-        assert_eq!(tokens.len(), 16);
+        assert_eq!(tokens.len(), 17);
         assert_eq!(tokens[0].kind, TokenKind::DocComment);
         assert_eq!(tokens[1].kind, TokenKind::FormStart);
         assert_eq!(tokens[2].kind, TokenKind::Keyword);
         assert_eq!(tokens[3].kind, TokenKind::Symbol);
-        assert_eq!(tokens[13].kind, TokenKind::StringLiteral);
+        assert_eq!(tokens[13].kind, TokenKind::CharLiteral);
+        assert_eq!(tokens[14].kind, TokenKind::StringLiteral);
     }
 }
