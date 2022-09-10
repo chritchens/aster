@@ -13,6 +13,22 @@ pub enum PrimValue {
     String(String),
 }
 
+impl Default for PrimValue {
+    fn default() -> Self {
+        PrimValue::Empty
+    }
+}
+
+impl PrimValue {
+    pub fn new_empty() -> Self {
+        PrimValue::Empty
+    }
+
+    pub fn new_char(c: char) -> Self {
+        PrimValue::Char(c.to_string())
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Value {
     pub tokens: Vec<Token>,
@@ -40,6 +56,25 @@ impl Value {
         value.tokens = tokens;
         value.typing = Some(Type::Empty);
         value.content = Some(PrimValue::Empty);
+
+        Ok(value)
+    }
+
+    pub fn new_char(tokens: Vec<Token>) -> Result<Self> {
+        if tokens.len() != 1 && tokens[0].kind != TokenKind::CharLiteral {
+            return Err(Error::Parsing(ParsingError {
+                loc: tokens[0].chunks.as_ref().unwrap()[0].loc.clone(),
+                desc: "expected an char literal".into(),
+            }));
+        }
+
+        let c = tokens[0].chunks.as_ref().unwrap()[0].content;
+
+        let mut value = Value::default();
+
+        value.tokens = tokens;
+        value.typing = Some(Type::Char);
+        value.content = Some(PrimValue::new_char(c));
 
         Ok(value)
     }
