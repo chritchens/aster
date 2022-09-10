@@ -27,6 +27,10 @@ impl PrimValue {
     pub fn new_char(c: char) -> Self {
         PrimValue::Char(c.to_string())
     }
+
+    pub fn new_uint(s: &str) -> Self {
+        PrimValue::UInt(s.to_string())
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
@@ -44,7 +48,7 @@ impl Value {
     }
 
     pub fn new_empty(tokens: Vec<Token>) -> Result<Self> {
-        if tokens.len() != 1 && tokens[0].kind != TokenKind::EmptyLiteral {
+        if tokens.len() != 1 || tokens[0].kind != TokenKind::EmptyLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: Some(tokens[0].chunks.as_ref().unwrap()[0].loc.clone()),
                 desc: "expected an empty literal".into(),
@@ -61,10 +65,10 @@ impl Value {
     }
 
     pub fn new_char(tokens: Vec<Token>) -> Result<Self> {
-        if tokens.len() != 1 && tokens[0].kind != TokenKind::CharLiteral {
+        if tokens.len() != 1 || tokens[0].kind != TokenKind::CharLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: Some(tokens[0].chunks.as_ref().unwrap()[0].loc.clone()),
-                desc: "expected an char literal".into(),
+                desc: "expected a char literal".into(),
             }));
         }
 
@@ -75,6 +79,32 @@ impl Value {
         value.tokens = tokens;
         value.typing = Some(Type::Char);
         value.content = Some(PrimValue::new_char(c));
+
+        Ok(value)
+    }
+
+    pub fn new_uint(tokens: Vec<Token>) -> Result<Self> {
+        if tokens.len() != 1 || tokens[0].kind != TokenKind::UIntLiteral {
+            return Err(Error::Parsing(ParsingError {
+                loc: Some(tokens[0].chunks.as_ref().unwrap()[0].loc.clone()),
+                desc: "expected a uint literal".into(),
+            }));
+        }
+
+        let s: String = tokens[0].chunks.as_ref().unwrap().clone().into_iter().fold(
+            "".into(),
+            |mut acc, chunk| {
+                acc.push(chunk.content);
+
+                acc
+            },
+        );
+
+        let mut value = Value::default();
+
+        value.tokens = tokens;
+        value.typing = Some(Type::UInt);
+        value.content = Some(PrimValue::new_uint(&s));
 
         Ok(value)
     }
