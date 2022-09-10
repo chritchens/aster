@@ -24,10 +24,6 @@ impl PrimValue {
         PrimValue::Empty
     }
 
-    pub fn new_char(c: char) -> Self {
-        PrimValue::Char(c.to_string())
-    }
-
     pub fn new_uint(s: &str) -> Self {
         PrimValue::UInt(s.to_string())
     }
@@ -38,6 +34,14 @@ impl PrimValue {
 
     pub fn new_float(s: &str) -> Self {
         PrimValue::Float(s.to_string())
+    }
+
+    pub fn new_char(c: char) -> Self {
+        PrimValue::Char(c.to_string())
+    }
+
+    pub fn new_string(s: &str) -> Self {
+        PrimValue::String(s.to_string())
     }
 }
 
@@ -165,6 +169,32 @@ impl Value {
         value.tokens = tokens;
         value.typing = Some(Type::Float);
         value.content = Some(PrimValue::new_float(&s));
+
+        Ok(value)
+    }
+
+    pub fn new_string(tokens: Vec<Token>) -> Result<Self> {
+        if tokens.len() != 1 || tokens[0].kind != TokenKind::StringLiteral {
+            return Err(Error::Parsing(ParsingError {
+                loc: Some(tokens[0].chunks.as_ref().unwrap()[0].loc.clone()),
+                desc: "expected a string literal".into(),
+            }));
+        }
+
+        let s: String = tokens[0].chunks.as_ref().unwrap().clone().into_iter().fold(
+            "".into(),
+            |mut acc, chunk| {
+                acc.push(chunk.content);
+
+                acc
+            },
+        );
+
+        let mut value = Value::default();
+
+        value.tokens = tokens;
+        value.typing = Some(Type::String);
+        value.content = Some(PrimValue::new_string(&s));
 
         Ok(value)
     }
