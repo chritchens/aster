@@ -31,6 +31,10 @@ impl PrimValue {
     pub fn new_uint(s: &str) -> Self {
         PrimValue::UInt(s.to_string())
     }
+
+    pub fn new_int(s: &str) -> Self {
+        PrimValue::Int(s.to_string())
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
@@ -105,6 +109,32 @@ impl Value {
         value.tokens = tokens;
         value.typing = Some(Type::UInt);
         value.content = Some(PrimValue::new_uint(&s));
+
+        Ok(value)
+    }
+
+    pub fn new_int(tokens: Vec<Token>) -> Result<Self> {
+        if tokens.len() != 1 || tokens[0].kind != TokenKind::IntLiteral {
+            return Err(Error::Parsing(ParsingError {
+                loc: Some(tokens[0].chunks.as_ref().unwrap()[0].loc.clone()),
+                desc: "expected an int literal".into(),
+            }));
+        }
+
+        let s: String = tokens[0].chunks.as_ref().unwrap().clone().into_iter().fold(
+            "".into(),
+            |mut acc, chunk| {
+                acc.push(chunk.content);
+
+                acc
+            },
+        );
+
+        let mut value = Value::default();
+
+        value.tokens = tokens;
+        value.typing = Some(Type::Int);
+        value.content = Some(PrimValue::new_int(&s));
 
         Ok(value)
     }
