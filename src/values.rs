@@ -63,6 +63,10 @@ impl Values {
                     let value = Value::new_int(vec![token])?;
                     values.push(value);
                 }
+                TokenKind::FloatLiteral => {
+                    let value = Value::new_float(vec![token])?;
+                    values.push(value);
+                }
                 TokenKind::CharLiteral => {
                     let value = Value::new_char(vec![token])?;
                     values.push(value);
@@ -186,6 +190,21 @@ mod tests {
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Int));
         assert_eq!(values[0].content, Some(PrimValue::new_int(s)));
+    }
+
+    #[test]
+    fn float_value() {
+        use super::Values;
+        use crate::typing::Type;
+        use crate::value::PrimValue;
+
+        let s = "+0.432E-100";
+
+        let values = Values::from_str(s).unwrap();
+
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0].typing, Some(Type::Float));
+        assert_eq!(values[0].content, Some(PrimValue::new_float(s)));
     }
 
     #[test]
