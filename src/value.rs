@@ -46,7 +46,7 @@ impl Value {
     pub fn new_empty(tokens: Vec<Token>) -> Result<Self> {
         if tokens.len() != 1 && tokens[0].kind != TokenKind::EmptyLiteral {
             return Err(Error::Parsing(ParsingError {
-                loc: tokens[0].chunks.as_ref().unwrap()[0].loc.clone(),
+                loc: Some(tokens[0].chunks.as_ref().unwrap()[0].loc.clone()),
                 desc: "expected an empty literal".into(),
             }));
         }
@@ -63,7 +63,7 @@ impl Value {
     pub fn new_char(tokens: Vec<Token>) -> Result<Self> {
         if tokens.len() != 1 && tokens[0].kind != TokenKind::CharLiteral {
             return Err(Error::Parsing(ParsingError {
-                loc: tokens[0].chunks.as_ref().unwrap()[0].loc.clone(),
+                loc: Some(tokens[0].chunks.as_ref().unwrap()[0].loc.clone()),
                 desc: "expected an char literal".into(),
             }));
         }

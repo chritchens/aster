@@ -6,19 +6,23 @@ use std::io;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct SyntaxError {
-    pub loc: Loc,
+    pub loc: Option<Loc>,
     pub desc: String,
 }
 
 impl fmt::Display for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let file = self.loc.file.clone().unwrap_or_else(|| "none".into());
+        if let Some(loc) = self.loc.as_ref() {
+            let file = loc.file.clone().unwrap_or_else(|| "".into());
 
-        write!(
-            f,
-            "{} at position {} of line {} of file {}",
-            self.desc, self.loc.pos, self.loc.line, file
-        )
+            write!(
+                f,
+                "{} at position {} of line {} of file {}",
+                self.desc, loc.pos, loc.line, file
+            )
+        } else {
+            write!(f, "{}", self.desc)
+        }
     }
 }
 
@@ -26,19 +30,23 @@ impl error::Error for SyntaxError {}
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct ParsingError {
-    pub loc: Loc,
+    pub loc: Option<Loc>,
     pub desc: String,
 }
 
 impl fmt::Display for ParsingError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let file = self.loc.file.clone().unwrap_or_else(|| "none".into());
+        if let Some(loc) = self.loc.as_ref() {
+            let file = loc.file.clone().unwrap_or_else(|| "".into());
 
-        write!(
-            f,
-            "{} at position {} of line {} of file {}",
-            self.desc, self.loc.pos, self.loc.line, file
-        )
+            write!(
+                f,
+                "{} at position {} of line {} of file {}",
+                self.desc, loc.pos, loc.line, file
+            )
+        } else {
+            write!(f, "{}", self.desc)
+        }
     }
 }
 

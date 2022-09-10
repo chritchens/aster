@@ -278,7 +278,7 @@ impl Tokens {
 
                     if idx + 2 >= len {
                         return Err(Error::Syntax(SyntaxError {
-                            loc: chunks[idx].loc.clone(),
+                            loc: Some(chunks[idx].loc.clone()),
                             desc: "expected a char".into(),
                         }));
                     }
@@ -299,7 +299,7 @@ impl Tokens {
                         idx += 2;
                     } else {
                         return Err(Error::Syntax(SyntaxError {
-                            loc: chunks[idx].loc.clone(),
+                            loc: Some(chunks[idx].loc.clone()),
                             desc: "expected a char".into(),
                         }));
                     }
@@ -341,7 +341,7 @@ impl Tokens {
                         idx += 1;
                     } else {
                         return Err(Error::Syntax(SyntaxError {
-                            loc: chunks[prev_idx].loc.clone(),
+                            loc: Some(chunks[prev_idx].loc.clone()),
                             desc: "expected a string".into(),
                         }));
                     }
@@ -407,7 +407,7 @@ impl Tokens {
 
                     if forms_count < 0 {
                         return Err(Error::Syntax(SyntaxError {
-                            loc: chunks[idx].loc.clone(),
+                            loc: Some(chunks[idx].loc.clone()),
                             desc: "closing a form never opened".into(),
                         }));
                     }
@@ -439,7 +439,7 @@ impl Tokens {
             let err_form_chunk = chunks[err_idx].clone();
 
             return Err(Error::Syntax(SyntaxError {
-                loc: err_form_chunk.loc,
+                loc: Some(err_form_chunk.loc),
                 desc,
             }));
         }
@@ -654,7 +654,7 @@ mod tests {
 
         match res {
             Err(Error::Syntax(SyntaxError { loc, desc })) => {
-                assert_eq!(loc.pos, 2);
+                assert_eq!(loc.unwrap().pos, 2);
 
                 let err_desc: String = "closing a form never opened".into();
                 assert_eq!(desc, err_desc);
@@ -670,7 +670,7 @@ mod tests {
 
         match res {
             Err(Error::Syntax(SyntaxError { loc, desc })) => {
-                assert_eq!(loc.pos, 0);
+                assert_eq!(loc.unwrap().pos, 0);
 
                 let err_desc: String = "form not closed".into();
                 assert_eq!(desc, err_desc);
