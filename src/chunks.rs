@@ -7,7 +7,6 @@ use std::ops;
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Chunks {
     pub files: Vec<String>,
-    pub lines: usize,
     pub content: Vec<Chunk>,
 }
 
@@ -25,26 +24,21 @@ impl Chunks {
     }
 
     pub fn push(&mut self, chunk: Chunk) {
-        if self
-            .files
-            .iter()
-            .find(|file| {
-                chunk
-                    .loc
-                    .file
-                    .as_ref()
-                    .map(|chunk_file| &chunk_file == file)
-                    .unwrap_or(false)
-            })
-            .is_none()
-        {
-            if let Some(chunk_file) = chunk.loc.file.clone() {
+        let chunk_file = chunk.loc.file.clone();
+
+        let has_file = self.files.iter().any(|file| {
+            chunk
+                .loc
+                .file
+                .as_ref()
+                .map(|chunk_file| chunk_file == file)
+                .unwrap_or(false)
+        });
+
+        if chunk_file.is_some() && !has_file {
+            if let Some(chunk_file) = chunk_file {
                 self.files.push(chunk_file);
             }
-
-            self.lines += chunk.loc.line + 1;
-        } else if self.lines != chunk.loc.line + 1 {
-            self.lines += chunk.loc.line + 1;
         }
 
         self.content.push(chunk)
@@ -59,7 +53,6 @@ impl Chunks {
                 .map(|file| vec![file])
                 .or_else(|| Some(vec![]))
                 .unwrap(),
-            lines: chunk.loc.line,
             content: vec![chunk],
         }
     }
@@ -92,7 +85,6 @@ impl Chunks {
 
         Chunks {
             files: Vec::new(),
-            lines: line + 1,
             content: chunks,
         }
     }
@@ -161,7 +153,6 @@ mod tests {
 
         assert_eq!(chunks.len(), s.len());
         assert_eq!(chunks.files.len(), 0);
-        assert_eq!(chunks.lines, 3);
 
         let chunk = &chunks[17];
 
