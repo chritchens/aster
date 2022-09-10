@@ -51,6 +51,10 @@ impl Values {
                         desc: "unexpected doc comment token".into(),
                     }));
                 }
+                TokenKind::EmptyLiteral => {
+                    let value = Value::new_empty(vec![token])?;
+                    values.push(value);
+                }
                 _ => values.push(Value::new()),
             }
         }
@@ -125,5 +129,20 @@ mod tests {
         let values = Values::from_str(s).unwrap();
 
         assert!(values.is_empty());
+    }
+
+    #[test]
+    fn empty_value() {
+        use super::Values;
+        use crate::typing::Type;
+        use crate::value::PrimValue;
+
+        let s = "()";
+
+        let values = Values::from_str(s).unwrap();
+
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0].typing, Some(Type::Empty));
+        assert_eq!(values[0].content, Some(PrimValue::Empty));
     }
 }
