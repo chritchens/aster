@@ -232,7 +232,7 @@ mod tests {
         use crate::typing::Type;
         use crate::value::PrimValue;
 
-        let s = "\"\"\"";
+        let s = "\"\\\"\"";
 
         let values = Values::from_str(s).unwrap();
 

@@ -308,31 +308,41 @@ impl Tokens {
                     let mut token = Token::new_string_literal();
 
                     let mut is_string = false;
-                    let mut escape_idx = 0;
 
-                    let prev_idx = idx;
+                    let start_idx = idx;
 
                     idx += 1;
 
                     while idx < len && !is_string {
                         chunk = chunks[idx].clone();
+                        c = chunk.content;
 
-                        if chunk.content == '\\' {
-                            if escape_idx == idx - 1 {
-                                escape_idx = 0;
-                            } else {
-                                escape_idx = idx;
+                        match c {
+                            '\\' => {
+                                if idx + 1 < len {
+                                    idx += 1;
+                                    c = chunks[idx].content;
+                                    if c == '\\' || c == '\"' {
+                                        chunk = chunks[idx].clone();
+                                        token.push(chunk.clone());
+                                        idx += 1;
+                                    }
+                                } else {
+                                    return Err(Error::Syntax(SyntaxError {
+                                        loc: Some(chunks[start_idx].loc.clone()),
+                                        desc: "expected a string".into(),
+                                    }));
+                                }
+                            }
+                            '\"' => {
+                                is_string = true;
+                                break;
+                            }
+                            _ => {
+                                token.push(chunk.clone());
+                                idx += 1;
                             }
                         }
-
-                        if chunk.content == '"' && escape_idx != idx - 1 {
-                            is_string = true;
-                            break;
-                        }
-
-                        idx += 1;
-
-                        token.push(chunk.clone());
                     }
 
                     if is_string {
@@ -341,7 +351,7 @@ impl Tokens {
                         idx += 1;
                     } else {
                         return Err(Error::Syntax(SyntaxError {
-                            loc: Some(chunks[prev_idx].loc.clone()),
+                            loc: Some(chunks[start_idx].loc.clone()),
                             desc: "expected a string".into(),
                         }));
                     }
@@ -618,13 +628,12 @@ mod tests {
         use super::Tokens;
         use crate::token::TokenKind;
 
-        let s = "\"this is a str\\\"ing\" \"string\"";
+        let s = "\"\\\\\""; // "\"
 
         let tokens = Tokens::from_str(s).unwrap();
 
-        assert_eq!(tokens.len(), 2);
+        assert_eq!(tokens.len(), 1);
         assert_eq!(tokens[0].kind, TokenKind::StringLiteral);
-        assert_eq!(tokens[1].kind, TokenKind::StringLiteral);
     }
 
     #[test]
