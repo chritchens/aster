@@ -287,8 +287,12 @@ impl Tokens {
 
                     chunk = chunks[idx].clone();
 
-                    if chunk.content == '\\' && idx + 2 < len && chunks[idx + 2].content == '\'' {
+                    if chunk.content == '\\'
+                        && idx + 1 < len
+                        && (chunks[idx + 1].content == '\'' || chunks[idx + 1].content == '\\')
+                    {
                         idx += 1;
+                        chunk = chunks[idx].clone();
                     }
 
                     token.push(chunk);
@@ -612,11 +616,11 @@ mod tests {
         use super::Tokens;
         use crate::token::TokenKind;
 
-        let s = "'\"' '\'' 'a'";
+        let s = "'\\\\'";
 
         let tokens = Tokens::from_str(s).unwrap();
 
-        assert_eq!(tokens.len(), 3);
+        assert_eq!(tokens.len(), 1);
 
         for token in tokens.into_iter() {
             assert_eq!(token.kind, TokenKind::CharLiteral);
@@ -726,6 +730,7 @@ mod tests {
         assert_eq!(tokens[2].kind, TokenKind::Keyword);
         assert_eq!(tokens[3].kind, TokenKind::Symbol);
         assert_eq!(tokens[13].kind, TokenKind::CharLiteral);
+        assert_eq!(tokens[13].chunks.as_ref().unwrap()[0].content, '\'');
         assert_eq!(tokens[14].kind, TokenKind::StringLiteral);
     }
 }
