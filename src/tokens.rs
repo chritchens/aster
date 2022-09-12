@@ -117,11 +117,12 @@ impl Tokens {
                         idx += 1;
                     }
                 }
-                '0'..='9' | 'b' | 'o' | 'x' | '+' | '-' => {
+                '0'..='9' | 'b' | 'o' | 'x' | 'X' | '+' | '-' => {
                     let mut is_binary = false;
                     let mut is_octal = false;
                     let mut is_decimal = false;
-                    let mut is_hexa = false;
+                    let mut is_hexa_lower = false;
+                    let mut is_hexa_upper = false;
                     let mut is_uint = false;
                     let mut is_int = false;
                     let mut is_float = false;
@@ -136,7 +137,7 @@ impl Tokens {
 
                     while idx < len {
                         match c {
-                            'b' | 'o' | 'x' => {
+                            'b' | 'o' | 'x' | 'X' => {
                                 if idx != start_idx
                                     && (sign_idx.is_none()
                                         || (idx != start_idx + 1 && idx + 1 == len))
@@ -152,7 +153,8 @@ impl Tokens {
                                 match c {
                                     'b' => is_binary = true,
                                     'o' => is_octal = true,
-                                    'x' => is_hexa = true,
+                                    'x' => is_hexa_lower = true,
+                                    'X' => is_hexa_upper = true,
                                     _ => unreachable!(),
                                 }
 
@@ -326,7 +328,12 @@ impl Tokens {
                                 }
                             }
                             '1' => {
-                                if !is_binary && !is_octal && !is_decimal && !is_hexa {
+                                if !is_binary
+                                    && !is_octal
+                                    && !is_decimal
+                                    && !is_hexa_lower
+                                    && !is_hexa_upper
+                                {
                                     is_decimal = true;
                                 }
 
@@ -355,7 +362,7 @@ impl Tokens {
                                     }));
                                 }
 
-                                if !is_octal && !is_decimal && !is_hexa {
+                                if !is_octal && !is_decimal && !is_hexa_lower && !is_hexa_upper {
                                     is_decimal = true;
                                 }
 
@@ -432,6 +439,28 @@ impl Tokens {
                                         loc: Some(chunks[idx].loc.clone()),
                                         desc: "expected a decimal number".into(),
                                     }));
+                                }
+
+                                match c {
+                                    'A'..='F' => {
+                                        if is_hexa_lower {
+                                            return Err(Error::Syntax(SyntaxError {
+                                                loc: Some(chunks[idx].loc.clone()),
+                                                desc: "expected an uppercase hexadecimal number"
+                                                    .into(),
+                                            }));
+                                        }
+                                    }
+                                    'a'..='f' => {
+                                        if is_hexa_upper {
+                                            return Err(Error::Syntax(SyntaxError {
+                                                loc: Some(chunks[idx].loc.clone()),
+                                                desc: "expected an lowercase hexadecimal number"
+                                                    .into(),
+                                            }));
+                                        }
+                                    }
+                                    _ => unreachable!(),
                                 }
 
                                 if idx == start_idx
@@ -832,7 +861,7 @@ mod tests {
         use super::Tokens;
         use crate::token::TokenKind;
 
-        let s = "xFFF";
+        let s = "XFFF";
 
         let tokens = Tokens::from_str(s).unwrap();
 
