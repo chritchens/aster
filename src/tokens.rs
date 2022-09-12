@@ -11,6 +11,36 @@ use std::iter;
 use std::ops;
 use std::path::Path;
 
+const SYMBOL_PUNCTUATION: [char; 23] = [
+    '!', '$', '%', '&', '*', '+', ',', '-', '.', '/', ':', ';', '<', '=', '>', '?', '@', '\\', '^',
+    '_', '`', '|', '~',
+];
+
+fn is_symbol_punctuation(c: char) -> bool {
+    for a in SYMBOL_PUNCTUATION.iter() {
+        if &c == a {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn is_symbol_start(c: char) -> bool {
+    for a in ('A'..='z').into_iter() {
+        if c == a {
+            return true;
+        }
+    }
+
+    is_symbol_punctuation(c)
+}
+
+fn is_symbol_char(c: char) -> bool {
+    c.is_ascii_alphanumeric()
+        || (c != COMMENT_MARK && c != FORM_START && c != FORM_END && !c.is_whitespace())
+}
+
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Tokens(Vec<Token>);
 
@@ -516,12 +546,7 @@ impl Tokens {
                                     break;
                                 }
                             }
-                            w if !w.is_ascii_alphanumeric()
-                                && (w == COMMENT_MARK
-                                    || w == FORM_START
-                                    || w == FORM_END
-                                    || w.is_whitespace()) =>
-                            {
+                            w if !is_symbol_char(w) => {
                                 idx -= 1; // can't be tokenized as number
                                 break;
                             }
@@ -644,7 +669,7 @@ impl Tokens {
                         }));
                     }
                 }
-                'A'..='z' => {
+                mut c if is_symbol_start(c) => {
                     let mut token = Token::new_symbol();
                     token.push(chunk.clone());
 
@@ -653,12 +678,7 @@ impl Tokens {
                     while idx < len {
                         c = chunks[idx].content;
 
-                        if c.is_ascii_alphanumeric()
-                            || (c != COMMENT_MARK
-                                && c != FORM_START
-                                && c != FORM_END
-                                && !c.is_whitespace())
-                        {
+                        if is_symbol_char(c) {
                             token.push(chunks[idx].clone());
 
                             idx += 1;
