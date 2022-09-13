@@ -70,9 +70,56 @@ impl convert::TryFrom<String> for Keyword {
     }
 }
 
+pub fn is_separator_char(c: char) -> bool {
+    c.is_ascii_whitespace()
+}
+
 pub const COMMENT_MARK: char = '#';
 
 pub const COMMENT_MARK_POSTFIX: char = '!';
+
+pub const SINGLE_QUOTE: char = '\'';
+
+pub const DOUBLE_QUOTE: char = '"';
+
+pub const SYMBOL_START_PUNCTUATION: [char; 23] = [
+    '!', '$', '%', '&', '*', '+', ',', '-', '.', '/', ':', ';', '<', '=', '>', '?', '@', '\\', '^',
+    '_', '`', '|', '~',
+];
+
+pub fn is_symbol_punctuation(c: char) -> bool {
+    for a in SYMBOL_START_PUNCTUATION.iter() {
+        if &c == a {
+            return true;
+        }
+    }
+
+    false
+}
+
+pub fn is_symbol_start_char(c: char) -> bool {
+    for a in ('A'..='z').into_iter() {
+        if c == a {
+            return true;
+        }
+    }
+
+    is_symbol_punctuation(c)
+}
+
+pub fn is_symbol_char(c: char) -> bool {
+    c.is_ascii_alphanumeric()
+        || (c != COMMENT_MARK
+            && c != FORM_START
+            && c != FORM_END
+            && c != SINGLE_QUOTE
+            && c != DOUBLE_QUOTE
+            && !c.is_whitespace())
+}
+
+pub fn is_symbol_char_no_punctuation(c: char) -> bool {
+    is_symbol_char(c) && (!is_symbol_punctuation(c) || c == '.')
+}
 
 pub const FORM_START: char = '(';
 

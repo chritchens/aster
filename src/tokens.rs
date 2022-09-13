@@ -1,45 +1,19 @@
 use crate::chunks::Chunks;
 use crate::error::{Error, SyntaxError};
-use crate::keyword::KEYWORDS;
-use crate::keyword::{COMMENT_MARK, COMMENT_MARK_POSTFIX};
-use crate::keyword::{FORM_END, FORM_START};
 use crate::result::Result;
+use crate::syntax::is_separator_char;
+use crate::syntax::KEYWORDS;
+use crate::syntax::{is_symbol_char, is_symbol_start_char};
+use crate::syntax::{is_symbol_char_no_punctuation, is_symbol_punctuation};
+use crate::syntax::{COMMENT_MARK, COMMENT_MARK_POSTFIX};
+use crate::syntax::{DOUBLE_QUOTE, SINGLE_QUOTE};
+use crate::syntax::{FORM_END, FORM_START};
 use crate::token::Token;
 use std::convert;
 use std::fs;
 use std::iter;
 use std::ops;
 use std::path::Path;
-
-const SYMBOL_PUNCTUATION: [char; 23] = [
-    '!', '$', '%', '&', '*', '+', ',', '-', '.', '/', ':', ';', '<', '=', '>', '?', '@', '\\', '^',
-    '_', '`', '|', '~',
-];
-
-fn is_symbol_punctuation(c: char) -> bool {
-    for a in SYMBOL_PUNCTUATION.iter() {
-        if &c == a {
-            return true;
-        }
-    }
-
-    false
-}
-
-fn is_symbol_start(c: char) -> bool {
-    for a in ('A'..='z').into_iter() {
-        if c == a {
-            return true;
-        }
-    }
-
-    is_symbol_punctuation(c)
-}
-
-fn is_symbol_char(c: char) -> bool {
-    c.is_ascii_alphanumeric()
-        || (c != COMMENT_MARK && c != FORM_START && c != FORM_END && !c.is_whitespace())
-}
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Tokens(Vec<Token>);
@@ -188,7 +162,7 @@ impl Tokens {
                                     _ => unreachable!(),
                                 }
 
-                                if idx + 1 == len || chunks[idx + 1].content == ' ' {
+                                if idx + 1 == len || is_separator_char(chunks[idx + 1].content) {
                                     let mut token = Token::new_symbol();
                                     token.push(chunk.clone());
                                     tokens.push(token);
@@ -213,7 +187,7 @@ impl Tokens {
                                     }));
                                 }
 
-                                if idx + 1 == len || chunks[idx + 1].content == ' ' {
+                                if idx + 1 == len || is_separator_char(chunks[idx + 1].content) {
                                     let mut token = Token::new_symbol();
                                     token.push(chunk.clone());
                                     tokens.push(token);
@@ -243,7 +217,7 @@ impl Tokens {
                                     }));
                                 }
 
-                                if idx + 1 == len || chunks[idx + 1].content == ' ' {
+                                if idx + 1 == len || is_separator_char(chunks[idx + 1].content) {
                                     let mut token = Token::new_symbol();
                                     token.push(chunk.clone());
                                     tokens.push(token);
@@ -273,7 +247,7 @@ impl Tokens {
                                 }
 
                                 if idx == start_idx && idx + 1 == len
-                                    || chunks[idx + 1].content == ' '
+                                    || is_separator_char(chunks[idx + 1].content)
                                 {
                                     let mut token = Token::new_symbol();
                                     token.push(chunk.clone());
@@ -328,7 +302,7 @@ impl Tokens {
 
                                         if radix_idx == Some(idx - 1)
                                             && idx + 1 < len
-                                            && chunks[idx + 1].content != ' '
+                                            && is_separator_char(chunks[idx + 1].content)
                                         {
                                             return Err(Error::Syntax(SyntaxError {
                                                 loc: Some(chunks[idx].loc.clone()),
@@ -519,7 +493,7 @@ impl Tokens {
                                 }
 
                                 if idx == start_idx && idx + 1 == len
-                                    || chunks[idx + 1].content == ' '
+                                    || is_separator_char(chunks[idx + 1].content)
                                 {
                                     let mut token = Token::new_symbol();
                                     token.push(chunk.clone());
@@ -582,7 +556,7 @@ impl Tokens {
 
                     idx += 1;
                 }
-                '\'' => {
+                SINGLE_QUOTE => {
                     let mut token = Token::new_char_literal();
 
                     if idx + 2 >= len {
@@ -598,7 +572,8 @@ impl Tokens {
 
                     if chunk.content == '\\'
                         && idx + 1 < len
-                        && (chunks[idx + 1].content == '\'' || chunks[idx + 1].content == '\\')
+                        && (chunks[idx + 1].content == SINGLE_QUOTE
+                            || chunks[idx + 1].content == '\\')
                     {
                         idx += 1;
                         chunk = chunks[idx].clone();
@@ -606,7 +581,7 @@ impl Tokens {
 
                     token.push(chunk);
 
-                    if chunks[idx + 1].content == '\'' {
+                    if chunks[idx + 1].content == SINGLE_QUOTE {
                         tokens.push(token);
 
                         idx += 2;
@@ -617,7 +592,7 @@ impl Tokens {
                         }));
                     }
                 }
-                '\"' => {
+                DOUBLE_QUOTE => {
                     let mut token = Token::new_string_literal();
 
                     let mut is_string = false;
@@ -635,7 +610,7 @@ impl Tokens {
                                 if idx + 1 < len {
                                     idx += 1;
                                     c = chunks[idx].content;
-                                    if c == '\\' || c == '\"' {
+                                    if c == '\\' || c == DOUBLE_QUOTE {
                                         chunk = chunks[idx].clone();
                                         token.push(chunk.clone());
                                         idx += 1;
@@ -647,7 +622,7 @@ impl Tokens {
                                     }));
                                 }
                             }
-                            '\"' => {
+                            DOUBLE_QUOTE => {
                                 is_string = true;
                                 break;
                             }
@@ -669,22 +644,45 @@ impl Tokens {
                         }));
                     }
                 }
-                mut c if is_symbol_start(c) => {
+                mut c if is_symbol_start_char(c) => {
                     let mut token = Token::new_symbol();
                     token.push(chunk.clone());
 
+                    let only_punctuation = is_symbol_punctuation(c);
+                    let max_len = if only_punctuation { 3 } else { len };
+
                     idx += 1;
 
-                    while idx < len {
+                    while idx < len && idx < max_len {
                         c = chunks[idx].content;
 
                         if is_symbol_char(c) {
+                            if only_punctuation && !is_symbol_punctuation(c) {
+                                return Err(Error::Syntax(SyntaxError {
+                                    loc: Some(chunks[idx].loc.clone()),
+                                    desc: "expected a symbol with only punctuation".into(),
+                                }));
+                            } else if !only_punctuation && !is_symbol_char_no_punctuation(c) {
+                                return Err(Error::Syntax(SyntaxError {
+                                    loc: Some(chunks[idx].loc.clone()),
+                                    desc: "expected a symbol without punctuation".into(),
+                                }));
+                            }
+
                             token.push(chunks[idx].clone());
 
                             idx += 1;
                         } else {
                             break;
                         }
+                    }
+
+                    if max_len == 3 && idx < len && is_symbol_char(chunks[idx].content) {
+                        return Err(Error::Syntax(SyntaxError {
+                            loc: Some(chunks[idx].loc.clone()),
+                            desc: "expected a symbol with only punctuation and maximum lenght 3"
+                                .into(),
+                        }));
                     }
 
                     tokens.push(token.clone());
@@ -694,7 +692,7 @@ impl Tokens {
                     open_form_idxs.push(idx);
                     let mut is_empty = false;
 
-                    if idx + 1 < len && chunks[idx + 1].content == ')' {
+                    if idx + 1 < len && chunks[idx + 1].content == FORM_END {
                         is_empty = true;
                     }
 
@@ -949,7 +947,19 @@ mod tests {
         use super::Tokens;
         use crate::token::TokenKind;
 
-        let s = "aB0c-d.,'ef_!+/9";
+        let mut s = "aB0c-d.,ef_!+/9";
+
+        let mut res = Tokens::from_str(s);
+
+        assert!(res.is_err());
+
+        s = "_|2a";
+
+        res = Tokens::from_str(s);
+
+        assert!(res.is_err());
+
+        s = "<=>";
 
         let tokens = Tokens::from_str(s).unwrap();
 
