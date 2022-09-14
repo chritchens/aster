@@ -178,9 +178,7 @@ pub fn is_float_literal(s: &str) -> bool {
 }
 
 pub fn is_hex_char_letter(c: char) -> bool {
-    ('A'..='F')
-        .chain('a'..='f')
-        .any(|l| l == c)
+    ('A'..='F').chain('a'..='f').any(|l| l == c)
 }
 
 pub const SINGLE_QUOTE: char = '\'';
@@ -206,6 +204,14 @@ pub fn is_symbol_punctuation(c: char) -> bool {
 
 pub fn is_symbol_start_char(c: char) -> bool {
     ('A'..='z').any(|l| l == c) || is_symbol_punctuation(c)
+}
+
+pub fn is_type_symbol_start_char(c: char) -> bool {
+    ('A'..='Z').any(|l| l == c)
+}
+
+pub fn is_value_symbol_start_char(c: char) -> bool {
+    ('a'..='z').any(|l| l == c) || is_symbol_punctuation(c)
 }
 
 pub fn is_symbol_char(c: char) -> bool {
@@ -242,6 +248,16 @@ pub fn is_symbol(s: &str) -> bool {
     } else {
         s.chars().all(is_symbol_char_no_punctuation)
     }
+}
+
+pub fn is_value_symbol(s: &str) -> bool {
+    is_symbol(s) && is_value_symbol_start_char(s.chars().next().unwrap())
+}
+
+pub fn is_type_symbol(s: &str) -> bool {
+    is_symbol(s)
+        && is_type_symbol_start_char(s.chars().next().unwrap())
+        && !s.chars().any(is_symbol_punctuation)
 }
 
 pub const FORM_START: char = '(';

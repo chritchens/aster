@@ -1,13 +1,14 @@
 use crate::chunks::StringChunks;
 use crate::error::{Error, SyntaxError};
 use crate::result::Result;
+use crate::syntax::is_keyword;
 use crate::syntax::SINGLE_QUOTE;
 use crate::syntax::{is_comment_mark, is_doc_comment_mark};
 use crate::syntax::{is_double_quote, is_single_quote};
 use crate::syntax::{is_escape_char, is_whitespace};
 use crate::syntax::{is_float_literal, is_int_literal, is_uint_literal};
 use crate::syntax::{is_form_end, is_form_start};
-use crate::syntax::{is_keyword, is_symbol};
+use crate::syntax::{is_symbol, is_type_symbol, is_value_symbol};
 use crate::token::Token;
 use std::convert;
 use std::fs;
@@ -275,7 +276,14 @@ impl Tokens {
                     idx += 1;
                 }
                 x if is_symbol(&x) => {
-                    let mut token = Token::new_symbol();
+                    let mut token = if is_type_symbol(&x) {
+                        Token::new_type_symbol()
+                    } else if is_value_symbol(&x) {
+                        Token::new_value_symbol()
+                    } else {
+                        panic!("expected a symbol");
+                    };
+
                     token.push(chunk.clone());
 
                     tokens.push(token);
@@ -511,10 +519,17 @@ mod tests {
 
         s = "<=>";
 
-        let tokens = Tokens::from_str(s).unwrap();
+        let mut tokens = Tokens::from_str(s).unwrap();
 
         assert_eq!(tokens.len(), 1);
-        assert_eq!(tokens[0].kind, TokenKind::Symbol);
+        assert_eq!(tokens[0].kind, TokenKind::ValueSymbol);
+
+        s = "Type";
+
+        tokens = Tokens::from_str(s).unwrap();
+
+        assert_eq!(tokens.len(), 1);
+        assert_eq!(tokens[0].kind, TokenKind::TypeSymbol);
     }
 
     #[test]
@@ -566,7 +581,7 @@ mod tests {
         assert_eq!(tokens.len(), 30);
         assert_eq!(tokens[0].kind, TokenKind::FormStart);
         assert_eq!(tokens[1].kind, TokenKind::Keyword);
-        assert_eq!(tokens[2].kind, TokenKind::Symbol);
+        assert_eq!(tokens[2].kind, TokenKind::ValueSymbol);
         assert_eq!(tokens[8].kind, TokenKind::IntLiteral);
         assert_eq!(tokens[11].kind, TokenKind::UIntLiteral);
         assert_eq!(tokens[13].kind, TokenKind::FloatLiteral);
@@ -592,7 +607,7 @@ mod tests {
         assert_eq!(tokens[0].kind, TokenKind::DocComment);
         assert_eq!(tokens[1].kind, TokenKind::FormStart);
         assert_eq!(tokens[2].kind, TokenKind::Keyword);
-        assert_eq!(tokens[3].kind, TokenKind::Symbol);
+        assert_eq!(tokens[3].kind, TokenKind::ValueSymbol);
         assert_eq!(tokens[13].kind, TokenKind::CharLiteral);
         assert_eq!(
             tokens[13].chunks.as_ref().unwrap()[0].content,

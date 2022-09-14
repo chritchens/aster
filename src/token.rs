@@ -12,7 +12,8 @@ pub enum TokenKind {
     FloatLiteral,
     CharLiteral,
     StringLiteral,
-    Symbol,
+    ValueSymbol,
+    TypeSymbol,
     FormStart,
     FormEnd,
 }
@@ -97,9 +98,16 @@ impl Token {
         }
     }
 
-    pub fn new_symbol() -> Self {
+    pub fn new_value_symbol() -> Self {
         Token {
-            kind: TokenKind::Symbol,
+            kind: TokenKind::ValueSymbol,
+            chunks: None,
+        }
+    }
+
+    pub fn new_type_symbol() -> Self {
+        Token {
+            kind: TokenKind::TypeSymbol,
             chunks: None,
         }
     }
