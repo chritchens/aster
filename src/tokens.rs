@@ -1,13 +1,13 @@
-use crate::chunks::Chunks;
+use crate::chunks::StringChunks;
 use crate::error::{Error, SyntaxError};
 use crate::result::Result;
-use crate::syntax::is_separator_char;
-use crate::syntax::KEYWORDS;
-use crate::syntax::{is_symbol_char, is_symbol_start_char};
-use crate::syntax::{is_symbol_char_no_punctuation, is_symbol_punctuation};
-use crate::syntax::{COMMENT_MARK, COMMENT_MARK_POSTFIX};
-use crate::syntax::{DOUBLE_QUOTE, SINGLE_QUOTE};
-use crate::syntax::{FORM_END, FORM_START};
+use crate::syntax::SINGLE_QUOTE;
+use crate::syntax::{is_comment_mark, is_doc_comment_mark};
+use crate::syntax::{is_double_quote, is_single_quote};
+use crate::syntax::{is_escape_char, is_whitespace};
+use crate::syntax::{is_float_literal, is_int_literal, is_uint_literal};
+use crate::syntax::{is_form_end, is_form_start};
+use crate::syntax::{is_keyword, is_symbol};
 use crate::token::Token;
 use std::convert;
 use std::fs;
@@ -40,7 +40,7 @@ impl Tokens {
     }
 
     pub fn from_str(s: &str) -> Result<Self> {
-        let chunks = Chunks::from_str(s);
+        let chunks = StringChunks::from_str(s);
         let len = chunks.len();
         let mut idx = 0;
 
@@ -50,649 +50,179 @@ impl Tokens {
 
         let mut tokens = Tokens::new();
 
-        while idx != len {
-            let mut chunk = chunks[idx].clone();
+        while idx < len {
+            let chunk = chunks[idx].clone();
+            let s = chunk.content.clone();
 
-            let mut c = chunk.content;
-
-            match c {
-                COMMENT_MARK => {
-                    let next_chunk = if idx != len - 1 {
-                        Some(chunks[idx + 1].clone())
+            match s.clone() {
+                mut x if (is_comment_mark(&x) || is_doc_comment_mark(&x)) => {
+                    let mut token = if is_comment_mark(&x) {
+                        Token::new_comment()
                     } else {
-                        None
+                        Token::new_doc_comment()
                     };
 
-                    let mut token = Token::new_comment();
+                    let mut cchunk = chunk;
 
-                    if let Some(nxtc) = next_chunk {
-                        if nxtc.content == COMMENT_MARK_POSTFIX {
-                            token = Token::new_doc_comment()
-                        }
-                    };
-
-                    while idx < len && c != '\n' {
-                        c = chunk.content;
-                        token.push(chunk.clone());
-
-                        idx += 1;
-
-                        if idx == len {
-                            break;
-                        }
-
-                        chunk = chunks[idx].clone();
-                    }
-
-                    tokens.push(token);
-                }
-                'i' | 'd' => {
-                    let mut token = Token::new_keyword();
-                    let mut is_keyword = false;
-                    let mut klen = 0;
-
-                    for keyword in KEYWORDS.iter() {
-                        klen = keyword.len();
-
-                        if idx + klen > len {
-                            continue;
-                        }
-
-                        let chars: String = (0..klen).map(|i| chunks[idx + i].content).collect();
-
-                        if keyword != &chars {
-                            continue;
-                        }
-
-                        for i in 0..klen {
-                            token.push(chunks[idx + i].clone());
-                        }
-
-                        is_keyword = true;
-
+                    if idx + 1 >= len {
+                        token.push(cchunk);
                         tokens.push(token);
-
                         break;
                     }
 
-                    if is_keyword {
-                        idx += klen;
-                    } else {
-                        idx += 1;
-                    }
-                }
-                '0'..='9' | 'b' | 'o' | 'x' | 'X' | '+' | '-' => {
-                    let mut is_binary = false;
-                    let mut is_octal = false;
-                    let mut is_decimal = false;
-                    let mut is_hexa_lower = false;
-                    let mut is_hexa_upper = false;
-                    let mut is_uint = false;
-                    let mut is_int = false;
-                    let mut is_float = false;
-                    let mut is_symbol = false;
-                    let mut sign_idx = None;
-                    let mut radix_idx = None;
-                    let mut point_idx = None;
-                    let mut exp_idx = None;
+                    idx += 1;
 
-                    let start_idx = idx;
-                    let mut num_chunks = vec![];
+                    x = chunks[idx].content.clone();
 
                     while idx < len {
-                        match c {
-                            'b' | 'o' | 'x' | 'X' => {
-                                if idx != start_idx
-                                    && (sign_idx.is_none()
-                                        || (idx != start_idx + 1 && idx + 1 == len))
-                                {
-                                    return Err(Error::Syntax(SyntaxError {
-                                        loc: Some(chunks[idx].loc.clone()),
-                                        desc: "expected a well-formed number".into(),
-                                    }));
-                                }
+                        cchunk.content.push_str(&x);
 
-                                radix_idx = Some(idx);
-
-                                match c {
-                                    'b' => is_binary = true,
-                                    'o' => is_octal = true,
-                                    'x' => is_hexa_lower = true,
-                                    'X' => is_hexa_upper = true,
-                                    _ => unreachable!(),
-                                }
-
-                                if idx + 1 == len || is_separator_char(chunks[idx + 1].content) {
-                                    let mut token = Token::new_symbol();
-                                    token.push(chunk.clone());
-                                    tokens.push(token);
-
-                                    is_symbol = true;
-
-                                    break;
-                                }
-
-                                num_chunks.push(chunk.clone());
-
-                                idx += 1;
-                                chunk = chunks[idx].clone();
-                                c = chunk.content;
-                            }
-                            '+' => {
-                                if sign_idx.is_some() && idx > start_idx && exp_idx != Some(idx - 1)
-                                {
-                                    return Err(Error::Syntax(SyntaxError {
-                                        loc: Some(chunks[idx].loc.clone()),
-                                        desc: "expected a float".into(),
-                                    }));
-                                }
-
-                                if idx + 1 == len || is_separator_char(chunks[idx + 1].content) {
-                                    let mut token = Token::new_symbol();
-                                    token.push(chunk.clone());
-                                    tokens.push(token);
-
-                                    is_symbol = true;
-
-                                    break;
-                                }
-
-                                if idx == start_idx {
-                                    sign_idx = Some(idx);
-                                    is_int = true;
-                                }
-
-                                num_chunks.push(chunk.clone());
-
-                                idx += 1;
-                                chunk = chunks[idx].clone();
-                                c = chunk.content;
-                            }
-                            '-' => {
-                                if sign_idx.is_some() && idx > start_idx && exp_idx != Some(idx - 1)
-                                {
-                                    return Err(Error::Syntax(SyntaxError {
-                                        loc: Some(chunks[idx].loc.clone()),
-                                        desc: "expected a float".into(),
-                                    }));
-                                }
-
-                                if idx + 1 == len || is_separator_char(chunks[idx + 1].content) {
-                                    let mut token = Token::new_symbol();
-                                    token.push(chunk.clone());
-                                    tokens.push(token);
-
-                                    is_symbol = true;
-
-                                    break;
-                                }
-
-                                if idx == start_idx {
-                                    sign_idx = Some(idx);
-                                    is_int = true;
-                                }
-
-                                num_chunks.push(chunk.clone());
-
-                                idx += 1;
-                                chunk = chunks[idx].clone();
-                                c = chunk.content;
-                            }
-                            'E' => {
-                                if (exp_idx != None && idx != start_idx) || !is_float {
-                                    return Err(Error::Syntax(SyntaxError {
-                                        loc: Some(chunks[idx].loc.clone()),
-                                        desc: "expected a float".into(),
-                                    }));
-                                }
-
-                                if idx == start_idx && idx + 1 == len
-                                    || is_separator_char(chunks[idx + 1].content)
-                                {
-                                    let mut token = Token::new_symbol();
-                                    token.push(chunk.clone());
-                                    tokens.push(token);
-
-                                    is_symbol = true;
-
-                                    break;
-                                }
-
-                                exp_idx = Some(idx);
-
-                                num_chunks.push(chunk.clone());
-
-                                if idx + 1 < len {
-                                    idx += 1;
-                                    chunk = chunks[idx].clone();
-                                    c = chunk.content;
-                                } else {
-                                    break;
-                                }
-                            }
-                            '0' => {
-                                match idx {
-                                    x if x == start_idx => {
-                                        if idx + 1 < len {
-                                            if chunks[idx + 1].content != '.' {
-                                                return Err(Error::Syntax(SyntaxError {
-                                                    loc: Some(chunks[idx].loc.clone()),
-                                                    desc: "expected a float".into(),
-                                                }));
-                                            } else {
-                                                is_float = true;
-                                                is_uint = false;
-                                                is_int = false;
-                                            }
-                                        } else {
-                                            is_uint = true;
-                                            is_decimal = true;
-                                        }
-                                    }
-                                    x if x > start_idx => {
-                                        if (sign_idx == Some(idx - 1) && idx + 1 == len)
-                                            || point_idx == Some(idx - 1)
-                                            || exp_idx == Some(idx - 1)
-                                        {
-                                            return Err(Error::Syntax(SyntaxError {
-                                                loc: Some(chunks[idx].loc.clone()),
-                                                desc: "expected a number".into(), // +/-0, bn.0, E0 are not valid numbers
-                                            }));
-                                        }
-
-                                        if radix_idx == Some(idx - 1)
-                                            && idx + 1 < len
-                                            && is_separator_char(chunks[idx + 1].content)
-                                        {
-                                            return Err(Error::Syntax(SyntaxError {
-                                                loc: Some(chunks[idx].loc.clone()),
-                                                desc: "expected zero alone or a number greater than zero".into(),
-                                            }));
-                                        }
-
-                                        if point_idx.is_none() {
-                                            if sign_idx.is_some() {
-                                                is_int = true;
-                                            } else {
-                                                is_uint = true;
-                                            }
-                                        }
-                                    }
-                                    _ => unreachable!(),
-                                }
-
-                                num_chunks.push(chunk.clone());
-
-                                if idx + 1 < len {
-                                    idx += 1;
-                                    chunk = chunks[idx].clone();
-                                    c = chunk.content;
-                                } else {
-                                    break;
-                                }
-                            }
-                            '1' => {
-                                if !is_binary
-                                    && !is_octal
-                                    && !is_decimal
-                                    && !is_hexa_lower
-                                    && !is_hexa_upper
-                                {
-                                    is_decimal = true;
-                                }
-
-                                if idx == start_idx
-                                    || (radix_idx == Some(start_idx) && idx == start_idx + 1)
-                                    || (!is_int && !is_float)
-                                {
-                                    is_uint = true;
-                                }
-
-                                num_chunks.push(chunk.clone());
-
-                                if idx + 1 < len {
-                                    idx += 1;
-                                    chunk = chunks[idx].clone();
-                                    c = chunk.content;
-                                } else {
-                                    break;
-                                }
-                            }
-                            '2'..='7' => {
-                                if is_binary {
-                                    return Err(Error::Syntax(SyntaxError {
-                                        loc: Some(chunks[idx].loc.clone()),
-                                        desc: "expected a binary number".into(),
-                                    }));
-                                }
-
-                                if !is_octal && !is_decimal && !is_hexa_lower && !is_hexa_upper {
-                                    is_decimal = true;
-                                }
-
-                                if idx == start_idx
-                                    || (radix_idx == Some(start_idx) && idx == start_idx + 1)
-                                    || (!is_int && !is_float)
-                                {
-                                    is_uint = true;
-                                }
-
-                                num_chunks.push(chunk.clone());
-
-                                if idx + 1 < len {
-                                    idx += 1;
-                                    chunk = chunks[idx].clone();
-                                    c = chunk.content;
-                                } else {
-                                    break;
-                                }
-                            }
-                            '8'..='9' => {
-                                if is_binary {
-                                    return Err(Error::Syntax(SyntaxError {
-                                        loc: Some(chunks[idx].loc.clone()),
-                                        desc: "expected a binary number".into(),
-                                    }));
-                                }
-
-                                if is_octal {
-                                    return Err(Error::Syntax(SyntaxError {
-                                        loc: Some(chunks[idx].loc.clone()),
-                                        desc: "expected an octal number".into(),
-                                    }));
-                                }
-
-                                if !is_decimal {
-                                    is_decimal = true;
-                                }
-
-                                if idx == start_idx
-                                    || (radix_idx == Some(start_idx) && idx == start_idx + 1)
-                                    || (!is_int && !is_float)
-                                {
-                                    is_uint = true;
-                                }
-
-                                num_chunks.push(chunk.clone());
-
-                                if idx + 1 < len {
-                                    idx += 1;
-                                    chunk = chunks[idx].clone();
-                                    c = chunk.content;
-                                } else {
-                                    break;
-                                }
-                            }
-                            'A'..='F' | 'a'..='f' => {
-                                if is_binary {
-                                    return Err(Error::Syntax(SyntaxError {
-                                        loc: Some(chunks[idx].loc.clone()),
-                                        desc: "expected a binary number".into(),
-                                    }));
-                                }
-
-                                if is_octal {
-                                    return Err(Error::Syntax(SyntaxError {
-                                        loc: Some(chunks[idx].loc.clone()),
-                                        desc: "expected an octal number".into(),
-                                    }));
-                                }
-
-                                if is_decimal {
-                                    return Err(Error::Syntax(SyntaxError {
-                                        loc: Some(chunks[idx].loc.clone()),
-                                        desc: "expected a decimal number".into(),
-                                    }));
-                                }
-
-                                match c {
-                                    'A'..='F' => {
-                                        if is_hexa_lower {
-                                            return Err(Error::Syntax(SyntaxError {
-                                                loc: Some(chunks[idx].loc.clone()),
-                                                desc: "expected an uppercase hexadecimal number"
-                                                    .into(),
-                                            }));
-                                        }
-                                    }
-                                    'a'..='f' => {
-                                        if is_hexa_upper {
-                                            return Err(Error::Syntax(SyntaxError {
-                                                loc: Some(chunks[idx].loc.clone()),
-                                                desc: "expected an lowercase hexadecimal number"
-                                                    .into(),
-                                            }));
-                                        }
-                                    }
-                                    _ => unreachable!(),
-                                }
-
-                                if idx == start_idx
-                                    || (radix_idx == Some(start_idx) && idx == start_idx + 1)
-                                    || (!is_int && !is_float)
-                                {
-                                    is_uint = true;
-                                }
-
-                                num_chunks.push(chunk.clone());
-
-                                if idx + 1 < len {
-                                    idx += 1;
-                                    chunk = chunks[idx].clone();
-                                    c = chunk.content;
-                                } else {
-                                    break;
-                                }
-                            }
-                            '.' => {
-                                if point_idx != None && idx != start_idx {
-                                    return Err(Error::Syntax(SyntaxError {
-                                        loc: Some(chunks[idx].loc.clone()),
-                                        desc: "expected a float".into(),
-                                    }));
-                                }
-
-                                if idx == start_idx && idx + 1 == len
-                                    || is_separator_char(chunks[idx + 1].content)
-                                {
-                                    let mut token = Token::new_symbol();
-                                    token.push(chunk.clone());
-                                    tokens.push(token);
-
-                                    is_symbol = true;
-
-                                    break;
-                                }
-
-                                point_idx = Some(idx);
-
-                                is_float = true;
-                                is_uint = false;
-                                is_int = false;
-
-                                num_chunks.push(chunk.clone());
-
-                                if idx + 1 < len {
-                                    idx += 1;
-                                    chunk = chunks[idx].clone();
-                                    c = chunk.content;
-                                } else {
-                                    break;
-                                }
-                            }
-                            w if !is_symbol_char(w) => {
-                                idx -= 1; // can't be tokenized as number
-                                break;
-                            }
-                            _ => {
-                                return Err(Error::Syntax(SyntaxError {
-                                    loc: Some(chunks[start_idx].loc.clone()),
-                                    desc: "expected a number or a symbol".into(),
-                                }));
-                            }
+                        if x == '\n'.to_string() {
+                            break;
                         }
+
+                        if idx + 1 >= len {
+                            break;
+                        }
+
+                        idx += 1;
+
+                        x = chunks[idx].content.clone();
                     }
 
-                    if !is_symbol {
-                        let mut token = if is_uint {
-                            Token::new_uint_literal()
-                        } else if is_int {
-                            Token::new_int_literal()
-                        } else if is_float {
-                            Token::new_float_literal()
-                        } else {
+                    token.push(cchunk.clone());
+                    tokens.push(token);
+
+                    idx += 1;
+                }
+                x if is_keyword(&x) => {
+                    let mut token = Token::new_keyword();
+                    token.push(chunk.clone());
+
+                    idx += 1;
+
+                    tokens.push(token);
+                }
+                x if is_uint_literal(&x) => {
+                    let mut token = Token::new_uint_literal();
+                    token.push(chunk.clone());
+
+                    idx += 1;
+
+                    tokens.push(token);
+                }
+                x if is_int_literal(&x) => {
+                    let mut token = Token::new_int_literal();
+                    token.push(chunk.clone());
+
+                    idx += 1;
+
+                    tokens.push(token);
+                }
+                x if is_float_literal(&x) => {
+                    let mut token = Token::new_float_literal();
+                    token.push(chunk.clone());
+
+                    idx += 1;
+
+                    tokens.push(token);
+                }
+                x if is_single_quote(&x) => {
+                    if idx + 2 > len {
+                        return Err(Error::Syntax(SyntaxError {
+                            loc: Some(chunks[idx].loc.clone()),
+                            desc: "expected a char".into(),
+                        }));
+                    }
+
+                    let mut schunk = chunk;
+                    let mut rem_len = 2;
+
+                    while rem_len > 0 {
+                        idx += 1;
+
+                        let c = chunks[idx].content.clone();
+                        if c.len() != 1 {
                             return Err(Error::Syntax(SyntaxError {
-                                loc: Some(chunks[start_idx].loc.clone()),
-                                desc: "expected a number".into(),
+                                loc: Some(chunks[idx].loc.clone()),
+                                desc: "expected a char".into(),
                             }));
-                        };
-
-                        for chunk in num_chunks.iter() {
-                            token.push(chunk.clone());
                         }
 
-                        tokens.push(token);
+                        if is_escape_char(&c)
+                            && idx + 2 < len
+                            && (is_single_quote(&chunks[idx + 1].content)
+                                || is_escape_char(&chunks[idx + 1].content))
+                        {
+                            continue;
+                        }
+
+                        schunk.content.push_str(&c);
+
+                        rem_len -= 1;
                     }
 
-                    idx += 1;
-                }
-                SINGLE_QUOTE => {
+                    if !schunk.content.ends_with(SINGLE_QUOTE) {
+                        return Err(Error::Syntax(SyntaxError {
+                            loc: Some(chunks[idx].loc.clone()),
+                            desc: "expected a char".into(),
+                        }));
+                    }
+
                     let mut token = Token::new_char_literal();
+                    token.push(schunk);
 
-                    if idx + 2 >= len {
-                        return Err(Error::Syntax(SyntaxError {
-                            loc: Some(chunks[idx].loc.clone()),
-                            desc: "expected a char".into(),
-                        }));
-                    }
+                    tokens.push(token);
 
                     idx += 1;
-
-                    chunk = chunks[idx].clone();
-
-                    if chunk.content == '\\'
-                        && idx + 1 < len
-                        && (chunks[idx + 1].content == SINGLE_QUOTE
-                            || chunks[idx + 1].content == '\\')
-                    {
-                        idx += 1;
-                        chunk = chunks[idx].clone();
-                    }
-
-                    token.push(chunk);
-
-                    if chunks[idx + 1].content == SINGLE_QUOTE {
-                        tokens.push(token);
-
-                        idx += 2;
-                    } else {
-                        return Err(Error::Syntax(SyntaxError {
-                            loc: Some(chunks[idx].loc.clone()),
-                            desc: "expected a char".into(),
-                        }));
-                    }
                 }
-                DOUBLE_QUOTE => {
-                    let mut token = Token::new_string_literal();
+                mut x if is_double_quote(&x) => {
+                    let mut schunk = chunk;
 
-                    let mut is_string = false;
-
-                    let start_idx = idx;
-
-                    idx += 1;
-
-                    while idx < len && !is_string {
-                        chunk = chunks[idx].clone();
-                        c = chunk.content;
-
-                        match c {
-                            '\\' => {
-                                if idx + 1 < len {
-                                    idx += 1;
-                                    c = chunks[idx].content;
-                                    if c == '\\' || c == DOUBLE_QUOTE {
-                                        chunk = chunks[idx].clone();
-                                        token.push(chunk.clone());
-                                        idx += 1;
-                                    }
-                                } else {
-                                    return Err(Error::Syntax(SyntaxError {
-                                        loc: Some(chunks[start_idx].loc.clone()),
-                                        desc: "expected a string".into(),
-                                    }));
-                                }
-                            }
-                            DOUBLE_QUOTE => {
-                                is_string = true;
-                                break;
-                            }
-                            _ => {
-                                token.push(chunk.clone());
-                                idx += 1;
-                            }
-                        }
-                    }
-
-                    if is_string {
-                        tokens.push(token);
-
-                        idx += 1;
-                    } else {
+                    if idx + 1 >= len {
                         return Err(Error::Syntax(SyntaxError {
-                            loc: Some(chunks[start_idx].loc.clone()),
+                            loc: Some(chunks[idx].loc.clone()),
                             desc: "expected a string".into(),
                         }));
                     }
-                }
-                mut c if is_symbol_start_char(c) => {
-                    let mut token = Token::new_symbol();
-                    token.push(chunk.clone());
-
-                    let only_punctuation = is_symbol_punctuation(c);
-                    let max_len = if only_punctuation { 3 } else { len };
 
                     idx += 1;
 
-                    while idx < len && idx < max_len {
-                        c = chunks[idx].content;
+                    while idx < len {
+                        x = chunks[idx].content.clone();
+                        schunk.content.push_str(&x);
 
-                        if is_symbol_char(c) {
-                            if only_punctuation && !is_symbol_punctuation(c) {
-                                return Err(Error::Syntax(SyntaxError {
-                                    loc: Some(chunks[idx].loc.clone()),
-                                    desc: "expected a symbol with only punctuation".into(),
-                                }));
-                            } else if !only_punctuation && !is_symbol_char_no_punctuation(c) {
-                                return Err(Error::Syntax(SyntaxError {
-                                    loc: Some(chunks[idx].loc.clone()),
-                                    desc: "expected a symbol without punctuation".into(),
-                                }));
-                            }
-
-                            token.push(chunks[idx].clone());
-
+                        if is_escape_char(&x)
+                            && idx + 2 < len
+                            && (is_double_quote(&chunks[idx + 1].content)
+                                || is_escape_char(&chunks[idx + 1].content))
+                        {
                             idx += 1;
-                        } else {
+                            x = chunks[idx].content.clone();
+                            schunk.content.push_str(&x);
+                            idx += 1;
+                            continue;
+                        }
+
+                        if is_double_quote(&x) {
                             break;
                         }
+
+                        idx += 1;
                     }
 
-                    if max_len == 3 && idx < len && is_symbol_char(chunks[idx].content) {
-                        return Err(Error::Syntax(SyntaxError {
-                            loc: Some(chunks[idx].loc.clone()),
-                            desc: "expected a symbol with only punctuation and maximum lenght 3"
-                                .into(),
-                        }));
-                    }
+                    let mut token = Token::new_string_literal();
+                    token.push(schunk.clone());
+                    tokens.push(token);
 
-                    tokens.push(token.clone());
+                    idx += 1;
                 }
-                FORM_START => {
+                mut x if is_form_start(&x) => {
                     forms_count += 1;
                     open_form_idxs.push(idx);
                     let mut is_empty = false;
 
-                    if idx + 1 < len && chunks[idx + 1].content == FORM_END {
+                    if idx + 1 < len && is_form_end(&chunks[idx + 1].content) {
                         is_empty = true;
                     }
 
@@ -702,23 +232,29 @@ impl Tokens {
                         Token::new_form_start()
                     };
 
-                    token.push(chunk.clone());
-
                     if is_empty {
+                        let mut fchunk = chunk;
+
                         idx += 1;
 
                         forms_count -= 1;
                         open_form_idxs.pop();
                         close_form_idxs.push(idx);
 
-                        token.push(chunks[idx].clone());
+                        x = chunks[idx].content.clone();
+                        fchunk.content.push_str(&x);
+
+                        token.push(fchunk);
+                        tokens.push(token);
+
+                        idx += 1;
+                    } else {
+                        token.push(chunk.clone());
+                        tokens.push(token);
+                        idx += 1;
                     }
-
-                    tokens.push(token);
-
-                    idx += 1;
                 }
-                FORM_END => {
+                x if is_form_end(&x) => {
                     forms_count -= 1;
 
                     if forms_count < 0 {
@@ -738,7 +274,23 @@ impl Tokens {
 
                     idx += 1;
                 }
-                _ => idx += 1,
+                x if is_symbol(&x) => {
+                    let mut token = Token::new_symbol();
+                    token.push(chunk.clone());
+
+                    tokens.push(token);
+
+                    idx += 1;
+                }
+                x if is_whitespace(&x) => {
+                    idx += 1;
+                }
+                _ => {
+                    return Err(Error::Syntax(SyntaxError {
+                        loc: Some(chunks[idx].loc.clone()),
+                        desc: "unrecognized syntax".into(),
+                    }));
+                }
             }
         }
 
@@ -752,10 +304,8 @@ impl Tokens {
                 )
             };
 
-            let err_form_chunk = chunks[err_idx].clone();
-
             return Err(Error::Syntax(SyntaxError {
-                loc: Some(err_form_chunk.loc),
+                loc: Some(chunks[err_idx].loc.clone()),
                 desc,
             }));
         }
@@ -918,7 +468,7 @@ mod tests {
         use super::Tokens;
         use crate::token::TokenKind;
 
-        let s = "'\\\\'";
+        let s = "'\\'";
 
         let tokens = Tokens::from_str(s).unwrap();
 
@@ -934,7 +484,7 @@ mod tests {
         use super::Tokens;
         use crate::token::TokenKind;
 
-        let s = "\"\\\\\""; // "\"
+        let s = "\"\\\"";
 
         let tokens = Tokens::from_str(s).unwrap();
 
@@ -1044,7 +594,10 @@ mod tests {
         assert_eq!(tokens[2].kind, TokenKind::Keyword);
         assert_eq!(tokens[3].kind, TokenKind::Symbol);
         assert_eq!(tokens[13].kind, TokenKind::CharLiteral);
-        assert_eq!(tokens[13].chunks.as_ref().unwrap()[0].content, '\'');
+        assert_eq!(
+            tokens[13].chunks.as_ref().unwrap()[0].content,
+            "'''".to_string()
+        );
         assert_eq!(tokens[14].kind, TokenKind::StringLiteral);
     }
 }

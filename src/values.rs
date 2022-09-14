@@ -223,7 +223,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Char));
-        assert_eq!(values[0].content, Some(PrimValue::new_char('\'')));
+        assert_eq!(values[0].content, Some(PrimValue::new_char("'")));
     }
 
     #[test]
@@ -238,6 +238,6 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::String));
-        assert_eq!(values[0].content, Some(PrimValue::new_string("\"")));
+        assert_eq!(values[0].content, Some(PrimValue::new_string("\\\"")));
     }
 }

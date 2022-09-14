@@ -36,8 +36,8 @@ impl PrimValue {
         PrimValue::Float(s.to_string())
     }
 
-    pub fn new_char(c: char) -> Self {
-        PrimValue::Char(c.to_string())
+    pub fn new_char(s: &str) -> Self {
+        PrimValue::Char(s.to_string())
     }
 
     pub fn new_string(s: &str) -> Self {
@@ -84,13 +84,15 @@ impl Value {
             }));
         }
 
-        let c = tokens[0].chunks.as_ref().unwrap()[0].content;
+        let mut content = tokens[0].chunks.as_ref().unwrap()[0].content.clone();
+        content.remove(0);
+        content.remove(content.len() - 1);
 
         let mut value = Value::default();
 
         value.tokens = tokens;
         value.typing = Some(Type::Char);
-        value.content = Some(PrimValue::new_char(c));
+        value.content = Some(PrimValue::new_char(&content));
 
         Ok(value)
     }
@@ -103,20 +105,13 @@ impl Value {
             }));
         }
 
-        let s: String = tokens[0].chunks.as_ref().unwrap().clone().into_iter().fold(
-            "".into(),
-            |mut acc, chunk| {
-                acc.push(chunk.content);
-
-                acc
-            },
-        );
+        let content = tokens[0].chunks.as_ref().unwrap()[0].content.clone();
 
         let mut value = Value::default();
 
         value.tokens = tokens;
         value.typing = Some(Type::UInt);
-        value.content = Some(PrimValue::new_uint(&s));
+        value.content = Some(PrimValue::new_uint(&content));
 
         Ok(value)
     }
@@ -129,20 +124,13 @@ impl Value {
             }));
         }
 
-        let s: String = tokens[0].chunks.as_ref().unwrap().clone().into_iter().fold(
-            "".into(),
-            |mut acc, chunk| {
-                acc.push(chunk.content);
-
-                acc
-            },
-        );
+        let content = tokens[0].chunks.as_ref().unwrap()[0].content.clone();
 
         let mut value = Value::default();
 
         value.tokens = tokens;
         value.typing = Some(Type::Int);
-        value.content = Some(PrimValue::new_int(&s));
+        value.content = Some(PrimValue::new_int(&content));
 
         Ok(value)
     }
@@ -155,20 +143,13 @@ impl Value {
             }));
         }
 
-        let s: String = tokens[0].chunks.as_ref().unwrap().clone().into_iter().fold(
-            "".into(),
-            |mut acc, chunk| {
-                acc.push(chunk.content);
-
-                acc
-            },
-        );
+        let content = tokens[0].chunks.as_ref().unwrap()[0].content.clone();
 
         let mut value = Value::default();
 
         value.tokens = tokens;
         value.typing = Some(Type::Float);
-        value.content = Some(PrimValue::new_float(&s));
+        value.content = Some(PrimValue::new_float(&content));
 
         Ok(value)
     }
@@ -181,20 +162,15 @@ impl Value {
             }));
         }
 
-        let s: String = tokens[0].chunks.as_ref().unwrap().clone().into_iter().fold(
-            "".into(),
-            |mut acc, chunk| {
-                acc.push(chunk.content);
-
-                acc
-            },
-        );
+        let mut content = tokens[0].chunks.as_ref().unwrap()[0].content.clone();
+        content.remove(0);
+        content.remove(content.len() - 1);
 
         let mut value = Value::default();
 
         value.tokens = tokens;
         value.typing = Some(Type::String);
-        value.content = Some(PrimValue::new_string(&s));
+        value.content = Some(PrimValue::new_string(&content));
 
         Ok(value)
     }

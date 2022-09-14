@@ -1,5 +1,5 @@
-use crate::chunk::Chunk;
-use crate::chunks::Chunks;
+use crate::chunk::StringChunk;
+use crate::chunks::StringChunks;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum TokenKind {
@@ -26,7 +26,7 @@ impl Default for TokenKind {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Token {
     pub kind: TokenKind,
-    pub chunks: Option<Chunks>,
+    pub chunks: Option<StringChunks>,
 }
 
 impl Token {
@@ -118,7 +118,7 @@ impl Token {
         }
     }
 
-    pub fn push(&mut self, chunk: Chunk) {
+    pub fn push(&mut self, chunk: StringChunk) {
         let mut chunks = self.chunks.clone().unwrap_or_default();
         chunks.push(chunk);
         self.chunks.replace(chunks);
