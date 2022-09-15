@@ -24,10 +24,6 @@ impl Tokens {
         Tokens::default()
     }
 
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        Self::from_string(fs::read_to_string(path)?)
-    }
-
     pub fn len(&self) -> usize {
         self.0.len()
     }
@@ -323,6 +319,10 @@ impl Tokens {
 
     pub fn from_string(s: String) -> Result<Self> {
         Self::from_str(&s)
+    }
+
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
+        Self::from_string(fs::read_to_string(path)?)
     }
 }
 
