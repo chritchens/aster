@@ -1,5 +1,6 @@
 use crate::error::{Error, ParsingError};
 use crate::result::Result;
+use crate::token::Token;
 use crate::token::TokenKind;
 use crate::tokens::Tokens;
 use crate::value::Value;
@@ -36,6 +37,8 @@ impl Values {
             .collect();
 
         let mut values = Values::new();
+        let mut form: Vec<Token> = vec![];
+        let mut form_count = 0;
 
         for token in tokens.into_iter() {
             match token.kind {
@@ -52,28 +55,75 @@ impl Values {
                     }));
                 }
                 TokenKind::EmptyLiteral => {
-                    let value = Value::new_empty(vec![token])?;
-                    values.push(value);
+                    if form_count != 0 {
+                        form.push(token);
+                    } else {
+                        let value = Value::new_empty(token)?;
+                        values.push(value);
+                    }
                 }
                 TokenKind::UIntLiteral => {
-                    let value = Value::new_uint(vec![token])?;
-                    values.push(value);
+                    if form_count != 0 {
+                        form.push(token);
+                    } else {
+                        let value = Value::new_uint(token)?;
+                        values.push(value);
+                    }
                 }
                 TokenKind::IntLiteral => {
-                    let value = Value::new_int(vec![token])?;
-                    values.push(value);
+                    if form_count != 0 {
+                        form.push(token);
+                    } else {
+                        let value = Value::new_int(token)?;
+                        values.push(value);
+                    }
                 }
                 TokenKind::FloatLiteral => {
-                    let value = Value::new_float(vec![token])?;
-                    values.push(value);
+                    if form_count != 0 {
+                        form.push(token);
+                    } else {
+                        let value = Value::new_float(token)?;
+                        values.push(value);
+                    }
                 }
                 TokenKind::CharLiteral => {
-                    let value = Value::new_char(vec![token])?;
-                    values.push(value);
+                    if form_count != 0 {
+                        form.push(token);
+                    } else {
+                        let value = Value::new_char(token)?;
+                        values.push(value);
+                    }
                 }
                 TokenKind::StringLiteral => {
-                    let value = Value::new_string(vec![token])?;
-                    values.push(value);
+                    if form_count != 0 {
+                        form.push(token);
+                    } else {
+                        let value = Value::new_string(token)?;
+                        values.push(value);
+                    }
+                }
+                TokenKind::ValueSymbol | TokenKind::TypeSymbol => {
+                    if form_count != 0 {
+                        form.push(token);
+                    } else {
+                        let value = Value::new_symbol(token)?;
+                        values.push(value);
+                    }
+                }
+                TokenKind::FormStart => {
+                    form_count += 1;
+                    form.push(token);
+                }
+                TokenKind::FormEnd => {
+                    form_count -= 1;
+                    form.push(token);
+
+                    if form_count == 0 {
+                        let value = Value::new_fun(form)?;
+                        values.push(value);
+
+                        form = Vec::new();
+                    }
                 }
                 _ => values.push(Value::new()),
             }
@@ -163,7 +213,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Empty));
-        assert_eq!(values[0].content, Some(PrimValue::Empty));
+        assert_eq!(values[0].value, Some(PrimValue::Empty));
     }
 
     #[test]
@@ -178,7 +228,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::UInt));
-        assert_eq!(values[0].content, Some(PrimValue::new_uint(s)));
+        assert_eq!(values[0].value, Some(PrimValue::new_uint(s)));
     }
 
     #[test]
@@ -193,7 +243,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Int));
-        assert_eq!(values[0].content, Some(PrimValue::new_int(s)));
+        assert_eq!(values[0].value, Some(PrimValue::new_int(s)));
     }
 
     #[test]
@@ -208,7 +258,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Float));
-        assert_eq!(values[0].content, Some(PrimValue::new_float(s)));
+        assert_eq!(values[0].value, Some(PrimValue::new_float(s)));
     }
 
     #[test]
@@ -223,7 +273,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Char));
-        assert_eq!(values[0].content, Some(PrimValue::new_char("'")));
+        assert_eq!(values[0].value, Some(PrimValue::new_char("'")));
     }
 
     #[test]
@@ -238,6 +288,53 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::String));
-        assert_eq!(values[0].content, Some(PrimValue::new_string("\\\"")));
+        assert_eq!(values[0].value, Some(PrimValue::new_string("\\\"")));
+    }
+
+    #[test]
+    fn symbol_value() {
+        use super::Values;
+        use crate::typing::Type;
+
+        let mut s = "Int";
+
+        let mut values = Values::from_str(s).unwrap();
+
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0].typing, Some(Type::Type));
+
+        s = "square";
+
+        values = Values::from_str(s).unwrap();
+
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0].typing, Some(Type::Unknown));
+    }
+
+    #[test]
+    fn fun_value() {
+        use super::Values;
+        use crate::typing::Type;
+
+        let s = "(+ 1 (sum (square 3) 4))";
+
+        let values = Values::from_str(s).unwrap();
+
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0].name, Some("+".into()));
+        assert_eq!(
+            values[0].typing,
+            Some(Type::Fun(vec![
+                Type::Unknown,
+                Type::UInt,
+                Type::Fun(vec![
+                    Type::Unknown,
+                    Type::Fun(vec![Type::Unknown, Type::UInt]),
+                    Type::UInt
+                ])
+            ]))
+        );
+        assert_eq!(values[0].value, None);
+        assert_eq!(values[0].values.len(), 3);
     }
 }

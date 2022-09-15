@@ -52,10 +52,35 @@ impl fmt::Display for ParsingError {
 
 impl error::Error for ParsingError {}
 
+#[derive(Debug, Eq, PartialEq)]
+pub struct SemanticError {
+    pub loc: Option<Loc>,
+    pub desc: String,
+}
+
+impl fmt::Display for SemanticError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(loc) = self.loc.as_ref() {
+            let file = loc.file.clone().unwrap_or_else(|| "".into());
+
+            write!(
+                f,
+                "{} at position {} of line {} of file {}",
+                self.desc, loc.pos, loc.line, file
+            )
+        } else {
+            write!(f, "{}", self.desc)
+        }
+    }
+}
+
+impl error::Error for SemanticError {}
+
 #[derive(Debug)]
 pub enum Error {
     Syntax(SyntaxError),
     Parsing(ParsingError),
+    Semantic(SemanticError),
     IO(io::Error),
 }
 
@@ -64,6 +89,7 @@ impl fmt::Display for Error {
         match self {
             Self::Syntax(err) => err.fmt(f),
             Self::Parsing(err) => err.fmt(f),
+            Self::Semantic(err) => err.fmt(f),
             Self::IO(err) => err.fmt(f),
         }
     }
@@ -74,6 +100,7 @@ impl error::Error for Error {
         match self {
             Self::Syntax(err) => err.source(),
             Self::Parsing(err) => err.source(),
+            Self::Semantic(err) => err.source(),
             Self::IO(err) => err.source(),
         }
     }

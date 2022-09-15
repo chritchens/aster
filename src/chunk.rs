@@ -56,4 +56,12 @@ impl StringChunk {
     pub fn is_empty(&self) -> bool {
         self.content.is_empty()
     }
+
+    pub fn to_str(&self) -> &str {
+        self.content.as_str()
+    }
+
+    pub fn to_string(&self) -> String {
+        self.content.clone()
+    }
 }
