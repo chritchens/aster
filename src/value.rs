@@ -50,8 +50,8 @@ pub struct Value {
     pub token: Token,
     pub name: Option<String>,
     pub value: Option<PrimValue>,
+    pub children: Vec<Value>,
     pub typing: Option<Type>,
-    pub values: Vec<Value>,
 }
 
 impl Value {
@@ -296,7 +296,7 @@ impl Value {
                     }
 
                     let child_value = Value::new_app(child_tokens)?;
-                    value.values.push(child_value.clone());
+                    value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
@@ -305,7 +305,7 @@ impl Value {
                 TokenKind::FormEnd => break,
                 TokenKind::EmptyLiteral => {
                     let child_value = Value::new_empty(token.clone())?;
-                    value.values.push(child_value.clone());
+                    value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
@@ -315,7 +315,7 @@ impl Value {
                 }
                 TokenKind::Keyword => {
                     let child_value = Value::new_keyword(token.clone())?;
-                    value.values.push(child_value.clone());
+                    value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
@@ -325,7 +325,7 @@ impl Value {
                 }
                 TokenKind::UIntLiteral => {
                     let child_value = Value::new_uint(token.clone())?;
-                    value.values.push(child_value.clone());
+                    value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
@@ -335,7 +335,7 @@ impl Value {
                 }
                 TokenKind::IntLiteral => {
                     let child_value = Value::new_int(token.clone())?;
-                    value.values.push(child_value.clone());
+                    value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
@@ -345,7 +345,7 @@ impl Value {
                 }
                 TokenKind::FloatLiteral => {
                     let child_value = Value::new_float(token.clone())?;
-                    value.values.push(child_value.clone());
+                    value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
@@ -355,7 +355,7 @@ impl Value {
                 }
                 TokenKind::CharLiteral => {
                     let child_value = Value::new_char(token.clone())?;
-                    value.values.push(child_value.clone());
+                    value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
@@ -365,7 +365,7 @@ impl Value {
                 }
                 TokenKind::StringLiteral => {
                     let child_value = Value::new_string(token.clone())?;
-                    value.values.push(child_value.clone());
+                    value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
@@ -375,7 +375,7 @@ impl Value {
                 }
                 TokenKind::ValueSymbol | TokenKind::TypeSymbol => {
                     let child_value = Value::new_symbol(token.clone())?;
-                    value.values.push(child_value.clone());
+                    value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;

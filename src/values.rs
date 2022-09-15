@@ -362,7 +362,7 @@ mod tests {
             ]))
         );
         assert_eq!(values[0].value, None);
-        assert_eq!(values[0].values.len(), 3);
+        assert_eq!(values[0].children.len(), 3);
     }
 
     #[test]
