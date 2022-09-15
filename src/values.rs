@@ -5,8 +5,10 @@ use crate::token::TokenKind;
 use crate::tokens::Tokens;
 use crate::value::Value;
 use std::convert;
+use std::fs;
 use std::iter;
 use std::ops;
+use std::path::Path;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Values(Vec<Value>);
@@ -59,6 +61,14 @@ impl Values {
                         form.push(token);
                     } else {
                         let value = Value::new_empty(token)?;
+                        values.push(value);
+                    }
+                }
+                TokenKind::Keyword => {
+                    if form_count != 0 {
+                        form.push(token);
+                    } else {
+                        let value = Value::new_keyword(token)?;
                         values.push(value);
                     }
                 }
@@ -125,7 +135,6 @@ impl Values {
                         form = Vec::new();
                     }
                 }
-                _ => values.push(Value::new()),
             }
         }
 
@@ -134,6 +143,10 @@ impl Values {
 
     pub fn from_string(s: String) -> Result<Self> {
         Self::from_str(&s)
+    }
+
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
+        Self::from_string(fs::read_to_string(path)?)
     }
 }
 
@@ -214,6 +227,20 @@ mod tests {
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Empty));
         assert_eq!(values[0].value, Some(PrimValue::Empty));
+    }
+
+    #[test]
+    fn keyword_value() {
+        use super::Values;
+        use crate::typing::Type;
+
+        let s = "defsig";
+
+        let values = Values::from_str(s).unwrap();
+
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0].name, Some(s.into()));
+        assert_eq!(values[0].typing, Some(Type::Unknown));
     }
 
     #[test]
@@ -336,5 +363,25 @@ mod tests {
         );
         assert_eq!(values[0].value, None);
         assert_eq!(values[0].values.len(), 3);
+    }
+
+    #[test]
+    fn values_from_file() {
+        use super::Values;
+        use crate::typing::Type;
+        use std::path::Path;
+
+        let path = Path::new("./examples/sum.sp");
+
+        let values = Values::from_file(path).unwrap();
+
+        assert_eq!(values.len(), 3);
+        assert_eq!(
+            values[2].typing,
+            Some(Type::App(vec![
+                Type::Unknown,
+                Type::App(vec![Type::Unknown, Type::UInt, Type::UInt])
+            ]))
+        );
     }
 }

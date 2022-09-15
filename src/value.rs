@@ -76,6 +76,25 @@ impl Value {
         Ok(value)
     }
 
+    pub fn new_keyword(token: Token) -> Result<Self> {
+        if token.kind != TokenKind::Keyword {
+            return Err(Error::Parsing(ParsingError {
+                loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
+                desc: "expected a keyword".into(),
+            }));
+        }
+
+        let name = token.chunks.as_ref().unwrap()[0].to_string();
+
+        let mut value = Value::default();
+
+        value.token = token;
+        value.name = Some(name);
+        value.typing = Some(Type::Unknown);
+
+        Ok(value)
+    }
+
     pub fn new_char(token: Token) -> Result<Self> {
         if token.kind != TokenKind::CharLiteral {
             return Err(Error::Parsing(ParsingError {
@@ -217,10 +236,10 @@ impl Value {
             }));
         }
 
-        if tokens[1].kind != TokenKind::ValueSymbol {
+        if tokens[1].kind != TokenKind::ValueSymbol && tokens[1].kind != TokenKind::Keyword {
             return Err(Error::Parsing(ParsingError {
                 loc: Some(tokens[0].chunks.as_ref().unwrap()[0].loc.clone()),
-                desc: "expected a function name".into(),
+                desc: "expected the function name to be a symbol or keyword".into(),
             }));
         }
 
@@ -286,6 +305,16 @@ impl Value {
                 TokenKind::FormEnd => break,
                 TokenKind::EmptyLiteral => {
                     let child_value = Value::new_empty(token.clone())?;
+                    value.values.push(child_value.clone());
+
+                    let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
+                    typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
+                    value.typing = Some(typing);
+
+                    idx += 1;
+                }
+                TokenKind::Keyword => {
+                    let child_value = Value::new_keyword(token.clone())?;
                     value.values.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
