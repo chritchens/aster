@@ -206,7 +206,7 @@ impl Value {
         Ok(value)
     }
 
-    pub fn new_fun(tokens: Vec<Token>) -> Result<Self> {
+    pub fn new_app(tokens: Vec<Token>) -> Result<Self> {
         if tokens.len() < 3
             || tokens[0].kind != TokenKind::FormStart
             || tokens.last().unwrap().kind != TokenKind::FormEnd
@@ -276,10 +276,10 @@ impl Value {
                         }));
                     }
 
-                    let child_value = Value::new_fun(child_tokens)?;
+                    let child_value = Value::new_app(child_tokens)?;
                     value.values.push(child_value.clone());
 
-                    let mut typing = value.typing.unwrap_or_else(|| Type::Fun(vec![]));
+                    let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
                     value.typing = Some(typing);
                 }
@@ -288,7 +288,7 @@ impl Value {
                     let child_value = Value::new_empty(token.clone())?;
                     value.values.push(child_value.clone());
 
-                    let mut typing = value.typing.unwrap_or_else(|| Type::Fun(vec![]));
+                    let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
                     value.typing = Some(typing);
 
@@ -298,7 +298,7 @@ impl Value {
                     let child_value = Value::new_uint(token.clone())?;
                     value.values.push(child_value.clone());
 
-                    let mut typing = value.typing.unwrap_or_else(|| Type::Fun(vec![]));
+                    let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
                     value.typing = Some(typing);
 
@@ -308,7 +308,7 @@ impl Value {
                     let child_value = Value::new_int(token.clone())?;
                     value.values.push(child_value.clone());
 
-                    let mut typing = value.typing.unwrap_or_else(|| Type::Fun(vec![]));
+                    let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
                     value.typing = Some(typing);
 
@@ -318,7 +318,7 @@ impl Value {
                     let child_value = Value::new_float(token.clone())?;
                     value.values.push(child_value.clone());
 
-                    let mut typing = value.typing.unwrap_or_else(|| Type::Fun(vec![]));
+                    let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
                     value.typing = Some(typing);
 
@@ -328,7 +328,7 @@ impl Value {
                     let child_value = Value::new_char(token.clone())?;
                     value.values.push(child_value.clone());
 
-                    let mut typing = value.typing.unwrap_or_else(|| Type::Fun(vec![]));
+                    let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
                     value.typing = Some(typing);
 
@@ -338,7 +338,7 @@ impl Value {
                     let child_value = Value::new_string(token.clone())?;
                     value.values.push(child_value.clone());
 
-                    let mut typing = value.typing.unwrap_or_else(|| Type::Fun(vec![]));
+                    let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
                     value.typing = Some(typing);
 
@@ -348,7 +348,7 @@ impl Value {
                     let child_value = Value::new_symbol(token.clone())?;
                     value.values.push(child_value.clone());
 
-                    let mut typing = value.typing.unwrap_or_else(|| Type::Fun(vec![]));
+                    let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
                     value.typing = Some(typing);
 

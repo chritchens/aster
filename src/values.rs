@@ -119,7 +119,7 @@ impl Values {
                     form.push(token);
 
                     if form_count == 0 {
-                        let value = Value::new_fun(form)?;
+                        let value = Value::new_app(form)?;
                         values.push(value);
 
                         form = Vec::new();
@@ -324,12 +324,12 @@ mod tests {
         assert_eq!(values[0].name, Some("+".into()));
         assert_eq!(
             values[0].typing,
-            Some(Type::Fun(vec![
+            Some(Type::App(vec![
                 Type::Unknown,
                 Type::UInt,
-                Type::Fun(vec![
+                Type::App(vec![
                     Type::Unknown,
-                    Type::Fun(vec![Type::Unknown, Type::UInt]),
+                    Type::App(vec![Type::Unknown, Type::UInt]),
                     Type::UInt
                 ])
             ]))

@@ -14,6 +14,7 @@ pub enum Type {
     Sum(Vec<Type>),
     Prod(Vec<Type>),
     Fun(Vec<Type>),
+    App(Vec<Type>),
     Type,
 }
 
@@ -28,9 +29,9 @@ impl Type {
                 v.push(t);
                 Type::Prod(v)
             }
-            Type::Fun(mut v) => {
+            Type::App(mut v) => {
                 v.push(t);
-                Type::Fun(v)
+                Type::App(v)
             }
             _ => {
                 return Err(Error::Semantic(SemanticError {
