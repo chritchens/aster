@@ -240,7 +240,10 @@ impl Value {
             }));
         }
 
-        if tokens[1].kind != TokenKind::ValueSymbol && tokens[1].kind != TokenKind::Keyword {
+        if tokens[1].kind != TokenKind::ValueSymbol
+            && tokens[1].kind != TokenKind::TypeSymbol
+            && tokens[1].kind != TokenKind::Keyword
+        {
             return Err(Error::Parsing(ParsingError {
                 loc: tokens[0].loc(),
                 desc: "expected the function name to be a symbol or keyword".into(),

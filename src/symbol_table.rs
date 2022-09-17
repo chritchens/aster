@@ -178,15 +178,15 @@ mod test {
         use super::SymbolTable;
         use crate::values::Values;
 
-        let s = "(deftype Integer Int)";
+        let s = "(deftype RGB (Prod UInt UInt UInt))";
 
         let values = Values::from_str(s).unwrap();
 
         let st = SymbolTable::from_values(&values).unwrap();
 
         assert_eq!(st.def_types.len(), 1);
-        assert!(st.def_types.contains("Integer"));
+        assert!(st.def_types.contains("RGB"));
         assert_eq!(st.types.len(), 1);
-        assert!(st.types.contains_key("Integer"));
+        assert!(st.types.contains_key("RGB"));
     }
 }
