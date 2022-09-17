@@ -2,7 +2,7 @@ use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum Type {
     Unknown,
     Builtin,

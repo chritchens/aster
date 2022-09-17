@@ -134,6 +134,18 @@ impl Token {
         }
     }
 
+    pub fn file(&self) -> Option<String> {
+        if let Some(ref chunks) = self.chunks {
+            if !chunks.files.is_empty() {
+                Some(chunks.files[0].clone())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
     pub fn push(&mut self, chunk: StringChunk) {
         let mut chunks = self.chunks.clone().unwrap_or_default();
         chunks.push(chunk);
