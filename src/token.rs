@@ -1,5 +1,6 @@
 use crate::chunk::StringChunk;
 use crate::chunks::StringChunks;
+use crate::loc::Loc;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum TokenKind {
@@ -138,6 +139,18 @@ impl Token {
         if let Some(ref chunks) = self.chunks {
             if !chunks.files.is_empty() {
                 Some(chunks.files[0].clone())
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        if let Some(ref chunks) = self.chunks {
+            if !chunks.content.is_empty() {
+                Some(chunks.content[0].loc.clone())
             } else {
                 None
             }

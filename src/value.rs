@@ -62,7 +62,7 @@ impl Value {
     pub fn new_empty(token: Token) -> Result<Self> {
         if token.kind != TokenKind::EmptyLiteral {
             return Err(Error::Parsing(ParsingError {
-                loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
+                loc: token.loc(),
                 desc: "expected an empty literal".into(),
             }));
         }
@@ -79,7 +79,7 @@ impl Value {
     pub fn new_keyword(token: Token) -> Result<Self> {
         if token.kind != TokenKind::Keyword {
             return Err(Error::Parsing(ParsingError {
-                loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
+                loc: token.loc(),
                 desc: "expected a keyword".into(),
             }));
         }
@@ -98,7 +98,7 @@ impl Value {
     pub fn new_char(token: Token) -> Result<Self> {
         if token.kind != TokenKind::CharLiteral {
             return Err(Error::Parsing(ParsingError {
-                loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
+                loc: token.loc(),
                 desc: "expected a char literal".into(),
             }));
         }
@@ -119,7 +119,7 @@ impl Value {
     pub fn new_uint(token: Token) -> Result<Self> {
         if token.kind != TokenKind::UIntLiteral {
             return Err(Error::Parsing(ParsingError {
-                loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
+                loc: token.loc(),
                 desc: "expected a uint literal".into(),
             }));
         }
@@ -138,7 +138,7 @@ impl Value {
     pub fn new_int(token: Token) -> Result<Self> {
         if token.kind != TokenKind::IntLiteral {
             return Err(Error::Parsing(ParsingError {
-                loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
+                loc: token.loc(),
                 desc: "expected an int literal".into(),
             }));
         }
@@ -157,7 +157,7 @@ impl Value {
     pub fn new_float(token: Token) -> Result<Self> {
         if token.kind != TokenKind::FloatLiteral {
             return Err(Error::Parsing(ParsingError {
-                loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
+                loc: token.loc(),
                 desc: "expected a float literal".into(),
             }));
         }
@@ -176,7 +176,7 @@ impl Value {
     pub fn new_string(token: Token) -> Result<Self> {
         if token.kind != TokenKind::StringLiteral {
             return Err(Error::Parsing(ParsingError {
-                loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
+                loc: token.loc(),
                 desc: "expected a string literal".into(),
             }));
         }
@@ -200,7 +200,7 @@ impl Value {
             && token.kind != TokenKind::PathSymbol
         {
             return Err(Error::Parsing(ParsingError {
-                loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
+                loc: token.loc(),
                 desc: "expected a symbol".into(),
             }));
         }
@@ -208,7 +208,7 @@ impl Value {
         let name = token.chunks.as_ref().unwrap()[0].to_string();
         if name.is_empty() {
             return Err(Error::Parsing(ParsingError {
-                loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
+                loc: token.loc(),
                 desc: "expected a non-empty function name".into(),
             }));
         }
@@ -235,14 +235,14 @@ impl Value {
             || tokens.last().unwrap().kind != TokenKind::FormEnd
         {
             return Err(Error::Parsing(ParsingError {
-                loc: Some(tokens[0].chunks.as_ref().unwrap()[0].loc.clone()),
+                loc: tokens[0].loc(),
                 desc: "expected a form".into(),
             }));
         }
 
         if tokens[1].kind != TokenKind::ValueSymbol && tokens[1].kind != TokenKind::Keyword {
             return Err(Error::Parsing(ParsingError {
-                loc: Some(tokens[0].chunks.as_ref().unwrap()[0].loc.clone()),
+                loc: tokens[0].loc(),
                 desc: "expected the function name to be a symbol or keyword".into(),
             }));
         }
@@ -252,7 +252,7 @@ impl Value {
         let name = head_token.chunks.as_ref().unwrap()[0].to_string();
         if name.is_empty() {
             return Err(Error::Parsing(ParsingError {
-                loc: Some(head_token.chunks.as_ref().unwrap()[0].loc.clone()),
+                loc: head_token.loc(),
                 desc: "expected a non-empty function name".into(),
             }));
         }
@@ -266,7 +266,7 @@ impl Value {
 
         while idx < len {
             let token = tokens[idx].clone();
-            let loc = token.chunks.as_ref().unwrap()[0].loc.clone();
+            let loc = token.loc().unwrap();
 
             match token.kind {
                 TokenKind::FormStart => {
@@ -294,7 +294,7 @@ impl Value {
 
                     if form_count != 0 {
                         return Err(Error::Parsing(ParsingError {
-                            loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
+                            loc: Some(loc),
                             desc: "expected a well-formed form".into(),
                         }));
                     }
@@ -389,7 +389,7 @@ impl Value {
                 }
                 _ => {
                     return Err(Error::Parsing(ParsingError {
-                        loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
+                        loc: Some(loc),
                         desc: "expected a well-formed form".into(),
                     }));
                 }
