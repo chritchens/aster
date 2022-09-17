@@ -44,4 +44,15 @@ impl Type {
 
         Ok(self)
     }
+
+    pub fn is_complete(&self) -> bool {
+        match self {
+            Type::Unknown => false,
+            Type::Sum(inner_types) => inner_types.iter().all(|t| t.is_complete()),
+            Type::Prod(inner_types) => inner_types.iter().all(|t| t.is_complete()),
+            Type::Fun(inner_types) => inner_types.iter().all(|t| t.is_complete()),
+            Type::App(inner_types) => inner_types.iter().all(|t| t.is_complete()),
+            _ => true,
+        }
+    }
 }

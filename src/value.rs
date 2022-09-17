@@ -394,4 +394,8 @@ impl Value {
 
         Ok(value)
     }
+
+    pub fn is_fully_typed(&self) -> bool {
+        self.typing.is_none() || self.typing.as_ref().map(|t| t.is_complete()).unwrap()
+    }
 }

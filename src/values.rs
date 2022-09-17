@@ -141,6 +141,10 @@ impl Values {
         Ok(values)
     }
 
+    pub fn is_fully_typed(&self) -> bool {
+        self.clone().into_iter().all(|value| value.is_fully_typed())
+    }
+
     pub fn from_string(s: String) -> Result<Self> {
         Self::from_str(&s)
     }
@@ -383,5 +387,26 @@ mod tests {
                 Type::App(vec![Type::Unknown, Type::UInt, Type::UInt])
             ]))
         );
+    }
+
+    #[test]
+    fn fully_typed() {
+        use super::Values;
+        use std::path::Path;
+
+        let s = "\"string\"";
+
+        let mut values = Values::from_str(s).unwrap();
+
+        assert!(values.is_fully_typed());
+
+        let path = Path::new("./examples/sum.sp");
+
+        values = Values::from_file(path).unwrap();
+
+        assert!(!values.is_fully_typed());
+        assert!(!values[0].is_fully_typed());
+        assert!(!values[1].is_fully_typed());
+        assert!(!values[2].is_fully_typed());
     }
 }
