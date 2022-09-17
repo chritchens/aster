@@ -4,7 +4,7 @@ use std::convert;
 use std::fmt;
 
 pub const KEYWORDS: [&str; 7] = [
-    "include", "deftype", "defsig", "defvar", "defsum", "defprod", "defun",
+    "include", "deftype", "defsig", "defprim", "defsum", "defprod", "defun",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -16,7 +16,7 @@ pub enum Keyword {
     Include,
     Deftype,
     Defsig,
-    Defvar,
+    Defprim,
     Defsum,
     Defprod,
     Defun,
@@ -28,7 +28,7 @@ impl fmt::Display for Keyword {
             Keyword::Include => write!(f, "include"),
             Keyword::Deftype => write!(f, "deftype"),
             Keyword::Defsig => write!(f, "defsig"),
-            Keyword::Defvar => write!(f, "defvar"),
+            Keyword::Defprim => write!(f, "defprim"),
             Keyword::Defsum => write!(f, "defsum"),
             Keyword::Defprod => write!(f, "defprod"),
             Keyword::Defun => write!(f, "defun"),
@@ -42,7 +42,7 @@ impl Keyword {
             "include" => Ok(Keyword::Include),
             "deftype" => Ok(Keyword::Deftype),
             "defsig" => Ok(Keyword::Defsig),
-            "defvar" => Ok(Keyword::Defvar),
+            "defprim" => Ok(Keyword::Defprim),
             "defsum" => Ok(Keyword::Defsum),
             "defprod" => Ok(Keyword::Defprod),
             "defun" => Ok(Keyword::Defun),

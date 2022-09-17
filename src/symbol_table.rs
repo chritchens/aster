@@ -52,7 +52,7 @@ impl SymbolTable {
                         Keyword::Include => {
                             incl_paths.insert(arg);
                         }
-                        Keyword::Defvar | Keyword::Defsum | Keyword::Defprod | Keyword::Defun => {
+                        Keyword::Defprim | Keyword::Defsum | Keyword::Defprod | Keyword::Defun => {
                             def_values.insert(arg);
                         }
                         Keyword::Deftype | Keyword::Defsig => {
