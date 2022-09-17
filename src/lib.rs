@@ -3,6 +3,7 @@ pub mod chunks;
 pub mod error;
 pub mod loc;
 pub mod result;
+pub mod symbol_table;
 pub mod syntax;
 pub mod token;
 pub mod tokens;
