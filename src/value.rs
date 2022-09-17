@@ -90,7 +90,7 @@ impl Value {
 
         value.token = token;
         value.name = Some(name);
-        value.typing = Some(Type::Unknown);
+        value.typing = Some(Type::Builtin);
 
         Ok(value)
     }

@@ -240,7 +240,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].name, Some(s.into()));
-        assert_eq!(values[0].typing, Some(Type::Unknown));
+        assert_eq!(values[0].typing, Some(Type::Builtin));
     }
 
     #[test]

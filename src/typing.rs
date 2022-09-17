@@ -5,6 +5,7 @@ use crate::result::Result;
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Type {
     Unknown,
+    Builtin,
     Empty,
     UInt,
     Int,
