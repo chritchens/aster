@@ -8,7 +8,7 @@ use crate::syntax::{is_double_quote, is_single_quote};
 use crate::syntax::{is_escape_char, is_whitespace};
 use crate::syntax::{is_float_literal, is_int_literal, is_uint_literal};
 use crate::syntax::{is_form_end, is_form_start};
-use crate::syntax::{is_symbol, is_type_symbol, is_value_symbol};
+use crate::syntax::{is_path_symbol, is_symbol, is_type_symbol, is_value_symbol};
 use crate::token::Token;
 use std::convert;
 use std::fs;
@@ -276,6 +276,8 @@ impl Tokens {
                         Token::new_type_symbol()
                     } else if is_value_symbol(&x) {
                         Token::new_value_symbol()
+                    } else if is_path_symbol(&x) {
+                        Token::new_path_symbol()
                     } else {
                         panic!("expected a symbol");
                     };
@@ -530,6 +532,13 @@ mod tests {
 
         assert_eq!(tokens.len(), 1);
         assert_eq!(tokens[0].kind, TokenKind::TypeSymbol);
+
+        s = "a.b.c";
+
+        tokens = Tokens::from_str(s).unwrap();
+
+        assert_eq!(tokens.len(), 1);
+        assert_eq!(tokens[0].kind, TokenKind::PathSymbol);
     }
 
     #[test]
@@ -607,7 +616,7 @@ mod tests {
         assert_eq!(tokens[0].kind, TokenKind::DocComment);
         assert_eq!(tokens[1].kind, TokenKind::FormStart);
         assert_eq!(tokens[2].kind, TokenKind::Keyword);
-        assert_eq!(tokens[3].kind, TokenKind::ValueSymbol);
+        assert_eq!(tokens[3].kind, TokenKind::PathSymbol);
         assert_eq!(tokens[13].kind, TokenKind::CharLiteral);
         assert_eq!(
             tokens[13].chunks.as_ref().unwrap()[0].content,

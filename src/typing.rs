@@ -12,6 +12,7 @@ pub enum Type {
     Float,
     Char,
     String,
+    Path,
     Sum(Vec<Type>),
     Prod(Vec<Type>),
     Fun(Vec<Type>),

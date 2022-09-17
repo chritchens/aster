@@ -198,6 +198,8 @@ pub const SYMBOL_START_PUNCTUATION: [char; 23] = [
     '_', '`', '|', '~',
 ];
 
+pub const SYMBOL_PATH_SEPARATOR: char = '.';
+
 pub fn is_symbol_punctuation(c: char) -> bool {
     SYMBOL_START_PUNCTUATION.iter().any(|p| p == &c)
 }
@@ -211,7 +213,11 @@ pub fn is_type_symbol_start_char(c: char) -> bool {
 }
 
 pub fn is_value_symbol_start_char(c: char) -> bool {
-    ('a'..='z').any(|l| l == c) || is_symbol_punctuation(c)
+    ('a'..='z').any(|l| l == c) || (is_symbol_punctuation(c) && c != SYMBOL_PATH_SEPARATOR)
+}
+
+pub fn is_path_symbol_start_char(c: char) -> bool {
+    ('a'..='z').any(|l| l == c)
 }
 
 pub fn is_symbol_char(c: char) -> bool {
@@ -225,7 +231,7 @@ pub fn is_symbol_char(c: char) -> bool {
 }
 
 pub fn is_symbol_char_no_punctuation(c: char) -> bool {
-    is_symbol_char(c) && (!is_symbol_punctuation(c) || c == '.')
+    is_symbol_char(c) && !is_symbol_punctuation(c)
 }
 
 pub fn is_symbol(s: &str) -> bool {
@@ -238,6 +244,7 @@ pub fn is_symbol(s: &str) -> bool {
     }
 
     let only_punctuation = s.starts_with(is_symbol_punctuation);
+    let is_path = s.contains(SYMBOL_PATH_SEPARATOR);
 
     if only_punctuation {
         if s.len() > 3 {
@@ -245,19 +252,32 @@ pub fn is_symbol(s: &str) -> bool {
         }
 
         s.chars().all(is_symbol_punctuation)
+    } else if is_path {
+        s.chars()
+            .all(|c| is_path_symbol_start_char(c) || c == SYMBOL_PATH_SEPARATOR)
+            && !s.ends_with(SYMBOL_PATH_SEPARATOR)
     } else {
         s.chars().all(is_symbol_char_no_punctuation)
     }
 }
 
 pub fn is_value_symbol(s: &str) -> bool {
-    is_symbol(s) && is_value_symbol_start_char(s.chars().next().unwrap())
+    is_symbol(s)
+        && is_value_symbol_start_char(s.chars().next().unwrap())
+        && !s.contains(SYMBOL_PATH_SEPARATOR)
 }
 
 pub fn is_type_symbol(s: &str) -> bool {
     is_symbol(s)
         && is_type_symbol_start_char(s.chars().next().unwrap())
         && !s.chars().any(is_symbol_punctuation)
+}
+
+pub fn is_path_symbol(s: &str) -> bool {
+    is_symbol(s)
+        && is_path_symbol_start_char(s.chars().next().unwrap())
+        && s.chars().all(|c| is_path_symbol_start_char(c) || c == '.')
+        && !s.ends_with('.')
 }
 
 pub const FORM_START: char = '(';

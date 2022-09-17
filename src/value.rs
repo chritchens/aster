@@ -195,7 +195,10 @@ impl Value {
     }
 
     pub fn new_symbol(token: Token) -> Result<Self> {
-        if token.kind != TokenKind::ValueSymbol && token.kind != TokenKind::TypeSymbol {
+        if token.kind != TokenKind::ValueSymbol
+            && token.kind != TokenKind::TypeSymbol
+            && token.kind != TokenKind::PathSymbol
+        {
             return Err(Error::Parsing(ParsingError {
                 loc: Some(token.chunks.as_ref().unwrap()[0].loc.clone()),
                 desc: "expected a symbol".into(),
@@ -213,6 +216,7 @@ impl Value {
         let typing = match token.kind {
             TokenKind::ValueSymbol => Type::Unknown,
             TokenKind::TypeSymbol => Type::Type,
+            TokenKind::PathSymbol => Type::Path,
             _ => unreachable!(),
         };
 
@@ -373,7 +377,7 @@ impl Value {
 
                     idx += 1;
                 }
-                TokenKind::ValueSymbol | TokenKind::TypeSymbol => {
+                TokenKind::ValueSymbol | TokenKind::TypeSymbol | TokenKind::PathSymbol => {
                     let child_value = Value::new_symbol(token.clone())?;
                     value.children.push(child_value.clone());
 

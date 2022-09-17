@@ -14,6 +14,7 @@ pub enum TokenKind {
     StringLiteral,
     ValueSymbol,
     TypeSymbol,
+    PathSymbol,
     FormStart,
     FormEnd,
 }
@@ -108,6 +109,13 @@ impl Token {
     pub fn new_type_symbol() -> Self {
         Token {
             kind: TokenKind::TypeSymbol,
+            chunks: None,
+        }
+    }
+
+    pub fn new_path_symbol() -> Self {
+        Token {
+            kind: TokenKind::PathSymbol,
             chunks: None,
         }
     }

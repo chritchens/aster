@@ -112,7 +112,7 @@ impl Values {
                         values.push(value);
                     }
                 }
-                TokenKind::ValueSymbol | TokenKind::TypeSymbol => {
+                TokenKind::ValueSymbol | TokenKind::TypeSymbol | TokenKind::PathSymbol => {
                     if form_count != 0 {
                         form.push(token);
                     } else {
@@ -405,8 +405,8 @@ mod tests {
         values = Values::from_file(path).unwrap();
 
         assert!(!values.is_fully_typed());
-        assert!(!values[0].is_fully_typed());
-        assert!(!values[1].is_fully_typed());
+        assert!(values[0].is_fully_typed());
+        assert!(values[1].is_fully_typed());
         assert!(!values[2].is_fully_typed());
     }
 }
