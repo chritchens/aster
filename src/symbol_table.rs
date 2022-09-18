@@ -131,6 +131,7 @@ impl SymbolTable {
                                 .and_modify(|v| v.push(st_el.clone()))
                                 .or_insert_with(|| vec![st_el]);
                         }
+                        _ => {}
                     }
                 }
             }

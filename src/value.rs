@@ -1,5 +1,6 @@
 use crate::error::{Error, ParsingError};
 use crate::result::Result;
+use crate::syntax::is_type_symbol;
 use crate::token::{Token, TokenKind};
 use crate::typing::Type;
 
@@ -88,9 +89,15 @@ impl Value {
 
         let mut value = Value::default();
 
+        let typing = if is_type_symbol(&name) {
+            Type::Type
+        } else {
+            Type::Builtin
+        };
+
         value.token = token;
         value.name = Some(name);
-        value.typing = Some(Type::Builtin);
+        value.typing = Some(typing);
 
         Ok(value)
     }

@@ -20,6 +20,17 @@ pub enum Keyword {
     Defsum,
     Defprod,
     Defun,
+    Empty,
+    UInt,
+    Int,
+    Float,
+    Char,
+    String,
+    Path,
+    Sum,
+    Prod,
+    Fun,
+    Type,
 }
 
 impl fmt::Display for Keyword {
@@ -32,6 +43,17 @@ impl fmt::Display for Keyword {
             Keyword::Defsum => write!(f, "defsum"),
             Keyword::Defprod => write!(f, "defprod"),
             Keyword::Defun => write!(f, "defun"),
+            Keyword::Empty => write!(f, "Empty"),
+            Keyword::UInt => write!(f, "UInt"),
+            Keyword::Int => write!(f, "Int"),
+            Keyword::Float => write!(f, "Float"),
+            Keyword::Char => write!(f, "Char"),
+            Keyword::String => write!(f, "String"),
+            Keyword::Path => write!(f, "Path"),
+            Keyword::Sum => write!(f, "Sum"),
+            Keyword::Prod => write!(f, "Prod"),
+            Keyword::Fun => write!(f, "Fun"),
+            Keyword::Type => write!(f, "Type"),
         }
     }
 }
@@ -46,6 +68,17 @@ impl Keyword {
             "defsum" => Ok(Keyword::Defsum),
             "defprod" => Ok(Keyword::Defprod),
             "defun" => Ok(Keyword::Defun),
+            "Empty" => Ok(Keyword::Empty),
+            "UInt" => Ok(Keyword::UInt),
+            "Int" => Ok(Keyword::Int),
+            "Float" => Ok(Keyword::Float),
+            "Char" => Ok(Keyword::Char),
+            "String" => Ok(Keyword::String),
+            "Path" => Ok(Keyword::Path),
+            "Sum" => Ok(Keyword::Sum),
+            "Prod" => Ok(Keyword::Prod),
+            "Fun" => Ok(Keyword::Fun),
+            "Type" => Ok(Keyword::Type),
             _ => Err(Error::Syntax(SyntaxError {
                 loc: None,
                 desc: "expected keyword".into(),
