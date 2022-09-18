@@ -526,7 +526,7 @@ mod tests {
         assert_eq!(tokens.len(), 1);
         assert_eq!(tokens[0].kind, TokenKind::ValueSymbol);
 
-        s = "Type";
+        s = "BigInt";
 
         tokens = Tokens::from_str(s).unwrap();
 

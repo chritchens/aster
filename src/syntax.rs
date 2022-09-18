@@ -3,8 +3,9 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 7] = [
-    "include", "deftype", "defsig", "defprim", "defsum", "defprod", "defun",
+pub const KEYWORDS: [&str; 18] = [
+    "include", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "Empty", "UInt",
+    "Int", "Float", "Char", "String", "Path", "Sum", "Prod", "Fun", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {

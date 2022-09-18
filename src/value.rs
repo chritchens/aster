@@ -1,6 +1,5 @@
 use crate::error::{Error, ParsingError};
 use crate::result::Result;
-use crate::syntax::is_type_symbol;
 use crate::token::{Token, TokenKind};
 use crate::typing::Type;
 
@@ -89,7 +88,14 @@ impl Value {
 
         let mut value = Value::default();
 
-        let typing = if is_type_symbol(&name) {
+        let typing = if name == "Empty"
+            || name == "UInt"
+            || name == "Int"
+            || name == "Float"
+            || name == "Char"
+            || name == "String"
+            || name == "Path"
+        {
             Type::Type
         } else {
             Type::Builtin
@@ -222,7 +228,7 @@ impl Value {
 
         let typing = match token.kind {
             TokenKind::ValueSymbol => Type::Unknown,
-            TokenKind::TypeSymbol => Type::Type,
+            TokenKind::TypeSymbol => Type::Unknown, // could be a type constructor
             TokenKind::PathSymbol => Type::Path,
             _ => unreachable!(),
         };
@@ -402,6 +408,23 @@ impl Value {
                         loc: Some(loc),
                         desc: "expected a well-formed form".into(),
                     }));
+                }
+            }
+        }
+
+        if value.token.kind == TokenKind::Keyword && value.name.as_ref().unwrap() == "deftype" {
+            if let Some(Type::App(v)) = value.typing.as_ref() {
+                if let Type::App(v2) = v[2].clone() {
+                    let mut v3 = v2;
+                    v3.remove(0);
+                    v3.push(Type::Type);
+
+                    let constructor_type = Type::Fun(v3);
+
+                    let mut typing_v = v.clone();
+                    typing_v[1] = constructor_type;
+
+                    value.typing = Some(Type::App(typing_v));
                 }
             }
         }
