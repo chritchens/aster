@@ -339,7 +339,7 @@ mod tests {
         values = Values::from_str(s).unwrap();
 
         assert_eq!(values.len(), 1);
-        assert_eq!(values[0].typing, Some(Type::Unknown));
+        assert_eq!(values[0].typing, Some(Type::Unknown(None)));
     }
 
     #[test]
@@ -356,11 +356,11 @@ mod tests {
         assert_eq!(
             values[0].typing,
             Some(Type::App(vec![
-                Type::Unknown,
+                Type::Unknown(None),
                 Type::UInt,
                 Type::App(vec![
-                    Type::Unknown,
-                    Type::App(vec![Type::Unknown, Type::UInt]),
+                    Type::Unknown(None),
+                    Type::App(vec![Type::Unknown(None), Type::UInt]),
                     Type::UInt
                 ])
             ]))
@@ -383,8 +383,8 @@ mod tests {
         assert_eq!(
             values[2].typing,
             Some(Type::App(vec![
-                Type::Unknown,
-                Type::App(vec![Type::Unknown, Type::UInt, Type::UInt])
+                Type::Unknown(None),
+                Type::App(vec![Type::Unknown(None), Type::UInt, Type::UInt])
             ]))
         );
     }

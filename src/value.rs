@@ -227,8 +227,8 @@ impl Value {
         }
 
         let typing = match token.kind {
-            TokenKind::ValueSymbol => Type::Unknown,
-            TokenKind::TypeSymbol => Type::Unknown, // could be a type constructor
+            TokenKind::ValueSymbol => Type::Unknown(None),
+            TokenKind::TypeSymbol => Type::Unknown(Some(name.clone())), // could be a type constructor
             TokenKind::PathSymbol => Type::Path,
             _ => unreachable!(),
         };
