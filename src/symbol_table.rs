@@ -29,11 +29,11 @@ impl STElement {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct SymbolTable {
     pub files: BTreeSet<String>,
-    pub incl_paths: BTreeSet<String>,
+    pub imp_paths: BTreeSet<String>,
     pub def_types: BTreeSet<String>,
     pub def_values: BTreeSet<String>,
 
-    pub includes: BTreeMap<String, Vec<STElement>>,
+    pub imports: BTreeMap<String, Vec<STElement>>,
     pub types: BTreeMap<String, Vec<STElement>>,
     pub sigs: BTreeMap<String, Vec<STElement>>,
     pub prims: BTreeMap<String, Vec<STElement>>,
@@ -61,12 +61,12 @@ impl SymbolTable {
                     let keyword = Keyword::from_str(&value.clone().name.unwrap())?;
 
                     match keyword {
-                        Keyword::Include => {
-                            st.incl_paths.insert(arg.clone());
+                        Keyword::Import => {
+                            st.imp_paths.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
 
-                            st.includes
+                            st.imports
                                 .entry(arg)
                                 .and_modify(|v| v.push(st_el.clone()))
                                 .or_insert_with(|| vec![st_el]);
@@ -148,7 +148,7 @@ mod test {
         use super::SymbolTable;
         use crate::values::Values;
 
-        let s = "(include std.io)";
+        let s = "(import std.io)";
 
         let values = Values::from_str(s).unwrap();
 
@@ -158,20 +158,20 @@ mod test {
     }
 
     #[test]
-    fn symbol_table_includes() {
+    fn symbol_table_imports() {
         use super::SymbolTable;
         use crate::values::Values;
 
-        let s = "(include std.io)";
+        let s = "(import std.io)";
 
         let values = Values::from_str(s).unwrap();
 
         let st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.incl_paths.len(), 1);
-        assert!(st.incl_paths.contains("std.io"));
-        assert_eq!(st.includes.len(), 1);
-        assert!(st.includes.contains_key("std.io"));
+        assert_eq!(st.imp_paths.len(), 1);
+        assert!(st.imp_paths.contains("std.io"));
+        assert_eq!(st.imports.len(), 1);
+        assert!(st.imports.contains_key("std.io"));
     }
 
     #[test]

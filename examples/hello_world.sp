@@ -1,6 +1,6 @@
 #! Hello World example
 
-(include std.io)
-(include std.string)
+(import std.io)
+(import std.string)
 
 (println "Hello World!")
