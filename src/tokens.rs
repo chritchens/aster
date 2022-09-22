@@ -292,6 +292,7 @@ impl Tokens {
                     idx += 1;
                 }
                 _ => {
+                    println!("idx: {}, s: {}", idx, s);
                     return Err(Error::Syntax(SyntaxError {
                         loc: Some(chunks[idx].loc.clone()),
                         desc: "unrecognized syntax".into(),
@@ -608,20 +609,24 @@ mod tests {
 
         let res = Tokens::from_file(path);
 
+        if res.is_err() {
+            res.as_ref().unwrap();
+        }
+
         assert!(res.is_ok());
 
         let tokens = res.unwrap();
 
-        assert_eq!(tokens.len(), 17);
+        assert_eq!(tokens.len(), 21);
         assert_eq!(tokens[0].kind, TokenKind::DocComment);
         assert_eq!(tokens[1].kind, TokenKind::FormStart);
         assert_eq!(tokens[2].kind, TokenKind::Keyword);
         assert_eq!(tokens[3].kind, TokenKind::PathSymbol);
-        assert_eq!(tokens[13].kind, TokenKind::CharLiteral);
+        assert_eq!(tokens[17].kind, TokenKind::CharLiteral);
         assert_eq!(
-            tokens[13].chunks.as_ref().unwrap()[0].content,
+            tokens[17].chunks.as_ref().unwrap()[0].content,
             "'''".to_string()
         );
-        assert_eq!(tokens[14].kind, TokenKind::StringLiteral);
+        assert_eq!(tokens[18].kind, TokenKind::StringLiteral);
     }
 }

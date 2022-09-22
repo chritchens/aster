@@ -1,6 +1,6 @@
 #! Hello World example
 
 (import std.io)
-(import std.string)
+(import std.string (removeAll) string)
 
-(println (removeAll '\'' "Hel'lo World!"))
+(println (string.removeAll '\'' "Hel'lo World!"))

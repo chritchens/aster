@@ -253,17 +253,18 @@ impl Value {
             }));
         }
 
-        if tokens[1].kind != TokenKind::ValueSymbol
-            && tokens[1].kind != TokenKind::TypeSymbol
-            && tokens[1].kind != TokenKind::Keyword
+        let head_token = tokens[1].clone();
+
+        if head_token.kind != TokenKind::ValueSymbol
+            && head_token.kind != TokenKind::TypeSymbol
+            && head_token.kind != TokenKind::PathSymbol
+            && head_token.kind != TokenKind::Keyword
         {
             return Err(Error::Parsing(ParsingError {
-                loc: tokens[0].loc(),
+                loc: head_token.loc(),
                 desc: "expected the function name to be a symbol or keyword".into(),
             }));
         }
-
-        let head_token = tokens[1].clone();
 
         let name = head_token.chunks.as_ref().unwrap()[0].to_string();
         if name.is_empty() {

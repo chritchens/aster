@@ -1,6 +1,6 @@
 #! Sum example
 
-(import std.io)
-(import std.math)
+(import std.io () io)
+(import std.math (sum))
 
-(println (sum 1 2))
+(io.println (sum 1 2))

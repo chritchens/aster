@@ -254,6 +254,10 @@ pub fn is_path_symbol_start_char(c: char) -> bool {
     ('a'..='z').any(|l| l == c)
 }
 
+pub fn is_path_symbol_char(c: char) -> bool {
+    ('A'..='Z').any(|l| l == c) || ('a'..='z').any(|l| l == c)
+}
+
 pub fn is_symbol_char(c: char) -> bool {
     c.is_ascii_alphanumeric()
         || (c != COMMENT_MARK
@@ -287,8 +291,10 @@ pub fn is_symbol(s: &str) -> bool {
 
         s.chars().all(is_symbol_punctuation)
     } else if is_path {
-        s.chars()
-            .all(|c| is_path_symbol_start_char(c) || c == SYMBOL_PATH_SEPARATOR)
+        let mut chars_iter = s.chars();
+
+        is_path_symbol_start_char(chars_iter.next().unwrap())
+            && chars_iter.all(|c| is_path_symbol_char(c) || c == SYMBOL_PATH_SEPARATOR)
             && !s.ends_with(SYMBOL_PATH_SEPARATOR)
     } else {
         s.chars().all(is_symbol_char_no_punctuation)
@@ -310,7 +316,7 @@ pub fn is_type_symbol(s: &str) -> bool {
 pub fn is_path_symbol(s: &str) -> bool {
     is_symbol(s)
         && is_path_symbol_start_char(s.chars().next().unwrap())
-        && s.chars().all(|c| is_path_symbol_start_char(c) || c == '.')
+        && s.chars().all(|c| is_path_symbol_char(c) || c == '.')
         && !s.ends_with('.')
 }
 

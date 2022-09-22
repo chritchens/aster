@@ -383,7 +383,7 @@ mod tests {
         assert_eq!(
             values[2].typing,
             Some(Type::App(vec![
-                Type::Unknown(None),
+                Type::Path,
                 Type::App(vec![Type::Unknown(None), Type::UInt, Type::UInt])
             ]))
         );
@@ -405,8 +405,11 @@ mod tests {
         values = Values::from_file(path).unwrap();
 
         assert!(!values.is_fully_typed());
-        assert!(values[0].is_fully_typed());
-        assert!(values[1].is_fully_typed());
+        assert!(!values[0].is_fully_typed());
+        assert!(values[0].children[0].is_fully_typed());
+        assert!(!values[1].is_fully_typed());
+        assert!(values[1].children[1].is_fully_typed());
         assert!(!values[2].is_fully_typed());
+        assert!(values[2].children[0].is_fully_typed());
     }
 }
