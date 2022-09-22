@@ -609,10 +609,6 @@ mod tests {
 
         let res = Tokens::from_file(path);
 
-        if res.is_err() {
-            res.as_ref().unwrap();
-        }
-
         assert!(res.is_ok());
 
         let tokens = res.unwrap();
