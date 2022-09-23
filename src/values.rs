@@ -381,8 +381,16 @@ mod tests {
 
         assert_eq!(values.len(), 5);
         assert_eq!(
+            values[2].typing,
+            Some(Type::App(vec![
+                Type::Builtin,
+                Type::Unknown(None),
+                Type::App(vec![Type::Builtin, Type::Type, Type::Type])
+            ]))
+        );
+        assert_eq!(
             values[4].typing,
-            Some(Type::App(vec![Type::Unknown(None), Type::Empty]))
+            Some(Type::App(vec![Type::Unknown(None), Type::Path]))
         );
     }
 

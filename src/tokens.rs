@@ -619,12 +619,12 @@ mod tests {
         assert_eq!(tokens[3].kind, TokenKind::PathSymbol);
         assert_eq!(tokens[14].kind, TokenKind::Keyword);
         assert_eq!(tokens[15].kind, TokenKind::ValueSymbol);
-        assert_eq!(tokens[19].kind, TokenKind::TypeSymbol);
-        assert_eq!(tokens[30].kind, TokenKind::CharLiteral);
+        assert_eq!(tokens[19].kind, TokenKind::Keyword);
+        assert_eq!(tokens[31].kind, TokenKind::CharLiteral);
         assert_eq!(
-            tokens[30].chunks.as_ref().unwrap()[0].content,
+            tokens[31].chunks.as_ref().unwrap()[0].content,
             "'''".to_string()
         );
-        assert_eq!(tokens[31].kind, TokenKind::StringLiteral);
+        assert_eq!(tokens[32].kind, TokenKind::StringLiteral);
     }
 }

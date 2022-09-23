@@ -95,6 +95,7 @@ impl Value {
             || name == "Char"
             || name == "String"
             || name == "Path"
+            || name == "IO"
         {
             Type::Type
         } else {

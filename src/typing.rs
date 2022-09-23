@@ -14,6 +14,7 @@ pub enum Type {
     Char,
     String,
     Path,
+    IO,
     Sum(Vec<Type>),
     Prod(Vec<Type>),
     Fun(Vec<Type>),
@@ -67,6 +68,7 @@ impl Type {
             "Char" => Type::Char,
             "String" => Type::String,
             "Path" => Type::Path,
+            "IO" => Type::IO,
             "Type" => Type::Type,
             st if is_type_symbol(st) => {
                 if is_keyword(st) {
@@ -104,6 +106,7 @@ impl Type {
             Type::Char => "Char".into(),
             Type::String => "String".into(),
             Type::Path => "Path".into(),
+            Type::IO => "IO".into(),
             Type::Sum(types) => format!(
                 "(Sum {})",
                 types

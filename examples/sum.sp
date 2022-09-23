@@ -3,7 +3,7 @@
 (import std.io () io)
 (import std.math (sum))
 
-(defsig main (Fun Empty IO))
-(defun main e (io.println (sum 1 2) e))
+(defsig main (Fun IO IO))
+(defun main io (io.println io (sum 1 2)))
 
-(main ())
+(main io.stdIO)

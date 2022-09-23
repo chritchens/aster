@@ -3,7 +3,7 @@
 (import std.io)
 (import std.string)
 
-(defsig main (Fun Empty IO))
-(defun main e (println "Hello World!" e))
+(defsig main (Fun IO IO))
+(defun main io (println io "Hello World!"))
 
-(main ())
+(main stdIO)
