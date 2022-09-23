@@ -292,7 +292,6 @@ impl Tokens {
                     idx += 1;
                 }
                 _ => {
-                    println!("idx: {}, s: {}", idx, s);
                     return Err(Error::Syntax(SyntaxError {
                         loc: Some(chunks[idx].loc.clone()),
                         desc: "unrecognized syntax".into(),
