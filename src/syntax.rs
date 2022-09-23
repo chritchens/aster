@@ -3,9 +3,9 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 18] = [
-    "import", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "Empty", "UInt", "Int",
-    "Float", "Char", "String", "Path", "Sum", "Prod", "Fun", "Type",
+pub const KEYWORDS: [&str; 19] = [
+    "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "Empty",
+    "UInt", "Int", "Float", "Char", "String", "Path", "Sum", "Prod", "Fun", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -15,6 +15,7 @@ pub fn is_keyword(s: &str) -> bool {
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum Keyword {
     Import,
+    Export,
     Deftype,
     Defsig,
     Defprim,
@@ -38,6 +39,7 @@ impl fmt::Display for Keyword {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Keyword::Import => write!(f, "import"),
+            Keyword::Export => write!(f, "export"),
             Keyword::Deftype => write!(f, "deftype"),
             Keyword::Defsig => write!(f, "defsig"),
             Keyword::Defprim => write!(f, "defprim"),
@@ -63,6 +65,7 @@ impl Keyword {
     pub fn from_str(s: &str) -> Result<Self> {
         match s {
             "import" => Ok(Keyword::Import),
+            "export" => Ok(Keyword::Export),
             "deftype" => Ok(Keyword::Deftype),
             "defsig" => Ok(Keyword::Defsig),
             "defprim" => Ok(Keyword::Defprim),
