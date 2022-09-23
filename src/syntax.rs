@@ -3,9 +3,9 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 19] = [
-    "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "Empty",
-    "UInt", "Int", "Float", "Char", "String", "Path", "Sum", "Prod", "Fun", "Type",
+pub const KEYWORDS: [&str; 20] = [
+    "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "defattrs",
+    "Empty", "UInt", "Int", "Float", "Char", "String", "Path", "Sum", "Prod", "Fun", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -22,6 +22,7 @@ pub enum Keyword {
     Defsum,
     Defprod,
     Defun,
+    Defattrs,
     Empty,
     UInt,
     Int,
@@ -46,6 +47,7 @@ impl fmt::Display for Keyword {
             Keyword::Defsum => write!(f, "defsum"),
             Keyword::Defprod => write!(f, "defprod"),
             Keyword::Defun => write!(f, "defun"),
+            Keyword::Defattrs => write!(f, "defattrs"),
             Keyword::Empty => write!(f, "Empty"),
             Keyword::UInt => write!(f, "UInt"),
             Keyword::Int => write!(f, "Int"),
@@ -72,6 +74,7 @@ impl Keyword {
             "defsum" => Ok(Keyword::Defsum),
             "defprod" => Ok(Keyword::Defprod),
             "defun" => Ok(Keyword::Defun),
+            "defattrs" => Ok(Keyword::Defattrs),
             "Empty" => Ok(Keyword::Empty),
             "UInt" => Ok(Keyword::UInt),
             "Int" => Ok(Keyword::Int),
