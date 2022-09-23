@@ -379,13 +379,10 @@ mod tests {
 
         let values = Values::from_file(path).unwrap();
 
-        assert_eq!(values.len(), 3);
+        assert_eq!(values.len(), 5);
         assert_eq!(
-            values[2].typing,
-            Some(Type::App(vec![
-                Type::Path,
-                Type::App(vec![Type::Unknown(None), Type::UInt, Type::UInt])
-            ]))
+            values[4].typing,
+            Some(Type::App(vec![Type::Unknown(None), Type::Empty]))
         );
     }
 

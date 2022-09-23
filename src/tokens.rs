@@ -612,16 +612,19 @@ mod tests {
 
         let tokens = res.unwrap();
 
-        assert_eq!(tokens.len(), 21);
+        assert_eq!(tokens.len(), 40);
         assert_eq!(tokens[0].kind, TokenKind::DocComment);
         assert_eq!(tokens[1].kind, TokenKind::FormStart);
         assert_eq!(tokens[2].kind, TokenKind::Keyword);
         assert_eq!(tokens[3].kind, TokenKind::PathSymbol);
-        assert_eq!(tokens[17].kind, TokenKind::CharLiteral);
+        assert_eq!(tokens[14].kind, TokenKind::Keyword);
+        assert_eq!(tokens[15].kind, TokenKind::ValueSymbol);
+        assert_eq!(tokens[19].kind, TokenKind::TypeSymbol);
+        assert_eq!(tokens[30].kind, TokenKind::CharLiteral);
         assert_eq!(
-            tokens[17].chunks.as_ref().unwrap()[0].content,
+            tokens[30].chunks.as_ref().unwrap()[0].content,
             "'''".to_string()
         );
-        assert_eq!(tokens[18].kind, TokenKind::StringLiteral);
+        assert_eq!(tokens[31].kind, TokenKind::StringLiteral);
     }
 }
