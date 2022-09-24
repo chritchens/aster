@@ -36,7 +36,6 @@ pub struct SymbolTable {
     pub exp_values: BTreeSet<String>,
 
     pub imports: BTreeMap<String, Vec<STElement>>,
-    pub exports: BTreeMap<String, Vec<STElement>>,
     pub types: BTreeMap<String, Vec<STElement>>,
     pub sigs: BTreeMap<String, Vec<STElement>>,
     pub prims: BTreeMap<String, Vec<STElement>>,
@@ -44,6 +43,7 @@ pub struct SymbolTable {
     pub prods: BTreeMap<String, Vec<STElement>>,
     pub funs: BTreeMap<String, Vec<STElement>>,
     pub attrs: BTreeMap<String, Vec<STElement>>,
+    pub exports: BTreeMap<String, Vec<STElement>>,
 }
 
 impl SymbolTable {
