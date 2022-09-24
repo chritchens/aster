@@ -77,9 +77,10 @@ impl CharChunks {
 
                 if content == '\n' {
                     line += 1;
+                    pos = 0;
+                } else {
+                    pos += 1;
                 }
-
-                pos += 1;
 
                 chunk
             })
@@ -308,12 +309,12 @@ mod tests {
         assert_eq!(chunks.len(), s.len());
         assert_eq!(chunks.files.len(), 0);
 
-        let chunk = &chunks[17];
+        let chunk = &chunks[19];
 
-        assert_eq!(chunk.content, '\n');
+        assert_eq!(chunk.content, 'p');
         assert_eq!(chunk.loc.file, None);
-        assert_eq!(chunk.loc.line, 1);
-        assert_eq!(chunk.loc.pos, 17);
+        assert_eq!(chunk.loc.line, 2);
+        assert_eq!(chunk.loc.pos, 1);
     }
 
     #[test]
