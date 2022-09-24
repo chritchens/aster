@@ -32,16 +32,20 @@ pub struct SymbolTable {
     pub files: BTreeSet<String>,
     pub imp_paths: BTreeSet<String>,
     pub def_types: BTreeSet<String>,
-    pub def_values: BTreeSet<String>,
+    pub def_prims: BTreeSet<String>,
+    pub def_sums: BTreeSet<String>,
+    pub def_prods: BTreeSet<String>,
+    pub def_sigs: BTreeSet<String>,
+    pub def_funs: BTreeSet<String>,
     pub def_attrs: BTreeSet<String>,
     pub exp_values: BTreeSet<String>,
 
     pub imports: BTreeMap<String, Vec<STElement>>,
     pub types: BTreeMap<String, Vec<STElement>>,
-    pub sigs: BTreeMap<String, Vec<STElement>>,
     pub prims: BTreeMap<String, Vec<STElement>>,
     pub sums: BTreeMap<String, Vec<STElement>>,
     pub prods: BTreeMap<String, Vec<STElement>>,
+    pub sigs: BTreeMap<String, Vec<STElement>>,
     pub funs: BTreeMap<String, Vec<STElement>>,
     pub attrs: BTreeMap<String, Vec<STElement>>,
     pub exports: BTreeMap<String, Vec<STElement>>,
@@ -123,7 +127,7 @@ impl SymbolTable {
                         }
                         Keyword::Defsig => {
                             let arg = value.children[1].name.clone().unwrap();
-                            st.def_types.insert(arg.clone());
+                            st.def_sigs.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
 
@@ -145,7 +149,7 @@ impl SymbolTable {
                         }
                         Keyword::Defprim => {
                             let arg = value.children[1].name.clone().unwrap();
-                            st.def_values.insert(arg.clone());
+                            st.def_prims.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
 
@@ -156,7 +160,7 @@ impl SymbolTable {
                         }
                         Keyword::Defsum => {
                             let arg = value.children[1].name.clone().unwrap();
-                            st.def_values.insert(arg.clone());
+                            st.def_sums.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
 
@@ -167,7 +171,7 @@ impl SymbolTable {
                         }
                         Keyword::Defprod => {
                             let arg = value.children[1].name.clone().unwrap();
-                            st.def_values.insert(arg.clone());
+                            st.def_prods.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
 
@@ -178,7 +182,7 @@ impl SymbolTable {
                         }
                         Keyword::Defun => {
                             let arg = value.children[1].name.clone().unwrap();
-                            st.def_values.insert(arg.clone());
+                            st.def_funs.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
 
@@ -328,9 +332,12 @@ mod test {
         let st = SymbolTable::from_values(&values).unwrap();
 
         assert!(st.main_sig.is_some());
-        assert!(st.def_types.contains("main"));
+        assert_eq!(st.def_sigs.len(), 1);
+        assert!(st.def_sigs.contains("main"));
         assert_eq!(st.sigs.len(), 1);
         assert!(st.sigs.contains_key("main"));
+        assert_eq!(st.def_funs.len(), 1);
+        assert!(st.def_funs.contains("main"));
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
     }
