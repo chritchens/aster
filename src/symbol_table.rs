@@ -32,6 +32,7 @@ pub struct SymbolTable {
     pub imp_paths: BTreeSet<String>,
     pub def_types: BTreeSet<String>,
     pub def_values: BTreeSet<String>,
+    pub def_attrs: BTreeSet<String>,
     pub exp_values: BTreeSet<String>,
 
     pub imports: BTreeMap<String, Vec<STElement>>,
@@ -42,6 +43,7 @@ pub struct SymbolTable {
     pub sums: BTreeMap<String, Vec<STElement>>,
     pub prods: BTreeMap<String, Vec<STElement>>,
     pub funs: BTreeMap<String, Vec<STElement>>,
+    pub attrs: BTreeMap<String, Vec<STElement>>,
 }
 
 impl SymbolTable {
@@ -170,6 +172,17 @@ impl SymbolTable {
                                 .and_modify(|v| v.push(st_el.clone()))
                                 .or_insert_with(|| vec![st_el]);
                         }
+                        Keyword::Defattrs => {
+                            let arg = value.children[1].name.clone().unwrap();
+                            st.def_attrs.insert(arg.clone());
+
+                            let st_el = STElement::from_value(&value);
+
+                            st.attrs
+                                .entry(arg)
+                                .and_modify(|v| v.push(st_el.clone()))
+                                .or_insert_with(|| vec![st_el]);
+                        }
                         _ => {}
                     }
                 }
@@ -241,6 +254,23 @@ mod test {
         assert!(st.exp_values.contains("c"));
         assert_eq!(st.exports.len(), 3);
         assert!(st.exports.contains_key("b"));
+    }
+
+    #[test]
+    fn symbol_table_attrs() {
+        use super::SymbolTable;
+        use crate::values::Values;
+
+        let s = "(defattrs sum (prod attr1 attr2 attr3))";
+
+        let values = Values::from_str(s).unwrap();
+
+        let st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_attrs.len(), 1);
+        assert!(st.def_attrs.contains("sum"));
+        assert_eq!(st.attrs.len(), 1);
+        assert!(st.attrs.contains_key("sum"));
     }
 
     #[test]
