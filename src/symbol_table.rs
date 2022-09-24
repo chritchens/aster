@@ -1,3 +1,4 @@
+use crate::error::{Error, SemanticError};
 use crate::result::Result;
 use crate::syntax::Keyword;
 use crate::typing::Type;
@@ -44,6 +45,9 @@ pub struct SymbolTable {
     pub funs: BTreeMap<String, Vec<STElement>>,
     pub attrs: BTreeMap<String, Vec<STElement>>,
     pub exports: BTreeMap<String, Vec<STElement>>,
+
+    pub main_sig: Option<STElement>,
+    pub main_fun: Option<STElement>,
 }
 
 impl SymbolTable {
@@ -124,9 +128,20 @@ impl SymbolTable {
                             let st_el = STElement::from_value(&value);
 
                             st.sigs
-                                .entry(arg)
+                                .entry(arg.clone())
                                 .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el]);
+                                .or_insert_with(|| vec![st_el.clone()]);
+
+                            if arg == "main" {
+                                if st.main_sig.is_some() {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "duplicate main signature".into(),
+                                    }));
+                                }
+
+                                st.main_sig = Some(st_el);
+                            }
                         }
                         Keyword::Defprim => {
                             let arg = value.children[1].name.clone().unwrap();
@@ -168,9 +183,20 @@ impl SymbolTable {
                             let st_el = STElement::from_value(&value);
 
                             st.funs
-                                .entry(arg)
+                                .entry(arg.clone())
                                 .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el]);
+                                .or_insert_with(|| vec![st_el.clone()]);
+
+                            if arg == "main" {
+                                if st.main_fun.is_some() {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "duplicate main function".into(),
+                                    }));
+                                }
+
+                                st.main_fun = Some(st_el);
+                            }
                         }
                         Keyword::Defattrs => {
                             let arg = value.children[1].name.clone().unwrap();
@@ -288,5 +314,24 @@ mod test {
         assert!(st.def_types.contains("RGB"));
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
+    }
+
+    #[test]
+    fn symbol_table_main() {
+        use super::SymbolTable;
+        use crate::values::Values;
+
+        let s = "(defsig main (Fun IO IO))\n(defun main io (id io))";
+
+        let values = Values::from_str(s).unwrap();
+
+        let st = SymbolTable::from_values(&values).unwrap();
+
+        assert!(st.main_sig.is_some());
+        assert!(st.def_types.contains("main"));
+        assert_eq!(st.sigs.len(), 1);
+        assert!(st.sigs.contains_key("main"));
+        assert_eq!(st.funs.len(), 1);
+        assert!(st.funs.contains_key("main"));
     }
 }
