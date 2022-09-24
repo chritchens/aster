@@ -31,6 +31,7 @@ impl STElement {
 pub struct SymbolTable {
     pub files: BTreeSet<String>,
     pub imp_paths: BTreeSet<String>,
+    pub exp_defs: BTreeSet<String>,
     pub def_types: BTreeSet<String>,
     pub def_prims: BTreeSet<String>,
     pub def_sums: BTreeSet<String>,
@@ -38,9 +39,9 @@ pub struct SymbolTable {
     pub def_sigs: BTreeSet<String>,
     pub def_funs: BTreeSet<String>,
     pub def_attrs: BTreeSet<String>,
-    pub exp_values: BTreeSet<String>,
 
     pub imports: BTreeMap<String, Vec<STElement>>,
+    pub exports: BTreeMap<String, Vec<STElement>>,
     pub types: BTreeMap<String, Vec<STElement>>,
     pub prims: BTreeMap<String, Vec<STElement>>,
     pub sums: BTreeMap<String, Vec<STElement>>,
@@ -48,7 +49,6 @@ pub struct SymbolTable {
     pub sigs: BTreeMap<String, Vec<STElement>>,
     pub funs: BTreeMap<String, Vec<STElement>>,
     pub attrs: BTreeMap<String, Vec<STElement>>,
-    pub exports: BTreeMap<String, Vec<STElement>>,
 
     pub main_sig: Option<STElement>,
     pub main_fun: Option<STElement>,
@@ -93,7 +93,7 @@ impl SymbolTable {
                                     let child = value.children[idx].clone();
 
                                     let arg = child.name.clone().unwrap();
-                                    st.exp_values.insert(arg.clone());
+                                    st.exp_defs.insert(arg.clone());
 
                                     let st_el = STElement::from_value(&value);
 
@@ -104,7 +104,7 @@ impl SymbolTable {
                                 }
                             } else {
                                 let arg = value.name.clone().unwrap();
-                                st.exp_values.insert(arg.clone());
+                                st.exp_defs.insert(arg.clone());
 
                                 let st_el = STElement::from_value(&value);
 
@@ -267,8 +267,8 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.exp_values.len(), 1);
-        assert!(st.exp_values.contains(">>"));
+        assert_eq!(st.exp_defs.len(), 1);
+        assert!(st.exp_defs.contains(">>"));
         assert_eq!(st.exports.len(), 1);
         assert!(st.exports.contains_key(">>"));
 
@@ -278,29 +278,12 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.exp_values.len(), 3);
-        assert!(st.exp_values.contains("a"));
-        assert!(st.exp_values.contains("b"));
-        assert!(st.exp_values.contains("c"));
+        assert_eq!(st.exp_defs.len(), 3);
+        assert!(st.exp_defs.contains("a"));
+        assert!(st.exp_defs.contains("b"));
+        assert!(st.exp_defs.contains("c"));
         assert_eq!(st.exports.len(), 3);
         assert!(st.exports.contains_key("b"));
-    }
-
-    #[test]
-    fn symbol_table_attrs() {
-        use super::SymbolTable;
-        use crate::values::Values;
-
-        let s = "(defattrs sum (prod attr1 attr2 attr3))";
-
-        let values = Values::from_str(s).unwrap();
-
-        let st = SymbolTable::from_values(&values).unwrap();
-
-        assert_eq!(st.def_attrs.len(), 1);
-        assert!(st.def_attrs.contains("sum"));
-        assert_eq!(st.attrs.len(), 1);
-        assert!(st.attrs.contains_key("sum"));
     }
 
     #[test]
@@ -318,6 +301,23 @@ mod test {
         assert!(st.def_types.contains("RGB"));
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
+    }
+
+    #[test]
+    fn symbol_table_attrs() {
+        use super::SymbolTable;
+        use crate::values::Values;
+
+        let s = "(defattrs sum (prod attr1 attr2 attr3))";
+
+        let values = Values::from_str(s).unwrap();
+
+        let st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_attrs.len(), 1);
+        assert!(st.def_attrs.contains("sum"));
+        assert_eq!(st.attrs.len(), 1);
+        assert!(st.attrs.contains_key("sum"));
     }
 
     #[test]
