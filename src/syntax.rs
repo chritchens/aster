@@ -153,11 +153,17 @@ pub fn is_uint_literal(s: &str) -> bool {
         return false;
     }
 
+    let len = s.len();
+
     match s {
-        x if x.starts_with('b') => x[1..].chars().all(|c| c.is_ascii_digit() && c < '2'),
-        x if x.starts_with('o') => x[1..].chars().all(|c| c.is_ascii_digit() && c < '8'),
-        x if x.starts_with('x') => x[1..].chars().all(|c| c.is_ascii_hexdigit() && c >= 'a'),
-        x if x.starts_with('X') => x[1..].chars().all(|c| c.is_ascii_hexdigit() && c <= 'F'),
+        x if x.starts_with('b') => len > 1 && x[1..].chars().all(|c| c.is_ascii_digit() && c < '2'),
+        x if x.starts_with('o') => len > 1 && x[1..].chars().all(|c| c.is_ascii_digit() && c < '8'),
+        x if x.starts_with('x') => {
+            len > 1 && x[1..].chars().all(|c| c.is_ascii_hexdigit() && c >= 'a')
+        }
+        x if x.starts_with('X') => {
+            len > 1 && x[1..].chars().all(|c| c.is_ascii_hexdigit() && c <= 'F')
+        }
         x => x.chars().all(|c| c.is_ascii_digit()),
     }
 }

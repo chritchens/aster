@@ -59,11 +59,11 @@ impl SymbolTable {
 
             if let Some(Type::App(types)) = value.typing.clone() {
                 if types[0] == Type::Builtin {
-                    let arg = value.children[1].name.clone().unwrap();
                     let keyword = Keyword::from_str(&value.clone().name.unwrap())?;
 
                     match keyword {
                         Keyword::Import => {
+                            let arg = value.children[1].name.clone().unwrap();
                             st.imp_paths.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
@@ -74,16 +74,38 @@ impl SymbolTable {
                                 .or_insert_with(|| vec![st_el]);
                         }
                         Keyword::Export => {
-                            st.exp_values.insert(arg.clone());
+                            let value = value.children[1].clone();
 
-                            let st_el = STElement::from_value(&value);
+                            if value.children.len() > 1 {
+                                let len = value.children.len();
 
-                            st.exports
-                                .entry(arg)
-                                .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el]);
+                                for idx in 1..len {
+                                    let child = value.children[idx].clone();
+
+                                    let arg = child.name.clone().unwrap();
+                                    st.exp_values.insert(arg.clone());
+
+                                    let st_el = STElement::from_value(&value);
+
+                                    st.exports
+                                        .entry(arg)
+                                        .and_modify(|v| v.push(st_el.clone()))
+                                        .or_insert_with(|| vec![st_el]);
+                                }
+                            } else {
+                                let arg = value.name.clone().unwrap();
+                                st.exp_values.insert(arg.clone());
+
+                                let st_el = STElement::from_value(&value);
+
+                                st.exports
+                                    .entry(arg)
+                                    .and_modify(|v| v.push(st_el.clone()))
+                                    .or_insert_with(|| vec![st_el]);
+                            }
                         }
                         Keyword::Deftype => {
+                            let arg = value.children[1].name.clone().unwrap();
                             st.def_types.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
@@ -94,6 +116,7 @@ impl SymbolTable {
                                 .or_insert_with(|| vec![st_el]);
                         }
                         Keyword::Defsig => {
+                            let arg = value.children[1].name.clone().unwrap();
                             st.def_types.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
@@ -104,6 +127,7 @@ impl SymbolTable {
                                 .or_insert_with(|| vec![st_el]);
                         }
                         Keyword::Defprim => {
+                            let arg = value.children[1].name.clone().unwrap();
                             st.def_values.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
@@ -114,6 +138,7 @@ impl SymbolTable {
                                 .or_insert_with(|| vec![st_el]);
                         }
                         Keyword::Defsum => {
+                            let arg = value.children[1].name.clone().unwrap();
                             st.def_values.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
@@ -124,6 +149,7 @@ impl SymbolTable {
                                 .or_insert_with(|| vec![st_el]);
                         }
                         Keyword::Defprod => {
+                            let arg = value.children[1].name.clone().unwrap();
                             st.def_values.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
@@ -134,6 +160,7 @@ impl SymbolTable {
                                 .or_insert_with(|| vec![st_el]);
                         }
                         Keyword::Defun => {
+                            let arg = value.children[1].name.clone().unwrap();
                             st.def_values.insert(arg.clone());
 
                             let st_el = STElement::from_value(&value);
@@ -191,16 +218,29 @@ mod test {
         use super::SymbolTable;
         use crate::values::Values;
 
-        let s = "(export >>)";
+        let mut s = "(export >>)";
 
-        let values = Values::from_str(s).unwrap();
+        let mut values = Values::from_str(s).unwrap();
 
-        let st = SymbolTable::from_values(&values).unwrap();
+        let mut st = SymbolTable::from_values(&values).unwrap();
 
         assert_eq!(st.exp_values.len(), 1);
         assert!(st.exp_values.contains(">>"));
         assert_eq!(st.exports.len(), 1);
         assert!(st.exports.contains_key(">>"));
+
+        s = "(export (prod a b c))";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.exp_values.len(), 3);
+        assert!(st.exp_values.contains("a"));
+        assert!(st.exp_values.contains("b"));
+        assert!(st.exp_values.contains("c"));
+        assert_eq!(st.exports.len(), 3);
+        assert!(st.exports.contains_key("b"));
     }
 
     #[test]
