@@ -20,6 +20,7 @@ pub enum Type {
     Prod(Vec<Type>),
     Fun(Vec<Type>),
     App(Vec<Type>),
+    Attrs(Vec<Type>),
     Type,
 }
 
@@ -37,6 +38,10 @@ impl Type {
             Type::App(mut v) => {
                 v.push(t);
                 Type::App(v)
+            }
+            Type::Attrs(mut v) => {
+                v.push(t);
+                Type::Attrs(v)
             }
             _ => {
                 return Err(Error::Semantic(SemanticError {
@@ -56,6 +61,7 @@ impl Type {
             Type::Prod(inner_types) => inner_types.iter().all(|t| t.is_complete()),
             Type::Fun(inner_types) => inner_types.iter().all(|t| t.is_complete()),
             Type::App(inner_types) => inner_types.iter().all(|t| t.is_complete()),
+            Type::Attrs(inner_types) => inner_types.iter().all(|t| t.is_complete()),
             _ => true,
         }
     }
@@ -135,6 +141,14 @@ impl Type {
             ),
             Type::App(types) => format!(
                 "(App {})",
+                types
+                    .iter()
+                    .map(|t| t.to_string())
+                    .collect::<Vec<String>>()
+                    .join(" ")
+            ),
+            Type::Attrs(types) => format!(
+                "(Attrs {})",
                 types
                     .iter()
                     .map(|t| t.to_string())

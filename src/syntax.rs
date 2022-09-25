@@ -3,9 +3,10 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 21] = [
+pub const KEYWORDS: [&str; 30] = [
     "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "defattrs",
-    "Empty", "UInt", "Int", "Float", "Char", "String", "Path", "IO", "Sum", "Prod", "Fun", "Type",
+    "def", "sum", "prod", "fun", "app", "attrs", "cast", "Empty", "UInt", "Int", "Float", "Char",
+    "String", "Path", "IO", "Sum", "Prod", "Fun", "App", "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -23,6 +24,13 @@ pub enum Keyword {
     Defprod,
     Defun,
     Defattrs,
+    Def,
+    Sum,
+    Prod,
+    Fun,
+    App,
+    Attrs,
+    Cast,
     EmptyT,
     UIntT,
     IntT,
@@ -34,6 +42,8 @@ pub enum Keyword {
     SumT,
     ProdT,
     FunT,
+    AppT,
+    AttrsT,
     TypeT,
 }
 
@@ -49,6 +59,13 @@ impl fmt::Display for Keyword {
             Keyword::Defprod => write!(f, "defprod"),
             Keyword::Defun => write!(f, "defun"),
             Keyword::Defattrs => write!(f, "defattrs"),
+            Keyword::Def => write!(f, "def"),
+            Keyword::Sum => write!(f, "sum"),
+            Keyword::Prod => write!(f, "prod"),
+            Keyword::Fun => write!(f, "fun"),
+            Keyword::App => write!(f, "app"),
+            Keyword::Attrs => write!(f, "attrs"),
+            Keyword::Cast => write!(f, "cast"),
             Keyword::EmptyT => write!(f, "Empty"),
             Keyword::UIntT => write!(f, "UInt"),
             Keyword::IntT => write!(f, "Int"),
@@ -60,6 +77,8 @@ impl fmt::Display for Keyword {
             Keyword::SumT => write!(f, "Sum"),
             Keyword::ProdT => write!(f, "Prod"),
             Keyword::FunT => write!(f, "Fun"),
+            Keyword::AppT => write!(f, "App"),
+            Keyword::AttrsT => write!(f, "Attrs"),
             Keyword::TypeT => write!(f, "Type"),
         }
     }
@@ -77,6 +96,13 @@ impl Keyword {
             "defprod" => Ok(Keyword::Defprod),
             "defun" => Ok(Keyword::Defun),
             "defattrs" => Ok(Keyword::Defattrs),
+            "def" => Ok(Keyword::Def),
+            "sum" => Ok(Keyword::Sum),
+            "prod" => Ok(Keyword::Prod),
+            "fun" => Ok(Keyword::Fun),
+            "app" => Ok(Keyword::App),
+            "attrs" => Ok(Keyword::Attrs),
+            "cast" => Ok(Keyword::Cast),
             "Empty" => Ok(Keyword::EmptyT),
             "UInt" => Ok(Keyword::UIntT),
             "Int" => Ok(Keyword::IntT),
@@ -88,6 +114,8 @@ impl Keyword {
             "Sum" => Ok(Keyword::SumT),
             "Prod" => Ok(Keyword::ProdT),
             "Fun" => Ok(Keyword::FunT),
+            "App" => Ok(Keyword::AppT),
+            "Attrs" => Ok(Keyword::AttrsT),
             "Type" => Ok(Keyword::TypeT),
             _ => Err(Error::Syntax(SyntaxError {
                 loc: None,

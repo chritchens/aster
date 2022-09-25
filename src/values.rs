@@ -347,7 +347,7 @@ mod tests {
         use super::Values;
         use crate::typing::Type;
 
-        let s = "(+ 1 (sum (square 3) 4))";
+        let s = "(+ 1 (math.sum (square 3) 4))";
 
         let values = Values::from_str(s).unwrap();
 
@@ -359,7 +359,7 @@ mod tests {
                 Type::Unknown(None),
                 Type::UInt,
                 Type::App(vec![
-                    Type::Unknown(None),
+                    Type::Path,
                     Type::App(vec![Type::Unknown(None), Type::UInt]),
                     Type::UInt
                 ])
@@ -412,7 +412,7 @@ mod tests {
         assert!(!values.is_fully_typed());
         assert!(!values[0].is_fully_typed());
         assert!(values[0].children[0].is_fully_typed());
-        assert!(!values[1].is_fully_typed());
+        assert!(values[1].is_fully_typed());
         assert!(values[1].children[1].is_fully_typed());
         assert!(!values[2].is_fully_typed());
         assert!(values[2].children[0].is_fully_typed());
