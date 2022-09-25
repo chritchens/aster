@@ -1,4 +1,5 @@
 use crate::loc::Loc;
+use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct CharChunk {
@@ -10,12 +11,29 @@ impl CharChunk {
     pub fn new() -> Self {
         CharChunk::default()
     }
+
+    #[allow(clippy::inherent_to_string_shadow_display)]
+    pub fn to_string(&self) -> String {
+        format!("{}", self.content)
+    }
+}
+
+impl fmt::Display for CharChunk {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: {}", self.loc, self.content)
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct StringChunk {
     pub loc: Loc,
     pub content: String,
+}
+
+impl fmt::Display for StringChunk {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}: {}", self.loc, self.content)
+    }
 }
 
 impl StringChunk {
@@ -61,6 +79,7 @@ impl StringChunk {
         self.content.as_str()
     }
 
+    #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         self.content.clone()
     }

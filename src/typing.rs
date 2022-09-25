@@ -2,6 +2,7 @@ use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_keyword, is_type_symbol};
+use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum Type {
@@ -92,6 +93,7 @@ impl Type {
         Type::from_str(&s, loc)
     }
 
+    #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
             Type::Unknown(opt_t) => match opt_t {
@@ -182,5 +184,11 @@ mod tests {
         let st = t.to_string();
 
         assert_eq!(s, st);
+    }
+}
+
+impl fmt::Display for Type {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }

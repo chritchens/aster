@@ -12,16 +12,10 @@ pub struct SyntaxError {
 
 impl fmt::Display for SyntaxError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(loc) = self.loc.as_ref() {
-            let file = loc.file.clone().unwrap_or_else(|| "".into());
-
-            write!(
-                f,
-                "{} at position {} of line {} of file {}",
-                self.desc, loc.pos, loc.line, file
-            )
+        if let Some(ref loc) = self.loc {
+            write!(f, "{}: {}", loc.to_string(), self.desc)
         } else {
-            write!(f, "{}", self.desc)
+            write!(f, "(no location): {}", self.desc)
         }
     }
 }
@@ -36,16 +30,10 @@ pub struct ParsingError {
 
 impl fmt::Display for ParsingError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(loc) = self.loc.as_ref() {
-            let file = loc.file.clone().unwrap_or_else(|| "".into());
-
-            write!(
-                f,
-                "{} at position {} of line {} of file {}",
-                self.desc, loc.pos, loc.line, file
-            )
+        if let Some(ref loc) = self.loc {
+            write!(f, "{}: {}", loc.to_string(), self.desc)
         } else {
-            write!(f, "{}", self.desc)
+            write!(f, "(no location): {}", self.desc)
         }
     }
 }
@@ -60,16 +48,10 @@ pub struct SemanticError {
 
 impl fmt::Display for SemanticError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(loc) = self.loc.as_ref() {
-            let file = loc.file.clone().unwrap_or_else(|| "".into());
-
-            write!(
-                f,
-                "{} at position {} of line {} of file {}",
-                self.desc, loc.pos, loc.line, file
-            )
+        if let Some(ref loc) = self.loc {
+            write!(f, "{}: {}", loc.to_string(), self.desc)
         } else {
-            write!(f, "{}", self.desc)
+            write!(f, "(no location): {}", self.desc)
         }
     }
 }
