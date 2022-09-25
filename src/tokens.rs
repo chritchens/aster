@@ -128,7 +128,7 @@ impl Tokens {
                     if idx + 2 > len {
                         return Err(Error::Syntax(SyntaxError {
                             loc: Some(chunks[idx].loc.clone()),
-                            desc: "expected a char".into(),
+                            desc: format!("expected {} to be a char", x),
                         }));
                     }
 
@@ -142,7 +142,7 @@ impl Tokens {
                         if c.len() != 1 {
                             return Err(Error::Syntax(SyntaxError {
                                 loc: Some(chunks[idx].loc.clone()),
-                                desc: "expected a char".into(),
+                                desc: format!("expected {} to be a char", x),
                             }));
                         }
 
@@ -162,7 +162,7 @@ impl Tokens {
                     if !schunk.content.ends_with(SINGLE_QUOTE) {
                         return Err(Error::Syntax(SyntaxError {
                             loc: Some(chunks[idx].loc.clone()),
-                            desc: "expected a char".into(),
+                            desc: format!("expected {} to be a char", x),
                         }));
                     }
 
@@ -179,7 +179,7 @@ impl Tokens {
                     if idx + 1 >= len {
                         return Err(Error::Syntax(SyntaxError {
                             loc: Some(chunks[idx].loc.clone()),
-                            desc: "expected a string".into(),
+                            desc: format!("expected {} to be a string", x),
                         }));
                     }
 
