@@ -3,10 +3,10 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 30] = [
+pub const KEYWORDS: [&str; 33] = [
     "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "defattrs",
-    "def", "sum", "prod", "fun", "app", "attrs", "cast", "Empty", "UInt", "Int", "Float", "Char",
-    "String", "Path", "IO", "Sum", "Prod", "Fun", "App", "Attrs", "Type",
+    "def", "type", "sum", "prod", "sig", "fun", "app", "attrs", "cast", "Empty", "UInt", "Int",
+    "Float", "Char", "String", "Path", "IO", "Sum", "Prod", "Sig", "Fun", "App", "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -25,8 +25,10 @@ pub enum Keyword {
     Defun,
     Defattrs,
     Def,
+    Type,
     Sum,
     Prod,
+    Sig,
     Fun,
     App,
     Attrs,
@@ -41,6 +43,7 @@ pub enum Keyword {
     IOT,
     SumT,
     ProdT,
+    SigT,
     FunT,
     AppT,
     AttrsT,
@@ -60,8 +63,10 @@ impl fmt::Display for Keyword {
             Keyword::Defun => write!(f, "defun"),
             Keyword::Defattrs => write!(f, "defattrs"),
             Keyword::Def => write!(f, "def"),
+            Keyword::Type => write!(f, "type"),
             Keyword::Sum => write!(f, "sum"),
             Keyword::Prod => write!(f, "prod"),
+            Keyword::Sig => write!(f, "sig"),
             Keyword::Fun => write!(f, "fun"),
             Keyword::App => write!(f, "app"),
             Keyword::Attrs => write!(f, "attrs"),
@@ -76,6 +81,7 @@ impl fmt::Display for Keyword {
             Keyword::IOT => write!(f, "IO"),
             Keyword::SumT => write!(f, "Sum"),
             Keyword::ProdT => write!(f, "Prod"),
+            Keyword::SigT => write!(f, "Sig"),
             Keyword::FunT => write!(f, "Fun"),
             Keyword::AppT => write!(f, "App"),
             Keyword::AttrsT => write!(f, "Attrs"),
@@ -97,8 +103,10 @@ impl Keyword {
             "defun" => Ok(Keyword::Defun),
             "defattrs" => Ok(Keyword::Defattrs),
             "def" => Ok(Keyword::Def),
+            "type" => Ok(Keyword::Type),
             "sum" => Ok(Keyword::Sum),
             "prod" => Ok(Keyword::Prod),
+            "sig" => Ok(Keyword::Sig),
             "fun" => Ok(Keyword::Fun),
             "app" => Ok(Keyword::App),
             "attrs" => Ok(Keyword::Attrs),
@@ -113,6 +121,7 @@ impl Keyword {
             "IO" => Ok(Keyword::IOT),
             "Sum" => Ok(Keyword::SumT),
             "Prod" => Ok(Keyword::ProdT),
+            "Sig" => Ok(Keyword::SigT),
             "Fun" => Ok(Keyword::FunT),
             "App" => Ok(Keyword::AppT),
             "Attrs" => Ok(Keyword::AttrsT),
