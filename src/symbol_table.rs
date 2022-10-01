@@ -78,13 +78,13 @@ impl SymbolTable {
 
                     match keyword {
                         Keyword::Import => {
-                            let arg = value.children[1].name.clone().unwrap();
-                            st.imp_paths.insert(arg.clone());
+                            let name = value.children[1].name.clone().unwrap();
+                            st.imp_paths.insert(name.clone());
 
                             let st_el = STElement::from_value(&value);
 
                             st.imports
-                                .entry(arg)
+                                .entry(name)
                                 .and_modify(|v| v.push(st_el.clone()))
                                 .or_insert_with(|| vec![st_el]);
                         }
@@ -97,40 +97,40 @@ impl SymbolTable {
                                 for idx in 1..len {
                                     let child = value.children[idx].clone();
 
-                                    let arg = child.name.clone().unwrap();
-                                    st.exp_defs.insert(arg.clone());
+                                    let name = child.name.clone().unwrap();
+                                    st.exp_defs.insert(name.clone());
 
                                     let st_el = STElement::from_value(&value);
 
                                     st.exports
-                                        .entry(arg)
+                                        .entry(name)
                                         .and_modify(|v| v.push(st_el.clone()))
                                         .or_insert_with(|| vec![st_el]);
                                 }
                             } else {
-                                let arg = value.name.clone().unwrap();
-                                st.exp_defs.insert(arg.clone());
+                                let name = value.name.clone().unwrap();
+                                st.exp_defs.insert(name.clone());
 
                                 let st_el = STElement::from_value(&value);
 
                                 st.exports
-                                    .entry(arg)
+                                    .entry(name)
                                     .and_modify(|v| v.push(st_el.clone()))
                                     .or_insert_with(|| vec![st_el]);
                             }
                         }
                         Keyword::Deftype => {
-                            let arg = value.children[1].name.clone().unwrap();
-                            st.def_types.insert(arg.clone());
+                            let name = value.children[1].name.clone().unwrap();
+                            st.def_types.insert(name.clone());
 
                             let st_el = STElement::from_value(&value);
 
                             st.types
-                                .entry(arg.clone())
+                                .entry(name.clone())
                                 .and_modify(|v| v.push(st_el.clone()))
                                 .or_insert_with(|| vec![st_el.clone()]);
 
-                            if arg == "Main" {
+                            if name == "Main" {
                                 if st.main_type.is_some() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
@@ -142,17 +142,17 @@ impl SymbolTable {
                             }
                         }
                         Keyword::Defsig => {
-                            let arg = value.children[1].name.clone().unwrap();
-                            st.def_sigs.insert(arg.clone());
+                            let name = value.children[1].name.clone().unwrap();
+                            st.def_sigs.insert(name.clone());
 
                             let st_el = STElement::from_value(&value);
 
                             st.sigs
-                                .entry(arg.clone())
+                                .entry(name.clone())
                                 .and_modify(|v| v.push(st_el.clone()))
                                 .or_insert_with(|| vec![st_el.clone()]);
 
-                            if arg == "main" {
+                            if name == "main" {
                                 if st.main_sig.is_some() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
@@ -164,50 +164,50 @@ impl SymbolTable {
                             }
                         }
                         Keyword::Defprim => {
-                            let arg = value.children[1].name.clone().unwrap();
-                            st.def_prims.insert(arg.clone());
+                            let name = value.children[1].name.clone().unwrap();
+                            st.def_prims.insert(name.clone());
 
                             let st_el = STElement::from_value(&value);
 
                             st.prims
-                                .entry(arg)
+                                .entry(name)
                                 .and_modify(|v| v.push(st_el.clone()))
                                 .or_insert_with(|| vec![st_el]);
                         }
                         Keyword::Defsum => {
-                            let arg = value.children[1].name.clone().unwrap();
-                            st.def_sums.insert(arg.clone());
+                            let name = value.children[1].name.clone().unwrap();
+                            st.def_sums.insert(name.clone());
 
                             let st_el = STElement::from_value(&value);
 
                             st.sums
-                                .entry(arg)
+                                .entry(name)
                                 .and_modify(|v| v.push(st_el.clone()))
                                 .or_insert_with(|| vec![st_el]);
                         }
                         Keyword::Defprod => {
-                            let arg = value.children[1].name.clone().unwrap();
-                            st.def_prods.insert(arg.clone());
+                            let name = value.children[1].name.clone().unwrap();
+                            st.def_prods.insert(name.clone());
 
                             let st_el = STElement::from_value(&value);
 
                             st.prods
-                                .entry(arg)
+                                .entry(name)
                                 .and_modify(|v| v.push(st_el.clone()))
                                 .or_insert_with(|| vec![st_el]);
                         }
                         Keyword::Defun => {
-                            let arg = value.children[1].name.clone().unwrap();
-                            st.def_funs.insert(arg.clone());
+                            let name = value.children[1].name.clone().unwrap();
+                            st.def_funs.insert(name.clone());
 
                             let st_el = STElement::from_value(&value);
 
                             st.funs
-                                .entry(arg.clone())
+                                .entry(name.clone())
                                 .and_modify(|v| v.push(st_el.clone()))
                                 .or_insert_with(|| vec![st_el.clone()]);
 
-                            if arg == "main" {
+                            if name == "main" {
                                 if st.main_fun.is_some() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
@@ -219,17 +219,17 @@ impl SymbolTable {
                             }
                         }
                         Keyword::Defattrs => {
-                            let arg = value.children[1].name.clone().unwrap();
-                            st.def_attrs.insert(arg.clone());
+                            let name = value.children[1].name.clone().unwrap();
+                            st.def_attrs.insert(name.clone());
 
                             let st_el = STElement::from_value(&value);
 
                             st.attrs
-                                .entry(arg.clone())
+                                .entry(name.clone())
                                 .and_modify(|v| v.push(st_el.clone()))
                                 .or_insert_with(|| vec![st_el.clone()]);
 
-                            if arg == "main" {
+                            if name == "main" {
                                 if st.main_attrs.is_some() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
@@ -248,33 +248,33 @@ impl SymbolTable {
                                 }));
                             }
 
-                            let arg = value.children[1].name.clone().unwrap();
-                            let arg_value = value.children[2].clone();
+                            let name = value.children[1].name.clone().unwrap();
+                            let name_value = value.children[2].clone();
                             let st_el = STElement::from_value(&value);
 
-                            let len = arg_value.children.len();
+                            let len = name_value.children.len();
 
                             if len == 2 {
-                                if arg_value.children[0].name.is_none() {
+                                if name_value.children[0].name.is_none() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
                                         desc: "expected a keyword".into(),
                                     }));
                                 }
 
-                                let kind = arg_value.children[0].name.clone().unwrap();
+                                let kind = name_value.children[0].name.clone().unwrap();
                                 let keyword = Keyword::from_string(kind)?;
 
                                 match keyword {
                                     Keyword::Type => {
-                                        st.def_types.insert(arg.clone());
+                                        st.def_types.insert(name.clone());
 
                                         st.types
-                                            .entry(arg.clone())
+                                            .entry(name.clone())
                                             .and_modify(|v| v.push(st_el.clone()))
                                             .or_insert_with(|| vec![st_el.clone()]);
 
-                                        if arg == "Main" {
+                                        if name == "Main" {
                                             if st.main_type.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: value.token.loc(),
@@ -286,14 +286,14 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::Sig => {
-                                        st.def_sigs.insert(arg.clone());
+                                        st.def_sigs.insert(name.clone());
 
                                         st.sigs
-                                            .entry(arg.clone())
+                                            .entry(name.clone())
                                             .and_modify(|v| v.push(st_el.clone()))
                                             .or_insert_with(|| vec![st_el.clone()]);
 
-                                        if arg == "main" {
+                                        if name == "main" {
                                             if st.main_sig.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: value.token.loc(),
@@ -305,38 +305,38 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::Prim => {
-                                        st.def_prims.insert(arg.clone());
+                                        st.def_prims.insert(name.clone());
 
                                         st.prims
-                                            .entry(arg)
+                                            .entry(name)
                                             .and_modify(|v| v.push(st_el.clone()))
                                             .or_insert_with(|| vec![st_el]);
                                     }
                                     Keyword::Sum => {
-                                        st.def_sums.insert(arg.clone());
+                                        st.def_sums.insert(name.clone());
 
                                         st.sums
-                                            .entry(arg)
+                                            .entry(name)
                                             .and_modify(|v| v.push(st_el.clone()))
                                             .or_insert_with(|| vec![st_el]);
                                     }
                                     Keyword::Prod => {
-                                        st.def_prods.insert(arg.clone());
+                                        st.def_prods.insert(name.clone());
 
                                         st.prods
-                                            .entry(arg)
+                                            .entry(name)
                                             .and_modify(|v| v.push(st_el.clone()))
                                             .or_insert_with(|| vec![st_el]);
                                     }
                                     Keyword::Fun => {
-                                        st.def_funs.insert(arg.clone());
+                                        st.def_funs.insert(name.clone());
 
                                         st.funs
-                                            .entry(arg.clone())
+                                            .entry(name.clone())
                                             .and_modify(|v| v.push(st_el.clone()))
                                             .or_insert_with(|| vec![st_el.clone()]);
 
-                                        if arg == "main" {
+                                        if name == "main" {
                                             if st.main_fun.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: value.token.loc(),
@@ -348,14 +348,14 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::App => {
-                                        st.def_apps.insert(arg.clone());
+                                        st.def_apps.insert(name.clone());
 
                                         st.apps
-                                            .entry(arg.clone())
+                                            .entry(name.clone())
                                             .and_modify(|v| v.push(st_el.clone()))
                                             .or_insert_with(|| vec![st_el.clone()]);
 
-                                        if arg == "main" {
+                                        if name == "main" {
                                             if st.main_app.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: value.token.loc(),
@@ -367,14 +367,14 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::Attrs => {
-                                        st.def_attrs.insert(arg.clone());
+                                        st.def_attrs.insert(name.clone());
 
                                         st.attrs
-                                            .entry(arg.clone())
+                                            .entry(name.clone())
                                             .and_modify(|v| v.push(st_el.clone()))
                                             .or_insert_with(|| vec![st_el.clone()]);
 
-                                        if arg == "main" {
+                                        if name == "main" {
                                             if st.main_attrs.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: value.token.loc(),
@@ -393,11 +393,11 @@ impl SymbolTable {
                                     }
                                 }
                             } else if len == 1 {
-                                let arg = value.name.clone().unwrap();
-                                st.def_prims.insert(arg.clone());
+                                let name = value.name.clone().unwrap();
+                                st.def_prims.insert(name.clone());
 
                                 st.prims
-                                    .entry(arg)
+                                    .entry(name)
                                     .and_modify(|v| v.push(st_el.clone()))
                                     .or_insert_with(|| vec![st_el]);
                             } else {
