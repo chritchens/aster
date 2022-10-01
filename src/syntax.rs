@@ -291,10 +291,14 @@ pub const SYMBOL_START_PUNCTUATION: [char; 23] = [
     '_', '`', '|', '~',
 ];
 
-pub const SYMBOL_PATH_SEPARATOR: char = '.';
-
 pub fn is_symbol_punctuation(c: char) -> bool {
     SYMBOL_START_PUNCTUATION.iter().any(|p| p == &c)
+}
+
+pub const SYMBOL_PATH_SEPARATOR: char = '.';
+
+pub fn is_symbol_path_separator(c: char) -> bool {
+    c == SYMBOL_PATH_SEPARATOR
 }
 
 pub fn is_symbol_start_char(c: char) -> bool {
@@ -375,12 +379,13 @@ pub fn is_type_symbol(s: &str) -> bool {
 pub fn is_path_symbol(s: &str) -> bool {
     is_symbol(s)
         && is_path_symbol_start_char(s.chars().next().unwrap())
-        && s.chars().all(|c| is_path_symbol_char(c) || c == '.')
-        && !s.ends_with('.')
+        && s.chars()
+            .all(|c| is_path_symbol_char(c) || c == SYMBOL_PATH_SEPARATOR)
+        && !s.ends_with(SYMBOL_PATH_SEPARATOR)
 }
 
 pub fn path_prefix(s: &str) -> String {
-    let mut v: Vec<&str> = s.split('.').collect();
+    let mut v: Vec<&str> = s.split(SYMBOL_PATH_SEPARATOR).collect();
     let len = v.len();
 
     if len > 1 {
@@ -392,7 +397,7 @@ pub fn path_prefix(s: &str) -> String {
 }
 
 pub fn path_suffix(s: &str) -> String {
-    let mut v: Vec<&str> = s.split('.').collect();
+    let mut v: Vec<&str> = s.split(SYMBOL_PATH_SEPARATOR).collect();
     let len = v.len();
 
     if len > 1 {
