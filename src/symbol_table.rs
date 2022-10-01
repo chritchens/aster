@@ -8,6 +8,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct STElement {
+    pub path: Option<String>,
     pub name: Option<String>,
     pub value: Value,
     pub file: Option<String>,
@@ -20,6 +21,7 @@ impl STElement {
 
     pub fn from_value(value: &Value) -> Self {
         STElement {
+            path: None,
             name: value.name.clone(),
             value: value.clone(),
             file: value.token.file(),
@@ -78,7 +80,16 @@ impl SymbolTable {
 
                     match keyword {
                         Keyword::Import => {
-                            let name = value.children[1].name.clone().unwrap();
+                            let mut name_segs = Vec::new();
+
+                            if let Some(path) = value.children[1].path.clone() {
+                                name_segs.push(path);
+                            }
+
+                            name_segs.push(value.children[1].name.clone().unwrap());
+
+                            let name = name_segs.join(".");
+
                             st.imp_paths.insert(name.clone());
 
                             let st_el = STElement::from_value(&value);

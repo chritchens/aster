@@ -379,6 +379,29 @@ pub fn is_path_symbol(s: &str) -> bool {
         && !s.ends_with('.')
 }
 
+pub fn path_prefix(s: &str) -> String {
+    let mut v: Vec<&str> = s.split('.').collect();
+    let len = v.len();
+
+    if len > 1 {
+        v.remove(len - 1);
+        v.join(".")
+    } else {
+        "".into()
+    }
+}
+
+pub fn path_suffix(s: &str) -> String {
+    let mut v: Vec<&str> = s.split('.').collect();
+    let len = v.len();
+
+    if len > 1 {
+        v.remove(len - 1).into()
+    } else {
+        s.into()
+    }
+}
+
 pub const FORM_START: char = '(';
 
 pub fn is_form_start(s: &str) -> bool {

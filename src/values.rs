@@ -333,6 +333,17 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Type));
+        assert_eq!(values[0].path, None);
+        assert_eq!(values[0].name, Some("Int".into()));
+
+        s = "builtin.Int";
+
+        values = Values::from_str(s).unwrap();
+
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0].typing, Some(Type::Path));
+        assert_eq!(values[0].path, Some("builtin".into()));
+        assert_eq!(values[0].name, Some("Int".into()));
 
         s = "square";
 
@@ -340,6 +351,17 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Unknown(None)));
+        assert_eq!(values[0].path, None);
+        assert_eq!(values[0].name, Some("square".into()));
+
+        s = "math.square";
+
+        values = Values::from_str(s).unwrap();
+
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0].typing, Some(Type::Path));
+        assert_eq!(values[0].path, Some("math".into()));
+        assert_eq!(values[0].name, Some("square".into()));
     }
 
     #[test]

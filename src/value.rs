@@ -1,5 +1,6 @@
 use crate::error::{Error, ParsingError};
 use crate::result::Result;
+use crate::syntax::{path_prefix, path_suffix};
 use crate::token::{Token, TokenKind};
 use crate::typing::Type;
 
@@ -48,6 +49,7 @@ impl PrimValue {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Value {
     pub token: Token,
+    pub path: Option<String>,
     pub name: Option<String>,
     pub value: Option<PrimValue>,
     pub children: Vec<Value>,
@@ -219,12 +221,22 @@ impl Value {
             }));
         }
 
-        let name = token.chunks.as_ref().unwrap()[0].to_string();
+        let mut name = token.chunks.as_ref().unwrap()[0].to_string();
         if name.is_empty() {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
                 desc: "expected a non-empty function name".into(),
             }));
+        }
+
+        let path = match token.kind {
+            TokenKind::Keyword | TokenKind::ValueSymbol | TokenKind::TypeSymbol => None,
+            TokenKind::PathSymbol => Some(path_prefix(&name)),
+            _ => unreachable!(),
+        };
+
+        if path.is_some() {
+            name = path_suffix(&name);
         }
 
         let typing = match token.kind {
@@ -236,6 +248,7 @@ impl Value {
 
         let mut value = Value::default();
         value.token = token;
+        value.path = path;
         value.name = Some(name);
 
         value.typing = Some(typing);
@@ -267,7 +280,7 @@ impl Value {
             }));
         }
 
-        let name = head_token.chunks.as_ref().unwrap()[0].to_string();
+        let mut name = head_token.chunks.as_ref().unwrap()[0].to_string();
         if name.is_empty() {
             return Err(Error::Parsing(ParsingError {
                 loc: head_token.loc(),
@@ -275,8 +288,19 @@ impl Value {
             }));
         }
 
+        let path = match head_token.kind {
+            TokenKind::Keyword | TokenKind::ValueSymbol | TokenKind::TypeSymbol => None,
+            TokenKind::PathSymbol => Some(path_prefix(&name)),
+            _ => unreachable!(),
+        };
+
+        if path.is_some() {
+            name = path_suffix(&name);
+        }
+
         let mut value = Value::default();
         value.token = head_token;
+        value.path = path;
         value.name = Some(name);
 
         let len = tokens.len() - 1;
