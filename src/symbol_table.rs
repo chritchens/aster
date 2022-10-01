@@ -38,6 +38,7 @@ pub struct SymbolTable {
     pub def_prods: BTreeSet<String>,
     pub def_sigs: BTreeSet<String>,
     pub def_funs: BTreeSet<String>,
+    pub def_apps: BTreeSet<String>,
     pub def_attrs: BTreeSet<String>,
 
     pub imports: BTreeMap<String, Vec<STElement>>,
@@ -48,10 +49,14 @@ pub struct SymbolTable {
     pub prods: BTreeMap<String, Vec<STElement>>,
     pub sigs: BTreeMap<String, Vec<STElement>>,
     pub funs: BTreeMap<String, Vec<STElement>>,
+    pub apps: BTreeMap<String, Vec<STElement>>,
     pub attrs: BTreeMap<String, Vec<STElement>>,
 
+    pub main_type: Option<STElement>,
     pub main_sig: Option<STElement>,
     pub main_fun: Option<STElement>,
+    pub main_app: Option<STElement>,
+    pub main_attrs: Option<STElement>,
 }
 
 impl SymbolTable {
@@ -121,9 +126,20 @@ impl SymbolTable {
                             let st_el = STElement::from_value(&value);
 
                             st.types
-                                .entry(arg)
+                                .entry(arg.clone())
                                 .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el]);
+                                .or_insert_with(|| vec![st_el.clone()]);
+
+                            if arg == "Main" {
+                                if st.main_type.is_some() {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "duplicate Main type".into(),
+                                    }));
+                                }
+
+                                st.main_type = Some(st_el);
+                            }
                         }
                         Keyword::Defsig => {
                             let arg = value.children[1].name.clone().unwrap();
@@ -209,9 +225,187 @@ impl SymbolTable {
                             let st_el = STElement::from_value(&value);
 
                             st.attrs
-                                .entry(arg)
+                                .entry(arg.clone())
                                 .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el]);
+                                .or_insert_with(|| vec![st_el.clone()]);
+
+                            if arg == "main" {
+                                if st.main_attrs.is_some() {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "duplicate main attributes".into(),
+                                    }));
+                                }
+
+                                st.main_attrs = Some(st_el);
+                            }
+                        }
+                        Keyword::Def => {
+                            if value.children.len() != 3 {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "invalid definition".into(),
+                                }));
+                            }
+
+                            let arg = value.children[1].name.clone().unwrap();
+                            let arg_value = value.children[2].clone();
+                            let st_el = STElement::from_value(&value);
+
+                            let len = arg_value.children.len();
+
+                            if len == 2 {
+                                if arg_value.children[0].name.is_none() {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "expected a keyword".into(),
+                                    }));
+                                }
+
+                                let kind = arg_value.children[0].name.clone().unwrap();
+                                let keyword = Keyword::from_string(kind)?;
+
+                                match keyword {
+                                    Keyword::Type => {
+                                        st.def_types.insert(arg.clone());
+
+                                        st.types
+                                            .entry(arg.clone())
+                                            .and_modify(|v| v.push(st_el.clone()))
+                                            .or_insert_with(|| vec![st_el.clone()]);
+
+                                        if arg == "Main" {
+                                            if st.main_type.is_some() {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: value.token.loc(),
+                                                    desc: "duplicate Main type".into(),
+                                                }));
+                                            }
+
+                                            st.main_type = Some(st_el);
+                                        }
+                                    }
+                                    Keyword::Sig => {
+                                        st.def_sigs.insert(arg.clone());
+
+                                        st.sigs
+                                            .entry(arg.clone())
+                                            .and_modify(|v| v.push(st_el.clone()))
+                                            .or_insert_with(|| vec![st_el.clone()]);
+
+                                        if arg == "main" {
+                                            if st.main_sig.is_some() {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: value.token.loc(),
+                                                    desc: "duplicate main signature".into(),
+                                                }));
+                                            }
+
+                                            st.main_sig = Some(st_el);
+                                        }
+                                    }
+                                    Keyword::Prim => {
+                                        st.def_prims.insert(arg.clone());
+
+                                        st.prims
+                                            .entry(arg)
+                                            .and_modify(|v| v.push(st_el.clone()))
+                                            .or_insert_with(|| vec![st_el]);
+                                    }
+                                    Keyword::Sum => {
+                                        st.def_sums.insert(arg.clone());
+
+                                        st.sums
+                                            .entry(arg)
+                                            .and_modify(|v| v.push(st_el.clone()))
+                                            .or_insert_with(|| vec![st_el]);
+                                    }
+                                    Keyword::Prod => {
+                                        st.def_prods.insert(arg.clone());
+
+                                        st.prods
+                                            .entry(arg)
+                                            .and_modify(|v| v.push(st_el.clone()))
+                                            .or_insert_with(|| vec![st_el]);
+                                    }
+                                    Keyword::Fun => {
+                                        st.def_funs.insert(arg.clone());
+
+                                        st.funs
+                                            .entry(arg.clone())
+                                            .and_modify(|v| v.push(st_el.clone()))
+                                            .or_insert_with(|| vec![st_el.clone()]);
+
+                                        if arg == "main" {
+                                            if st.main_fun.is_some() {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: value.token.loc(),
+                                                    desc: "duplicate main function".into(),
+                                                }));
+                                            }
+
+                                            st.main_fun = Some(st_el);
+                                        }
+                                    }
+                                    Keyword::App => {
+                                        st.def_apps.insert(arg.clone());
+
+                                        st.apps
+                                            .entry(arg.clone())
+                                            .and_modify(|v| v.push(st_el.clone()))
+                                            .or_insert_with(|| vec![st_el.clone()]);
+
+                                        if arg == "main" {
+                                            if st.main_app.is_some() {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: value.token.loc(),
+                                                    desc: "duplicate main application".into(),
+                                                }));
+                                            }
+
+                                            st.main_app = Some(st_el);
+                                        }
+                                    }
+                                    Keyword::Attrs => {
+                                        st.def_attrs.insert(arg.clone());
+
+                                        st.attrs
+                                            .entry(arg.clone())
+                                            .and_modify(|v| v.push(st_el.clone()))
+                                            .or_insert_with(|| vec![st_el.clone()]);
+
+                                        if arg == "main" {
+                                            if st.main_attrs.is_some() {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: value.token.loc(),
+                                                    desc: "duplicate main attributes".into(),
+                                                }));
+                                            }
+
+                                            st.main_attrs = Some(st_el);
+                                        }
+                                    }
+                                    _ => {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: value.token.loc(),
+                                            desc: "unexpected keyword".into(),
+                                        }));
+                                    }
+                                }
+                            } else if len == 1 {
+                                let arg = value.name.clone().unwrap();
+                                st.def_prims.insert(arg.clone());
+
+                                st.prims
+                                    .entry(arg)
+                                    .and_modify(|v| v.push(st_el.clone()))
+                                    .or_insert_with(|| vec![st_el]);
+                            } else {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "invalid definition".into(),
+                                }));
+                            }
                         }
                         _ => {}
                     }
@@ -291,11 +485,22 @@ mod test {
         use super::SymbolTable;
         use crate::values::Values;
 
-        let s = "(deftype RGB (Prod UInt UInt UInt))";
+        let mut s = "(deftype RGB (Prod UInt UInt UInt))";
 
-        let values = Values::from_str(s).unwrap();
+        let mut values = Values::from_str(s).unwrap();
 
-        let st = SymbolTable::from_values(&values).unwrap();
+        let mut st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_types.len(), 1);
+        assert!(st.def_types.contains("RGB"));
+        assert_eq!(st.types.len(), 1);
+        assert!(st.types.contains_key("RGB"));
+
+        s = "(def RGB (type (Prod UInt UInt UInt)))";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
 
         assert_eq!(st.def_types.len(), 1);
         assert!(st.def_types.contains("RGB"));
@@ -308,11 +513,22 @@ mod test {
         use super::SymbolTable;
         use crate::values::Values;
 
-        let s = "(defattrs sum (prod attr1 attr2 attr3))";
+        let mut s = "(defattrs sum (prod attr1 attr2 attr3))";
 
-        let values = Values::from_str(s).unwrap();
+        let mut values = Values::from_str(s).unwrap();
 
-        let st = SymbolTable::from_values(&values).unwrap();
+        let mut st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_attrs.len(), 1);
+        assert!(st.def_attrs.contains("sum"));
+        assert_eq!(st.attrs.len(), 1);
+        assert!(st.attrs.contains_key("sum"));
+
+        s = "(def sum (attrs (prod attr1 attr2 attr3)))";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
 
         assert_eq!(st.def_attrs.len(), 1);
         assert!(st.def_attrs.contains("sum"));
@@ -325,11 +541,27 @@ mod test {
         use super::SymbolTable;
         use crate::values::Values;
 
-        let s = "(defsig main (Fun IO IO))\n(defun main io (id io))";
+        let mut s = "(defsig main (Fun IO IO))\n(defun main io (id io))";
 
-        let values = Values::from_str(s).unwrap();
+        let mut values = Values::from_str(s).unwrap();
 
-        let st = SymbolTable::from_values(&values).unwrap();
+        let mut st = SymbolTable::from_values(&values).unwrap();
+
+        assert!(st.main_sig.is_some());
+        assert_eq!(st.def_sigs.len(), 1);
+        assert!(st.def_sigs.contains("main"));
+        assert_eq!(st.sigs.len(), 1);
+        assert!(st.sigs.contains_key("main"));
+        assert_eq!(st.def_funs.len(), 1);
+        assert!(st.def_funs.contains("main"));
+        assert_eq!(st.funs.len(), 1);
+        assert!(st.funs.contains_key("main"));
+
+        s = "(def main (sig (Fun IO IO)))\n(def main (fun (_ io (id io))))";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
 
         assert!(st.main_sig.is_some());
         assert_eq!(st.def_sigs.len(), 1);

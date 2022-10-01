@@ -3,10 +3,11 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 33] = [
+pub const KEYWORDS: [&str; 35] = [
     "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "defattrs",
-    "def", "type", "sum", "prod", "sig", "fun", "app", "attrs", "cast", "Empty", "UInt", "Int",
-    "Float", "Char", "String", "Path", "IO", "Sum", "Prod", "Sig", "Fun", "App", "Attrs", "Type",
+    "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "cast", "Empty", "UInt",
+    "Int", "Float", "Char", "String", "Path", "IO", "Sum", "Prod", "Sig", "Fun", "App", "Attrs",
+    "Type", "_",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -26,6 +27,7 @@ pub enum Keyword {
     Defattrs,
     Def,
     Type,
+    Prim,
     Sum,
     Prod,
     Sig,
@@ -48,6 +50,7 @@ pub enum Keyword {
     AppT,
     AttrsT,
     TypeT,
+    Wildcard,
 }
 
 impl fmt::Display for Keyword {
@@ -64,6 +67,7 @@ impl fmt::Display for Keyword {
             Keyword::Defattrs => write!(f, "defattrs"),
             Keyword::Def => write!(f, "def"),
             Keyword::Type => write!(f, "type"),
+            Keyword::Prim => write!(f, "prim"),
             Keyword::Sum => write!(f, "sum"),
             Keyword::Prod => write!(f, "prod"),
             Keyword::Sig => write!(f, "sig"),
@@ -86,6 +90,7 @@ impl fmt::Display for Keyword {
             Keyword::AppT => write!(f, "App"),
             Keyword::AttrsT => write!(f, "Attrs"),
             Keyword::TypeT => write!(f, "Type"),
+            Keyword::Wildcard => write!(f, "_"),
         }
     }
 }
@@ -104,6 +109,7 @@ impl Keyword {
             "defattrs" => Ok(Keyword::Defattrs),
             "def" => Ok(Keyword::Def),
             "type" => Ok(Keyword::Type),
+            "prim" => Ok(Keyword::Prim),
             "sum" => Ok(Keyword::Sum),
             "prod" => Ok(Keyword::Prod),
             "sig" => Ok(Keyword::Sig),
@@ -126,6 +132,7 @@ impl Keyword {
             "App" => Ok(Keyword::AppT),
             "Attrs" => Ok(Keyword::AttrsT),
             "Type" => Ok(Keyword::TypeT),
+            "_" => Ok(Keyword::Wildcard),
             _ => Err(Error::Syntax(SyntaxError {
                 loc: None,
                 desc: "expected keyword".into(),
