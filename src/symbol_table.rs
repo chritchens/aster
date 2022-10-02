@@ -265,7 +265,7 @@ impl SymbolTable {
 
                             let len = name_value.children.len();
 
-                            if len == 2 {
+                            if len >= 2 {
                                 if name_value.children[0].name.is_none() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
@@ -288,7 +288,7 @@ impl SymbolTable {
                                         if name == "Main" {
                                             if st.main_type.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
-                                                    loc: value.token.loc(),
+                                                    loc: name_value.token.loc(),
                                                     desc: "duplicate Main type".into(),
                                                 }));
                                             }
@@ -307,7 +307,7 @@ impl SymbolTable {
                                         if name == "main" {
                                             if st.main_sig.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
-                                                    loc: value.token.loc(),
+                                                    loc: name_value.token.loc(),
                                                     desc: "duplicate main signature".into(),
                                                 }));
                                             }
@@ -350,7 +350,7 @@ impl SymbolTable {
                                         if name == "main" {
                                             if st.main_fun.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
-                                                    loc: value.token.loc(),
+                                                    loc: name_value.token.loc(),
                                                     desc: "duplicate main function".into(),
                                                 }));
                                             }
@@ -369,7 +369,7 @@ impl SymbolTable {
                                         if name == "main" {
                                             if st.main_app.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
-                                                    loc: value.token.loc(),
+                                                    loc: name_value.token.loc(),
                                                     desc: "duplicate main application".into(),
                                                 }));
                                             }
@@ -388,7 +388,7 @@ impl SymbolTable {
                                         if name == "main" {
                                             if st.main_attrs.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
-                                                    loc: value.token.loc(),
+                                                    loc: name_value.token.loc(),
                                                     desc: "duplicate main attributes".into(),
                                                 }));
                                             }
@@ -398,7 +398,7 @@ impl SymbolTable {
                                     }
                                     _ => {
                                         return Err(Error::Semantic(SemanticError {
-                                            loc: value.token.loc(),
+                                            loc: name_value.token.loc(),
                                             desc: "unexpected keyword".into(),
                                         }));
                                     }
@@ -413,7 +413,7 @@ impl SymbolTable {
                                     .or_insert_with(|| vec![st_el]);
                             } else {
                                 return Err(Error::Semantic(SemanticError {
-                                    loc: value.token.loc(),
+                                    loc: name_value.token.loc(),
                                     desc: "invalid definition".into(),
                                 }));
                             }
@@ -520,11 +520,140 @@ mod test {
     }
 
     #[test]
+    fn symbol_table_prims() {
+        use super::SymbolTable;
+        use crate::values::Values;
+
+        let mut s = "(defprim i 0)";
+
+        let mut values = Values::from_str(s).unwrap();
+
+        let mut st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_prims.len(), 1);
+        assert!(st.def_prims.contains("i"));
+        assert_eq!(st.prims.len(), 1);
+        assert!(st.prims.contains_key("i"));
+
+        s = "(def i (prim 0))";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_prims.len(), 1);
+        assert!(st.def_prims.contains("i"));
+        assert_eq!(st.prims.len(), 1);
+        assert!(st.prims.contains_key("i"));
+    }
+
+    #[test]
+    fn symbol_table_sums() {
+        use super::SymbolTable;
+        use crate::values::Values;
+
+        let mut s = "(defsum predicate true)";
+
+        let mut values = Values::from_str(s).unwrap();
+
+        let mut st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_sums.len(), 1);
+        assert!(st.def_sums.contains("predicate"));
+        assert_eq!(st.sums.len(), 1);
+        assert!(st.sums.contains_key("predicate"));
+
+        s = "(def predicate (sum true))";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_sums.len(), 1);
+        assert!(st.def_sums.contains("predicate"));
+        assert_eq!(st.sums.len(), 1);
+        assert!(st.sums.contains_key("predicate"));
+    }
+
+    #[test]
+    fn symbol_table_prods() {
+        use super::SymbolTable;
+        use crate::values::Values;
+
+        let mut s = "(defprod result 1 ())";
+
+        let mut values = Values::from_str(s).unwrap();
+
+        let mut st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_prods.len(), 1);
+        assert!(st.def_prods.contains("result"));
+        assert_eq!(st.prods.len(), 1);
+        assert!(st.prods.contains_key("result"));
+
+        s = "(def result (prod 1 ()))";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_prods.len(), 1);
+        assert!(st.def_prods.contains("result"));
+        assert_eq!(st.prods.len(), 1);
+        assert!(st.prods.contains_key("result"));
+    }
+
+    #[test]
+    fn symbol_table_funs() {
+        use super::SymbolTable;
+        use crate::values::Values;
+
+        let mut s = "(defun rShift x i (>> x i))";
+
+        let mut values = Values::from_str(s).unwrap();
+
+        let mut st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_funs.len(), 1);
+        assert!(st.def_funs.contains("rShift"));
+        assert_eq!(st.funs.len(), 1);
+        assert!(st.funs.contains_key("rShift"));
+
+        s = "(def rShift (fun x i (>> x i)))";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_funs.len(), 1);
+        assert!(st.def_funs.contains("rShift"));
+        assert_eq!(st.funs.len(), 1);
+        assert!(st.funs.contains_key("rShift"));
+    }
+
+    #[test]
+    fn symbol_table_apps() {
+        use super::SymbolTable;
+        use crate::values::Values;
+
+        let s = "(def res (app f x y z))";
+
+        let values = Values::from_str(s).unwrap();
+
+        let st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_apps.len(), 1);
+        assert!(st.def_apps.contains("res"));
+        assert_eq!(st.apps.len(), 1);
+        assert!(st.apps.contains_key("res"));
+    }
+
+    #[test]
     fn symbol_table_attrs() {
         use super::SymbolTable;
         use crate::values::Values;
 
-        let mut s = "(defattrs sum (prod attr1 attr2 attr3))";
+        let mut s = "(defattrs sum attr1 attr2 attr3)";
 
         let mut values = Values::from_str(s).unwrap();
 
@@ -535,7 +664,7 @@ mod test {
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
 
-        s = "(def sum (attrs (prod attr1 attr2 attr3)))";
+        s = "(def sum (attrs attr1 attr2 attr3))";
 
         values = Values::from_str(s).unwrap();
 
@@ -568,7 +697,7 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
 
-        s = "(def main (sig (Fun IO IO)))\n(def main (fun (_ io (id io))))";
+        s = "(def main (sig (Fun IO IO)))\n(def main (fun io (id io)))";
 
         values = Values::from_str(s).unwrap();
 
