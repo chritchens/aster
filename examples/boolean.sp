@@ -10,3 +10,6 @@
 
 (defsig false False)
 (defprim false)
+
+(defsig boolToUInt (Fun Bool UInt))
+(defun boolToUInt pred (case pred true 1 false 0))

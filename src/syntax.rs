@@ -3,11 +3,11 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 36] = [
+pub const KEYWORDS: [&str; 37] = [
     "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "defattrs",
-    "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "cast", "Empty", "Prim",
-    "UInt", "Int", "Float", "Char", "String", "Path", "IO", "Sum", "Prod", "Sig", "Fun", "App",
-    "Attrs", "Type", "_",
+    "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "cast", "case", "Empty",
+    "Prim", "UInt", "Int", "Float", "Char", "String", "Path", "IO", "Sum", "Prod", "Sig", "Fun",
+    "App", "Attrs", "Type", "_",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -35,6 +35,7 @@ pub enum Keyword {
     App,
     Attrs,
     Cast,
+    Case,
     EmptyT,
     PrimT,
     UIntT,
@@ -76,6 +77,7 @@ impl fmt::Display for Keyword {
             Keyword::App => write!(f, "app"),
             Keyword::Attrs => write!(f, "attrs"),
             Keyword::Cast => write!(f, "cast"),
+            Keyword::Case => write!(f, "case"),
             Keyword::EmptyT => write!(f, "Empty"),
             Keyword::PrimT => write!(f, "Prim"),
             Keyword::UIntT => write!(f, "UInt"),
@@ -119,6 +121,7 @@ impl Keyword {
             "app" => Ok(Keyword::App),
             "attrs" => Ok(Keyword::Attrs),
             "cast" => Ok(Keyword::Cast),
+            "case" => Ok(Keyword::Case),
             "Empty" => Ok(Keyword::EmptyT),
             "Prim" => Ok(Keyword::PrimT),
             "UInt" => Ok(Keyword::UIntT),
