@@ -9,6 +9,7 @@ pub enum Type {
     Unknown(Option<String>),
     Builtin,
     Empty,
+    Prim,
     UInt,
     Int,
     Float,
@@ -69,6 +70,7 @@ impl Type {
     pub fn from_str(s: &str, loc: Loc) -> Result<Self> {
         let t = match s {
             "Empty" => Type::Empty,
+            "Prim" => Type::Prim,
             "UInt" => Type::UInt,
             "Int" => Type::Int,
             "Float" => Type::Float,
@@ -108,6 +110,7 @@ impl Type {
             },
             Type::Builtin => "Builtin".into(),
             Type::Empty => "Empty".into(),
+            Type::Prim => "Prim".into(),
             Type::UInt => "UInt".into(),
             Type::Int => "Int".into(),
             Type::Float => "Float".into(),
