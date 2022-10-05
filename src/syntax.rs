@@ -5,8 +5,8 @@ use std::fmt;
 
 pub const KEYWORDS: [&str; 42] = [
     "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "defattrs",
-    "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "case", "caseMap", "get",
-    "set", "cast", "dup", "drop", "Empty", "Prim", "UInt", "Int", "Float", "Char", "String",
+    "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "case", "caseMap", "load",
+    "store", "cast", "dup", "drop", "Empty", "Prim", "UInt", "Int", "Float", "Char", "String",
     "Path", "IO", "Sum", "Prod", "Sig", "Fun", "App", "Attrs", "Type", "_",
 ];
 
@@ -36,8 +36,8 @@ pub enum Keyword {
     Attrs,
     Case,
     CaseMap,
-    Get,
-    Set,
+    Load,
+    Store,
     Cast,
     Dup,
     Drop,
@@ -83,8 +83,8 @@ impl fmt::Display for Keyword {
             Keyword::Attrs => write!(f, "attrs"),
             Keyword::Case => write!(f, "case"),
             Keyword::CaseMap => write!(f, "caseMap"),
-            Keyword::Get => write!(f, "get"),
-            Keyword::Set => write!(f, "set"),
+            Keyword::Load => write!(f, "load"),
+            Keyword::Store => write!(f, "store"),
             Keyword::Cast => write!(f, "cast"),
             Keyword::Dup => write!(f, "dup"),
             Keyword::Drop => write!(f, "drop"),
@@ -132,8 +132,8 @@ impl Keyword {
             "attrs" => Ok(Keyword::Attrs),
             "case" => Ok(Keyword::Case),
             "caseMap" => Ok(Keyword::CaseMap),
-            "get" => Ok(Keyword::Get),
-            "set" => Ok(Keyword::Set),
+            "load" => Ok(Keyword::Load),
+            "store" => Ok(Keyword::Store),
             "cast" => Ok(Keyword::Cast),
             "dup" => Ok(Keyword::Dup),
             "drop" => Ok(Keyword::Drop),
