@@ -3,11 +3,11 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 42] = [
+pub const KEYWORDS: [&str; 43] = [
     "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "defattrs",
     "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "case", "caseMap", "load",
     "store", "cast", "dup", "drop", "Empty", "Prim", "UInt", "Int", "Float", "Char", "String",
-    "Path", "IO", "Sum", "Prod", "Sig", "Fun", "App", "Attrs", "Type", "_",
+    "Mem", "Path", "IO", "Sum", "Prod", "Sig", "Fun", "App", "Attrs", "Type", "_",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -48,6 +48,7 @@ pub enum Keyword {
     FloatT,
     CharT,
     StringT,
+    MemT,
     PathT,
     IOT,
     SumT,
@@ -95,6 +96,7 @@ impl fmt::Display for Keyword {
             Keyword::FloatT => write!(f, "Float"),
             Keyword::CharT => write!(f, "Char"),
             Keyword::StringT => write!(f, "String"),
+            Keyword::MemT => write!(f, "Mem"),
             Keyword::PathT => write!(f, "Path"),
             Keyword::IOT => write!(f, "IO"),
             Keyword::SumT => write!(f, "Sum"),
@@ -144,6 +146,7 @@ impl Keyword {
             "Float" => Ok(Keyword::FloatT),
             "Char" => Ok(Keyword::CharT),
             "String" => Ok(Keyword::StringT),
+            "Mem" => Ok(Keyword::MemT),
             "Path" => Ok(Keyword::PathT),
             "IO" => Ok(Keyword::IOT),
             "Sum" => Ok(Keyword::SumT),
