@@ -3,11 +3,11 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 38] = [
+pub const KEYWORDS: [&str; 42] = [
     "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "defattrs",
-    "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "cast", "case", "caseMap",
-    "Empty", "Prim", "UInt", "Int", "Float", "Char", "String", "Path", "IO", "Sum", "Prod", "Sig",
-    "Fun", "App", "Attrs", "Type", "_",
+    "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "case", "caseMap", "get",
+    "set", "cast", "dup", "drop", "Empty", "Prim", "UInt", "Int", "Float", "Char", "String",
+    "Path", "IO", "Sum", "Prod", "Sig", "Fun", "App", "Attrs", "Type", "_",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -34,9 +34,13 @@ pub enum Keyword {
     Fun,
     App,
     Attrs,
-    Cast,
     Case,
     CaseMap,
+    Get,
+    Set,
+    Cast,
+    Dup,
+    Drop,
     EmptyT,
     PrimT,
     UIntT,
@@ -77,9 +81,13 @@ impl fmt::Display for Keyword {
             Keyword::Fun => write!(f, "fun"),
             Keyword::App => write!(f, "app"),
             Keyword::Attrs => write!(f, "attrs"),
-            Keyword::Cast => write!(f, "cast"),
             Keyword::Case => write!(f, "case"),
             Keyword::CaseMap => write!(f, "caseMap"),
+            Keyword::Get => write!(f, "get"),
+            Keyword::Set => write!(f, "set"),
+            Keyword::Cast => write!(f, "cast"),
+            Keyword::Dup => write!(f, "dup"),
+            Keyword::Drop => write!(f, "drop"),
             Keyword::EmptyT => write!(f, "Empty"),
             Keyword::PrimT => write!(f, "Prim"),
             Keyword::UIntT => write!(f, "UInt"),
@@ -122,9 +130,13 @@ impl Keyword {
             "fun" => Ok(Keyword::Fun),
             "app" => Ok(Keyword::App),
             "attrs" => Ok(Keyword::Attrs),
-            "cast" => Ok(Keyword::Cast),
             "case" => Ok(Keyword::Case),
             "caseMap" => Ok(Keyword::CaseMap),
+            "get" => Ok(Keyword::Get),
+            "set" => Ok(Keyword::Set),
+            "cast" => Ok(Keyword::Cast),
+            "dup" => Ok(Keyword::Dup),
+            "drop" => Ok(Keyword::Drop),
             "Empty" => Ok(Keyword::EmptyT),
             "Prim" => Ok(Keyword::PrimT),
             "UInt" => Ok(Keyword::UIntT),
