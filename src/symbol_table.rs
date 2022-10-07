@@ -1,34 +1,10 @@
 use crate::error::{Error, SemanticError};
-use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::Keyword;
 use crate::typing::Type;
 use crate::value::Value;
 use crate::values::Values;
 use std::collections::{BTreeMap, BTreeSet};
-
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
-pub struct STElement {
-    pub path: Option<String>,
-    pub name: Option<String>,
-    pub value: Value,
-    pub loc: Option<Loc>,
-}
-
-impl STElement {
-    pub fn new() -> Self {
-        STElement::default()
-    }
-
-    pub fn from_value(value: &Value) -> Self {
-        STElement {
-            path: None,
-            name: value.name.clone(),
-            value: value.clone(),
-            loc: value.token.loc(),
-        }
-    }
-}
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct SymbolTable {
@@ -44,22 +20,22 @@ pub struct SymbolTable {
     pub def_apps: BTreeSet<String>,
     pub def_attrs: BTreeSet<String>,
 
-    pub imports: BTreeMap<String, Vec<STElement>>,
-    pub exports: BTreeMap<String, Vec<STElement>>,
-    pub types: BTreeMap<String, Vec<STElement>>,
-    pub prims: BTreeMap<String, Vec<STElement>>,
-    pub sums: BTreeMap<String, Vec<STElement>>,
-    pub prods: BTreeMap<String, Vec<STElement>>,
-    pub sigs: BTreeMap<String, Vec<STElement>>,
-    pub funs: BTreeMap<String, Vec<STElement>>,
-    pub apps: BTreeMap<String, Vec<STElement>>,
-    pub attrs: BTreeMap<String, Vec<STElement>>,
+    pub imports: BTreeMap<String, Vec<Value>>,
+    pub exports: BTreeMap<String, Vec<Value>>,
+    pub types: BTreeMap<String, Vec<Value>>,
+    pub prims: BTreeMap<String, Vec<Value>>,
+    pub sums: BTreeMap<String, Vec<Value>>,
+    pub prods: BTreeMap<String, Vec<Value>>,
+    pub sigs: BTreeMap<String, Vec<Value>>,
+    pub funs: BTreeMap<String, Vec<Value>>,
+    pub apps: BTreeMap<String, Vec<Value>>,
+    pub attrs: BTreeMap<String, Vec<Value>>,
 
-    pub main_type: Option<STElement>,
-    pub main_sig: Option<STElement>,
-    pub main_fun: Option<STElement>,
-    pub main_app: Option<STElement>,
-    pub main_attrs: Option<STElement>,
+    pub main_type: Option<Value>,
+    pub main_sig: Option<Value>,
+    pub main_fun: Option<Value>,
+    pub main_app: Option<Value>,
+    pub main_attrs: Option<Value>,
 }
 
 impl SymbolTable {
@@ -70,7 +46,7 @@ impl SymbolTable {
     pub fn from_values(values: &Values) -> Result<Self> {
         let mut st = SymbolTable::new();
 
-        for value in values.clone().into_iter() {
+        for mut value in values.clone().into_iter() {
             if let Some(file) = value.token.file() {
                 st.files.insert(file);
             }
@@ -93,15 +69,13 @@ impl SymbolTable {
 
                             st.imp_paths.insert(name.clone());
 
-                            let st_el = STElement::from_value(&value);
-
                             st.imports
                                 .entry(name)
-                                .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el]);
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value]);
                         }
                         Keyword::Export => {
-                            let value = value.children[1].clone();
+                            value = value.children[1].clone();
 
                             if value.children.len() > 1 {
                                 let len = value.children.len();
@@ -112,35 +86,29 @@ impl SymbolTable {
                                     let name = child.name.clone().unwrap();
                                     st.exp_defs.insert(name.clone());
 
-                                    let st_el = STElement::from_value(&value);
-
                                     st.exports
                                         .entry(name)
-                                        .and_modify(|v| v.push(st_el.clone()))
-                                        .or_insert_with(|| vec![st_el]);
+                                        .and_modify(|v| v.push(value.clone()))
+                                        .or_insert_with(|| vec![value.clone()]);
                                 }
                             } else {
                                 let name = value.name.clone().unwrap();
                                 st.exp_defs.insert(name.clone());
 
-                                let st_el = STElement::from_value(&value);
-
                                 st.exports
                                     .entry(name)
-                                    .and_modify(|v| v.push(st_el.clone()))
-                                    .or_insert_with(|| vec![st_el]);
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
                             }
                         }
                         Keyword::Deftype => {
                             let name = value.children[1].name.clone().unwrap();
                             st.def_types.insert(name.clone());
 
-                            let st_el = STElement::from_value(&value);
-
                             st.types
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el.clone()]);
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
 
                             if name == "Main" {
                                 if st.main_type.is_some() {
@@ -150,19 +118,17 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                st.main_type = Some(st_el);
+                                st.main_type = Some(value);
                             }
                         }
                         Keyword::Defsig => {
                             let name = value.children[1].name.clone().unwrap();
                             st.def_sigs.insert(name.clone());
 
-                            let st_el = STElement::from_value(&value);
-
                             st.sigs
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el.clone()]);
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
 
                             if name == "main" {
                                 if st.main_sig.is_some() {
@@ -172,52 +138,44 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                st.main_sig = Some(st_el);
+                                st.main_sig = Some(value);
                             }
                         }
                         Keyword::Defprim => {
                             let name = value.children[1].name.clone().unwrap();
                             st.def_prims.insert(name.clone());
 
-                            let st_el = STElement::from_value(&value);
-
                             st.prims
                                 .entry(name)
-                                .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el]);
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value]);
                         }
                         Keyword::Defsum => {
                             let name = value.children[1].name.clone().unwrap();
                             st.def_sums.insert(name.clone());
 
-                            let st_el = STElement::from_value(&value);
-
                             st.sums
                                 .entry(name)
-                                .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el]);
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value]);
                         }
                         Keyword::Defprod => {
                             let name = value.children[1].name.clone().unwrap();
                             st.def_prods.insert(name.clone());
 
-                            let st_el = STElement::from_value(&value);
-
                             st.prods
                                 .entry(name)
-                                .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el]);
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value]);
                         }
                         Keyword::Defun => {
                             let name = value.children[1].name.clone().unwrap();
                             st.def_funs.insert(name.clone());
 
-                            let st_el = STElement::from_value(&value);
-
                             st.funs
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el.clone()]);
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
 
                             if name == "main" {
                                 if st.main_fun.is_some() {
@@ -227,19 +185,17 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                st.main_fun = Some(st_el);
+                                st.main_fun = Some(value);
                             }
                         }
                         Keyword::Defattrs => {
                             let name = value.children[1].name.clone().unwrap();
                             st.def_attrs.insert(name.clone());
 
-                            let st_el = STElement::from_value(&value);
-
                             st.attrs
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(st_el.clone()))
-                                .or_insert_with(|| vec![st_el.clone()]);
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
 
                             if name == "main" {
                                 if st.main_attrs.is_some() {
@@ -249,7 +205,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                st.main_attrs = Some(st_el);
+                                st.main_attrs = Some(value);
                             }
                         }
                         Keyword::Def => {
@@ -262,7 +218,6 @@ impl SymbolTable {
 
                             let name = value.children[1].name.clone().unwrap();
                             let name_value = value.children[2].clone();
-                            let st_el = STElement::from_value(&value);
 
                             let len = name_value.children.len();
 
@@ -283,8 +238,8 @@ impl SymbolTable {
 
                                         st.types
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(st_el.clone()))
-                                            .or_insert_with(|| vec![st_el.clone()]);
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
 
                                         if name == "Main" {
                                             if st.main_type.is_some() {
@@ -294,7 +249,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            st.main_type = Some(st_el);
+                                            st.main_type = Some(value);
                                         }
                                     }
                                     Keyword::Sig => {
@@ -302,8 +257,8 @@ impl SymbolTable {
 
                                         st.sigs
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(st_el.clone()))
-                                            .or_insert_with(|| vec![st_el.clone()]);
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
 
                                         if name == "main" {
                                             if st.main_sig.is_some() {
@@ -313,7 +268,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            st.main_sig = Some(st_el);
+                                            st.main_sig = Some(value);
                                         }
                                     }
                                     Keyword::Prim => {
@@ -321,32 +276,32 @@ impl SymbolTable {
 
                                         st.prims
                                             .entry(name)
-                                            .and_modify(|v| v.push(st_el.clone()))
-                                            .or_insert_with(|| vec![st_el]);
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value]);
                                     }
                                     Keyword::Sum => {
                                         st.def_sums.insert(name.clone());
 
                                         st.sums
                                             .entry(name)
-                                            .and_modify(|v| v.push(st_el.clone()))
-                                            .or_insert_with(|| vec![st_el]);
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value]);
                                     }
                                     Keyword::Prod => {
                                         st.def_prods.insert(name.clone());
 
                                         st.prods
                                             .entry(name)
-                                            .and_modify(|v| v.push(st_el.clone()))
-                                            .or_insert_with(|| vec![st_el]);
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value]);
                                     }
                                     Keyword::Fun => {
                                         st.def_funs.insert(name.clone());
 
                                         st.funs
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(st_el.clone()))
-                                            .or_insert_with(|| vec![st_el.clone()]);
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
 
                                         if name == "main" {
                                             if st.main_fun.is_some() {
@@ -356,7 +311,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            st.main_fun = Some(st_el);
+                                            st.main_fun = Some(value);
                                         }
                                     }
                                     Keyword::App => {
@@ -364,8 +319,8 @@ impl SymbolTable {
 
                                         st.apps
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(st_el.clone()))
-                                            .or_insert_with(|| vec![st_el.clone()]);
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
 
                                         if name == "main" {
                                             if st.main_app.is_some() {
@@ -375,7 +330,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            st.main_app = Some(st_el);
+                                            st.main_app = Some(value);
                                         }
                                     }
                                     Keyword::Attrs => {
@@ -383,8 +338,8 @@ impl SymbolTable {
 
                                         st.attrs
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(st_el.clone()))
-                                            .or_insert_with(|| vec![st_el.clone()]);
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
 
                                         if name == "main" {
                                             if st.main_attrs.is_some() {
@@ -394,7 +349,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            st.main_attrs = Some(st_el);
+                                            st.main_attrs = Some(value);
                                         }
                                     }
                                     _ => {
@@ -410,8 +365,8 @@ impl SymbolTable {
 
                                 st.prims
                                     .entry(name)
-                                    .and_modify(|v| v.push(st_el.clone()))
-                                    .or_insert_with(|| vec![st_el]);
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
                             } else {
                                 return Err(Error::Semantic(SemanticError {
                                     loc: name_value.token.loc(),

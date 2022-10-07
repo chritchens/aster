@@ -51,9 +51,9 @@ pub struct Value {
     pub token: Token,
     pub path: Option<String>,
     pub name: Option<String>,
+    pub typing: Option<Type>,
     pub value: Option<PrimValue>,
     pub children: Vec<Value>,
-    pub typing: Option<Type>,
 }
 
 impl Value {
