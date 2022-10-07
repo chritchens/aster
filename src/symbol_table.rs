@@ -1,4 +1,5 @@
 use crate::error::{Error, SemanticError};
+use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::Keyword;
 use crate::typing::Type;
@@ -11,7 +12,7 @@ pub struct STElement {
     pub path: Option<String>,
     pub name: Option<String>,
     pub value: Value,
-    pub file: Option<String>,
+    pub loc: Option<Loc>,
 }
 
 impl STElement {
@@ -24,7 +25,7 @@ impl STElement {
             path: None,
             name: value.name.clone(),
             value: value.clone(),
-            file: value.token.file(),
+            loc: value.token.loc(),
         }
     }
 }
