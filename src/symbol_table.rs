@@ -376,7 +376,6 @@ impl SymbolTable {
                         }
                         _ if value.prim.is_none() && value.children.len() > 1 => {
                             let name = value.children[1].name.clone().unwrap();
-                            st.def_apps.insert(name.clone());
 
                             st.apps
                                 .entry(name)
@@ -387,7 +386,6 @@ impl SymbolTable {
                     }
                 } else if value.prim.is_none() && value.children.len() > 1 {
                     let name = value.children[0].name.clone().unwrap();
-                    st.def_apps.insert(name.clone());
 
                     st.apps
                         .entry(name)
@@ -626,8 +624,8 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_apps.len(), 1);
-        assert!(st.def_apps.contains("f"));
+        assert_eq!(st.def_apps.len(), 0);
+        assert!(!st.def_apps.contains("f"));
         assert_eq!(st.apps.len(), 1);
         assert!(st.apps.contains_key("f"));
     }
