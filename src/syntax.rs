@@ -3,11 +3,12 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 45] = [
+pub const KEYWORDS: [&str; 47] = [
     "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "defattrs",
-    "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "case", "caseMap", "load",
-    "store", "cast", "dup", "drop", "panic", "Empty", "Prim", "UInt", "Int", "Float", "Char",
-    "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod", "Sig", "Fun", "App", "Attrs", "Type", "_",
+    "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "case", "caseMap", "size",
+    "load", "store", "cast", "dup", "drop", "panic", "Empty", "Prim", "UInt", "Int", "Float",
+    "Size", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod", "Sig", "Fun", "App",
+    "Attrs", "Type", "_",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -36,6 +37,7 @@ pub enum Keyword {
     Attrs,
     Case,
     CaseMap,
+    Size,
     Load,
     Store,
     Cast,
@@ -47,6 +49,7 @@ pub enum Keyword {
     UIntT,
     IntT,
     FloatT,
+    SizeT,
     CharT,
     StringT,
     MemT,
@@ -86,6 +89,7 @@ impl fmt::Display for Keyword {
             Keyword::Attrs => write!(f, "attrs"),
             Keyword::Case => write!(f, "case"),
             Keyword::CaseMap => write!(f, "caseMap"),
+            Keyword::Size => write!(f, "size"),
             Keyword::Load => write!(f, "load"),
             Keyword::Store => write!(f, "store"),
             Keyword::Cast => write!(f, "cast"),
@@ -97,6 +101,7 @@ impl fmt::Display for Keyword {
             Keyword::UIntT => write!(f, "UInt"),
             Keyword::IntT => write!(f, "Int"),
             Keyword::FloatT => write!(f, "Float"),
+            Keyword::SizeT => write!(f, "Size"),
             Keyword::CharT => write!(f, "Char"),
             Keyword::StringT => write!(f, "String"),
             Keyword::MemT => write!(f, "Mem"),
@@ -138,6 +143,7 @@ impl Keyword {
             "attrs" => Ok(Keyword::Attrs),
             "case" => Ok(Keyword::Case),
             "caseMap" => Ok(Keyword::CaseMap),
+            "size" => Ok(Keyword::Size),
             "load" => Ok(Keyword::Load),
             "store" => Ok(Keyword::Store),
             "cast" => Ok(Keyword::Cast),
@@ -149,6 +155,7 @@ impl Keyword {
             "UInt" => Ok(Keyword::UIntT),
             "Int" => Ok(Keyword::IntT),
             "Float" => Ok(Keyword::FloatT),
+            "Size" => Ok(Keyword::SizeT),
             "Char" => Ok(Keyword::CharT),
             "String" => Ok(Keyword::StringT),
             "Mem" => Ok(Keyword::MemT),
