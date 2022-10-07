@@ -46,13 +46,13 @@ impl Values {
             match token.kind {
                 TokenKind::Comment => {
                     return Err(Error::Parsing(ParsingError {
-                        loc: Some(token.chunks.unwrap()[0].loc.clone()),
+                        loc: Some(token.chunks[0].loc.clone()),
                         desc: "unexpected comment token".into(),
                     }));
                 }
                 TokenKind::DocComment => {
                     return Err(Error::Parsing(ParsingError {
-                        loc: Some(token.chunks.unwrap()[0].loc.clone()),
+                        loc: Some(token.chunks[0].loc.clone()),
                         desc: "unexpected doc comment token".into(),
                     }));
                 }

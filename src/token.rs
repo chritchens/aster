@@ -29,7 +29,7 @@ impl Default for TokenKind {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Token {
     pub kind: TokenKind,
-    pub chunks: Option<StringChunks>,
+    pub chunks: StringChunks,
 }
 
 impl Token {
@@ -37,131 +37,86 @@ impl Token {
         Token::default()
     }
 
-    pub fn new_comment() -> Self {
+    pub fn new_from_kind(kind: TokenKind) -> Self {
         Token {
-            kind: TokenKind::Comment,
-            chunks: None,
+            kind,
+            chunks: StringChunks::new(),
         }
+    }
+
+    pub fn new_comment() -> Self {
+        Token::new_from_kind(TokenKind::Comment)
     }
 
     pub fn new_doc_comment() -> Self {
-        Token {
-            kind: TokenKind::DocComment,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::DocComment)
     }
 
     pub fn new_keyword() -> Self {
-        Token {
-            kind: TokenKind::Keyword,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::Keyword)
     }
 
     pub fn new_empty_literal() -> Self {
-        Token {
-            kind: TokenKind::EmptyLiteral,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::EmptyLiteral)
     }
 
     pub fn new_uint_literal() -> Self {
-        Token {
-            kind: TokenKind::UIntLiteral,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::UIntLiteral)
     }
 
     pub fn new_int_literal() -> Self {
-        Token {
-            kind: TokenKind::IntLiteral,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::IntLiteral)
     }
 
     pub fn new_float_literal() -> Self {
-        Token {
-            kind: TokenKind::FloatLiteral,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::FloatLiteral)
     }
 
     pub fn new_char_literal() -> Self {
-        Token {
-            kind: TokenKind::CharLiteral,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::CharLiteral)
     }
 
     pub fn new_string_literal() -> Self {
-        Token {
-            kind: TokenKind::StringLiteral,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::StringLiteral)
     }
 
     pub fn new_value_symbol() -> Self {
-        Token {
-            kind: TokenKind::ValueSymbol,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::ValueSymbol)
     }
 
     pub fn new_type_symbol() -> Self {
-        Token {
-            kind: TokenKind::TypeSymbol,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::TypeSymbol)
     }
 
     pub fn new_path_symbol() -> Self {
-        Token {
-            kind: TokenKind::PathSymbol,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::PathSymbol)
     }
 
     pub fn new_form_start() -> Self {
-        Token {
-            kind: TokenKind::FormStart,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::FormStart)
     }
 
     pub fn new_form_end() -> Self {
-        Token {
-            kind: TokenKind::FormEnd,
-            chunks: None,
-        }
+        Token::new_from_kind(TokenKind::FormEnd)
     }
 
     pub fn file(&self) -> Option<String> {
-        if let Some(ref chunks) = self.chunks {
-            if !chunks.files.is_empty() {
-                Some(chunks.files[0].clone())
-            } else {
-                None
-            }
+        if !self.chunks.files.is_empty() {
+            Some(self.chunks.files[0].clone())
         } else {
             None
         }
     }
 
     pub fn loc(&self) -> Option<Loc> {
-        if let Some(ref chunks) = self.chunks {
-            if !chunks.content.is_empty() {
-                Some(chunks.content[0].loc.clone())
-            } else {
-                None
-            }
+        if !self.chunks.content.is_empty() {
+            Some(self.chunks.content[0].loc.clone())
         } else {
             None
         }
     }
 
     pub fn push(&mut self, chunk: StringChunk) {
-        let mut chunks = self.chunks.clone().unwrap_or_default();
-        chunks.push(chunk);
-        self.chunks.replace(chunks);
+        self.chunks.push(chunk)
     }
 }

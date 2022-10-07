@@ -86,7 +86,7 @@ impl Value {
             }));
         }
 
-        let name = token.chunks.as_ref().unwrap()[0].to_string();
+        let name = token.chunks[0].to_string();
 
         let mut value = Value::default();
 
@@ -119,7 +119,7 @@ impl Value {
             }));
         }
 
-        let mut content = token.chunks.as_ref().unwrap()[0].content.clone();
+        let mut content = token.chunks[0].content.clone();
         content.remove(0);
         content.remove(content.len() - 1);
 
@@ -140,7 +140,7 @@ impl Value {
             }));
         }
 
-        let content = token.chunks.as_ref().unwrap()[0].content.clone();
+        let content = token.chunks[0].content.clone();
 
         let mut value = Value::default();
 
@@ -159,7 +159,7 @@ impl Value {
             }));
         }
 
-        let content = token.chunks.as_ref().unwrap()[0].content.clone();
+        let content = token.chunks[0].content.clone();
 
         let mut value = Value::default();
 
@@ -178,7 +178,7 @@ impl Value {
             }));
         }
 
-        let content = token.chunks.as_ref().unwrap()[0].content.clone();
+        let content = token.chunks[0].content.clone();
 
         let mut value = Value::default();
 
@@ -197,7 +197,7 @@ impl Value {
             }));
         }
 
-        let mut content = token.chunks.as_ref().unwrap()[0].content.clone();
+        let mut content = token.chunks[0].content.clone();
         content.remove(0);
         content.remove(content.len() - 1);
 
@@ -221,7 +221,7 @@ impl Value {
             }));
         }
 
-        let mut name = token.chunks.as_ref().unwrap()[0].to_string();
+        let mut name = token.chunks[0].to_string();
         if name.is_empty() {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -280,7 +280,7 @@ impl Value {
             }));
         }
 
-        let mut name = head_token.chunks.as_ref().unwrap()[0].to_string();
+        let mut name = head_token.chunks[0].to_string();
         if name.is_empty() {
             return Err(Error::Parsing(ParsingError {
                 loc: head_token.loc(),

@@ -621,10 +621,7 @@ mod tests {
         assert_eq!(tokens[15].kind, TokenKind::ValueSymbol);
         assert_eq!(tokens[19].kind, TokenKind::Keyword);
         assert_eq!(tokens[31].kind, TokenKind::CharLiteral);
-        assert_eq!(
-            tokens[31].chunks.as_ref().unwrap()[0].content,
-            "'''".to_string()
-        );
+        assert_eq!(tokens[31].chunks[0].content, "'''".to_string());
         assert_eq!(tokens[32].kind, TokenKind::StringLiteral);
     }
 }
