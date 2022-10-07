@@ -374,8 +374,25 @@ impl SymbolTable {
                                 }));
                             }
                         }
+                        _ if value.value.is_none() && value.children.len() > 1 => {
+                            let name = value.children[1].name.clone().unwrap();
+                            st.def_apps.insert(name.clone());
+
+                            st.apps
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value]);
+                        }
                         _ => {}
                     }
+                } else if value.value.is_none() && value.children.len() > 1 {
+                    let name = value.children[0].name.clone().unwrap();
+                    st.def_apps.insert(name.clone());
+
+                    st.apps
+                        .entry(name)
+                        .and_modify(|v| v.push(value.clone()))
+                        .or_insert_with(|| vec![value]);
                 }
             }
         }
@@ -592,16 +609,27 @@ mod test {
         use super::SymbolTable;
         use crate::values::Values;
 
-        let s = "(def res (app f x y z))";
+        let mut s = "(def res (app f x y z))";
 
-        let values = Values::from_str(s).unwrap();
+        let mut values = Values::from_str(s).unwrap();
 
-        let st = SymbolTable::from_values(&values).unwrap();
+        let mut st = SymbolTable::from_values(&values).unwrap();
 
         assert_eq!(st.def_apps.len(), 1);
         assert!(st.def_apps.contains("res"));
         assert_eq!(st.apps.len(), 1);
         assert!(st.apps.contains_key("res"));
+
+        s = "(f x y z)";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_apps.len(), 1);
+        assert!(st.def_apps.contains("f"));
+        assert_eq!(st.apps.len(), 1);
+        assert!(st.apps.contains_key("f"));
     }
 
     #[test]
