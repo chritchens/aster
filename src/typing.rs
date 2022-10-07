@@ -16,10 +16,13 @@ pub enum Type {
     Size,
     Char,
     String,
+    Mem,
     Path,
     IO,
+    Ctx,
     Sum(Vec<Type>),
     Prod(Vec<Type>),
+    Sig(Vec<Type>),
     Fun(Vec<Type>),
     App(Vec<Type>),
     Attrs(Vec<Type>),
@@ -36,6 +39,14 @@ impl Type {
             Type::Prod(mut v) => {
                 v.push(t);
                 Type::Prod(v)
+            }
+            Type::Sig(mut v) => {
+                v.push(t);
+                Type::App(v)
+            }
+            Type::Fun(mut v) => {
+                v.push(t);
+                Type::App(v)
             }
             Type::App(mut v) => {
                 v.push(t);
@@ -61,6 +72,7 @@ impl Type {
             Type::Unknown(_) => false,
             Type::Sum(inner_types) => inner_types.iter().all(|t| t.is_complete()),
             Type::Prod(inner_types) => inner_types.iter().all(|t| t.is_complete()),
+            Type::Sig(inner_types) => inner_types.iter().all(|t| t.is_complete()),
             Type::Fun(inner_types) => inner_types.iter().all(|t| t.is_complete()),
             Type::App(inner_types) => inner_types.iter().all(|t| t.is_complete()),
             Type::Attrs(inner_types) => inner_types.iter().all(|t| t.is_complete()),
@@ -70,6 +82,7 @@ impl Type {
 
     pub fn from_str(s: &str, loc: Loc) -> Result<Self> {
         let t = match s {
+            "Builtin" => Type::Builtin,
             "Empty" => Type::Empty,
             "Prim" => Type::Prim,
             "UInt" => Type::UInt,
@@ -78,8 +91,10 @@ impl Type {
             "Size" => Type::Size,
             "Char" => Type::Char,
             "String" => Type::String,
+            "Mem" => Type::Mem,
             "Path" => Type::Path,
             "IO" => Type::IO,
+            "Ctx" => Type::Ctx,
             "Type" => Type::Type,
             st if is_type_symbol(st) => {
                 if is_keyword(st) {
@@ -119,8 +134,10 @@ impl Type {
             Type::Size => "Size".into(),
             Type::Char => "Char".into(),
             Type::String => "String".into(),
+            Type::Mem => "Mem".into(),
             Type::Path => "Path".into(),
             Type::IO => "IO".into(),
+            Type::Ctx => "Ctx".into(),
             Type::Sum(types) => format!(
                 "(Sum {})",
                 types
@@ -131,6 +148,14 @@ impl Type {
             ),
             Type::Prod(types) => format!(
                 "(Prod {})",
+                types
+                    .iter()
+                    .map(|t| t.to_string())
+                    .collect::<Vec<String>>()
+                    .join(" ")
+            ),
+            Type::Sig(types) => format!(
+                "(Sig {})",
                 types
                     .iter()
                     .map(|t| t.to_string())
