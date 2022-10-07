@@ -374,7 +374,7 @@ impl SymbolTable {
                                 }));
                             }
                         }
-                        _ if value.value.is_none() && value.children.len() > 1 => {
+                        _ if value.prim.is_none() && value.children.len() > 1 => {
                             let name = value.children[1].name.clone().unwrap();
                             st.def_apps.insert(name.clone());
 
@@ -385,7 +385,7 @@ impl SymbolTable {
                         }
                         _ => {}
                     }
-                } else if value.value.is_none() && value.children.len() > 1 {
+                } else if value.prim.is_none() && value.children.len() > 1 {
                     let name = value.children[0].name.clone().unwrap();
                     st.def_apps.insert(name.clone());
 

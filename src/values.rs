@@ -230,7 +230,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Empty));
-        assert_eq!(values[0].value, Some(PrimValue::Empty));
+        assert_eq!(values[0].prim, Some(PrimValue::Empty));
     }
 
     #[test]
@@ -259,7 +259,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::UInt));
-        assert_eq!(values[0].value, Some(PrimValue::new_uint(s)));
+        assert_eq!(values[0].prim, Some(PrimValue::new_uint(s)));
     }
 
     #[test]
@@ -274,7 +274,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Int));
-        assert_eq!(values[0].value, Some(PrimValue::new_int(s)));
+        assert_eq!(values[0].prim, Some(PrimValue::new_int(s)));
     }
 
     #[test]
@@ -289,7 +289,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Float));
-        assert_eq!(values[0].value, Some(PrimValue::new_float(s)));
+        assert_eq!(values[0].prim, Some(PrimValue::new_float(s)));
     }
 
     #[test]
@@ -304,7 +304,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::Char));
-        assert_eq!(values[0].value, Some(PrimValue::new_char("'")));
+        assert_eq!(values[0].prim, Some(PrimValue::new_char("'")));
     }
 
     #[test]
@@ -319,7 +319,7 @@ mod tests {
 
         assert_eq!(values.len(), 1);
         assert_eq!(values[0].typing, Some(Type::String));
-        assert_eq!(values[0].value, Some(PrimValue::new_string("\\\"")));
+        assert_eq!(values[0].prim, Some(PrimValue::new_string("\\\"")));
     }
 
     #[test]
@@ -387,7 +387,7 @@ mod tests {
                 ])
             ]))
         );
-        assert_eq!(values[0].value, None);
+        assert_eq!(values[0].prim, None);
         assert_eq!(values[0].children.len(), 3);
     }
 

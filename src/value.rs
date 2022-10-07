@@ -51,7 +51,7 @@ pub struct Value {
     pub token: Token,
     pub path: Option<String>,
     pub name: Option<String>,
-    pub value: Option<PrimValue>,
+    pub prim: Option<PrimValue>,
     pub typing: Option<Type>,
     pub children: Vec<Value>,
 }
@@ -72,7 +72,7 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.value = Some(PrimValue::Empty);
+        value.prim = Some(PrimValue::Empty);
         value.typing = Some(Type::Empty);
 
         Ok(value)
@@ -126,7 +126,7 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.value = Some(PrimValue::new_char(&content));
+        value.prim = Some(PrimValue::new_char(&content));
         value.typing = Some(Type::Char);
 
         Ok(value)
@@ -145,7 +145,7 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.value = Some(PrimValue::new_uint(&content));
+        value.prim = Some(PrimValue::new_uint(&content));
         value.typing = Some(Type::UInt);
 
         Ok(value)
@@ -164,7 +164,7 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.value = Some(PrimValue::new_int(&content));
+        value.prim = Some(PrimValue::new_int(&content));
         value.typing = Some(Type::Int);
 
         Ok(value)
@@ -183,7 +183,7 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.value = Some(PrimValue::new_float(&content));
+        value.prim = Some(PrimValue::new_float(&content));
         value.typing = Some(Type::Float);
 
         Ok(value)
@@ -204,7 +204,7 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.value = Some(PrimValue::new_string(&content));
+        value.prim = Some(PrimValue::new_string(&content));
         value.typing = Some(Type::String);
 
         Ok(value)
