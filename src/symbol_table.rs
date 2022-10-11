@@ -36,6 +36,24 @@ pub struct SymbolTable {
     pub main_fun: Option<Value>,
     pub main_app: Option<Value>,
     pub main_attrs: Option<Value>,
+
+    pub scoped_def_types: BTreeSet<String>,
+    pub scoped_def_prims: BTreeSet<String>,
+    pub scoped_def_sums: BTreeSet<String>,
+    pub scoped_def_prods: BTreeSet<String>,
+    pub scoped_def_sigs: BTreeSet<String>,
+    pub scoped_def_funs: BTreeSet<String>,
+    pub scoped_def_apps: BTreeSet<String>,
+    pub scoped_def_attrs: BTreeSet<String>,
+
+    pub scoped_types: BTreeMap<String, Vec<Value>>,
+    pub scoped_prims: BTreeMap<String, Vec<Value>>,
+    pub scoped_sums: BTreeMap<String, Vec<Value>>,
+    pub scoped_prods: BTreeMap<String, Vec<Value>>,
+    pub scoped_sigs: BTreeMap<String, Vec<Value>>,
+    pub scoped_funs: BTreeMap<String, Vec<Value>>,
+    pub scoped_apps: BTreeMap<String, Vec<Value>>,
+    pub scoped_attrs: BTreeMap<String, Vec<Value>>,
 }
 
 impl SymbolTable {
@@ -103,12 +121,22 @@ impl SymbolTable {
                         }
                         Keyword::Deftype => {
                             let name = value.children[1].name.clone().unwrap();
-                            st.def_types.insert(name.clone());
 
-                            st.types
-                                .entry(name.clone())
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                            if !value.scope_path.is_empty() {
+                                st.scoped_def_types.insert(name.clone());
+
+                                st.scoped_types
+                                    .entry(name.clone())
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value.clone()]);
+                            } else {
+                                st.def_types.insert(name.clone());
+
+                                st.types
+                                    .entry(name.clone())
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value.clone()]);
+                            }
 
                             if name == "Main" {
                                 if st.main_type.is_some() {
@@ -123,12 +151,22 @@ impl SymbolTable {
                         }
                         Keyword::Defsig => {
                             let name = value.children[1].name.clone().unwrap();
-                            st.def_sigs.insert(name.clone());
 
-                            st.sigs
-                                .entry(name.clone())
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                            if !value.scope_path.is_empty() {
+                                st.scoped_def_sigs.insert(name.clone());
+
+                                st.scoped_sigs
+                                    .entry(name.clone())
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value.clone()]);
+                            } else {
+                                st.def_sigs.insert(name.clone());
+
+                                st.sigs
+                                    .entry(name.clone())
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value.clone()]);
+                            }
 
                             if name == "main" {
                                 if st.main_sig.is_some() {
@@ -143,39 +181,77 @@ impl SymbolTable {
                         }
                         Keyword::Defprim => {
                             let name = value.children[1].name.clone().unwrap();
-                            st.def_prims.insert(name.clone());
 
-                            st.prims
-                                .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value]);
+                            if !value.scope_path.is_empty() {
+                                st.scoped_def_prims.insert(name.clone());
+
+                                st.scoped_prims
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
+                            } else {
+                                st.def_prims.insert(name.clone());
+
+                                st.prims
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
+                            }
                         }
                         Keyword::Defsum => {
                             let name = value.children[1].name.clone().unwrap();
-                            st.def_sums.insert(name.clone());
 
-                            st.sums
-                                .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value]);
+                            if !value.scope_path.is_empty() {
+                                st.scoped_def_sums.insert(name.clone());
+
+                                st.scoped_sums
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
+                            } else {
+                                st.def_sums.insert(name.clone());
+
+                                st.sums
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
+                            }
                         }
                         Keyword::Defprod => {
                             let name = value.children[1].name.clone().unwrap();
-                            st.def_prods.insert(name.clone());
 
-                            st.prods
-                                .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value]);
+                            if !value.scope_path.is_empty() {
+                                st.scoped_def_prods.insert(name.clone());
+                                st.scoped_prods
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
+                            } else {
+                                st.def_prods.insert(name.clone());
+                                st.prods
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
+                            }
                         }
                         Keyword::Defun => {
                             let name = value.children[1].name.clone().unwrap();
-                            st.def_funs.insert(name.clone());
 
-                            st.funs
-                                .entry(name.clone())
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                            if !value.scope_path.is_empty() {
+                                st.scoped_def_funs.insert(name.clone());
+
+                                st.scoped_funs
+                                    .entry(name.clone())
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value.clone()]);
+                            } else {
+                                st.def_funs.insert(name.clone());
+
+                                st.funs
+                                    .entry(name.clone())
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value.clone()]);
+                            }
 
                             if name == "main" {
                                 if st.main_fun.is_some() {
@@ -190,12 +266,22 @@ impl SymbolTable {
                         }
                         Keyword::Defattrs => {
                             let name = value.children[1].name.clone().unwrap();
-                            st.def_attrs.insert(name.clone());
 
-                            st.attrs
-                                .entry(name.clone())
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                            if !value.scope_path.is_empty() {
+                                st.scoped_def_attrs.insert(name.clone());
+
+                                st.scoped_attrs
+                                    .entry(name.clone())
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value.clone()]);
+                            } else {
+                                st.def_attrs.insert(name.clone());
+
+                                st.attrs
+                                    .entry(name.clone())
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value.clone()]);
+                            }
 
                             if name == "main" {
                                 if st.main_attrs.is_some() {
@@ -234,12 +320,21 @@ impl SymbolTable {
 
                                 match keyword {
                                     Keyword::Type => {
-                                        st.def_types.insert(name.clone());
+                                        if !value.scope_path.is_empty() {
+                                            st.scoped_def_types.insert(name.clone());
 
-                                        st.types
-                                            .entry(name.clone())
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            st.scoped_types
+                                                .entry(name.clone())
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value.clone()]);
+                                        } else {
+                                            st.def_types.insert(name.clone());
+
+                                            st.types
+                                                .entry(name.clone())
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value.clone()]);
+                                        }
 
                                         if name == "Main" {
                                             if st.main_type.is_some() {
@@ -253,12 +348,21 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::Sig => {
-                                        st.def_sigs.insert(name.clone());
+                                        if !value.scope_path.is_empty() {
+                                            st.scoped_def_sigs.insert(name.clone());
 
-                                        st.sigs
-                                            .entry(name.clone())
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            st.scoped_sigs
+                                                .entry(name.clone())
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value.clone()]);
+                                        } else {
+                                            st.def_sigs.insert(name.clone());
+
+                                            st.sigs
+                                                .entry(name.clone())
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value.clone()]);
+                                        }
 
                                         if name == "main" {
                                             if st.main_sig.is_some() {
@@ -272,36 +376,72 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::Prim => {
-                                        st.def_prims.insert(name.clone());
+                                        if !value.scope_path.is_empty() {
+                                            st.scoped_def_prims.insert(name.clone());
 
-                                        st.prims
-                                            .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value]);
+                                            st.scoped_prims
+                                                .entry(name)
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value]);
+                                        } else {
+                                            st.def_prims.insert(name.clone());
+
+                                            st.prims
+                                                .entry(name)
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value]);
+                                        }
                                     }
                                     Keyword::Sum => {
-                                        st.def_sums.insert(name.clone());
+                                        if !value.scope_path.is_empty() {
+                                            st.scoped_def_sums.insert(name.clone());
 
-                                        st.sums
-                                            .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value]);
+                                            st.scoped_sums
+                                                .entry(name)
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value]);
+                                        } else {
+                                            st.def_sums.insert(name.clone());
+
+                                            st.sums
+                                                .entry(name)
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value]);
+                                        }
                                     }
                                     Keyword::Prod => {
-                                        st.def_prods.insert(name.clone());
+                                        if !value.scope_path.is_empty() {
+                                            st.scoped_def_prods.insert(name.clone());
 
-                                        st.prods
-                                            .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value]);
+                                            st.scoped_prods
+                                                .entry(name)
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value]);
+                                        } else {
+                                            st.def_prods.insert(name.clone());
+
+                                            st.prods
+                                                .entry(name)
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value]);
+                                        }
                                     }
                                     Keyword::Fun => {
-                                        st.def_funs.insert(name.clone());
+                                        if !value.scope_path.is_empty() {
+                                            st.scoped_def_funs.insert(name.clone());
 
-                                        st.funs
-                                            .entry(name.clone())
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            st.scoped_funs
+                                                .entry(name.clone())
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value.clone()]);
+                                        } else {
+                                            st.def_funs.insert(name.clone());
+
+                                            st.funs
+                                                .entry(name.clone())
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value.clone()]);
+                                        }
 
                                         if name == "main" {
                                             if st.main_fun.is_some() {
@@ -315,12 +455,21 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::App => {
-                                        st.def_apps.insert(name.clone());
+                                        if !value.scope_path.is_empty() {
+                                            st.scoped_def_apps.insert(name.clone());
 
-                                        st.apps
-                                            .entry(name.clone())
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            st.scoped_apps
+                                                .entry(name.clone())
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value.clone()]);
+                                        } else {
+                                            st.def_apps.insert(name.clone());
+
+                                            st.apps
+                                                .entry(name.clone())
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value.clone()]);
+                                        }
 
                                         if name == "main" {
                                             if st.main_app.is_some() {
@@ -334,12 +483,21 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::Attrs => {
-                                        st.def_attrs.insert(name.clone());
+                                        if !value.scope_path.is_empty() {
+                                            st.scoped_def_attrs.insert(name.clone());
 
-                                        st.attrs
-                                            .entry(name.clone())
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            st.scoped_attrs
+                                                .entry(name.clone())
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value.clone()]);
+                                        } else {
+                                            st.def_attrs.insert(name.clone());
+
+                                            st.attrs
+                                                .entry(name.clone())
+                                                .and_modify(|v| v.push(value.clone()))
+                                                .or_insert_with(|| vec![value.clone()]);
+                                        }
 
                                         if name == "main" {
                                             if st.main_attrs.is_some() {
@@ -361,12 +519,22 @@ impl SymbolTable {
                                 }
                             } else if len == 1 {
                                 let name = value.name.clone().unwrap();
-                                st.def_prims.insert(name.clone());
 
-                                st.prims
-                                    .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
+                                if !value.scope_path.is_empty() {
+                                    st.scoped_def_prims.insert(name.clone());
+
+                                    st.scoped_prims
+                                        .entry(name)
+                                        .and_modify(|v| v.push(value.clone()))
+                                        .or_insert_with(|| vec![value]);
+                                } else {
+                                    st.def_prims.insert(name.clone());
+
+                                    st.prims
+                                        .entry(name)
+                                        .and_modify(|v| v.push(value.clone()))
+                                        .or_insert_with(|| vec![value]);
+                                }
                             } else {
                                 return Err(Error::Semantic(SemanticError {
                                     loc: name_value.token.loc(),
@@ -377,20 +545,34 @@ impl SymbolTable {
                         _ if value.prim.is_none() && value.children.len() > 1 => {
                             let name = value.children[1].name.clone().unwrap();
 
-                            st.apps
-                                .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value]);
+                            if !value.scope_path.is_empty() {
+                                st.scoped_apps
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
+                            } else {
+                                st.apps
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
+                            }
                         }
                         _ => {}
                     }
                 } else if value.prim.is_none() && value.children.len() > 1 {
                     let name = value.children[0].name.clone().unwrap();
 
-                    st.apps
-                        .entry(name)
-                        .and_modify(|v| v.push(value.clone()))
-                        .or_insert_with(|| vec![value]);
+                    if !value.scope_path.is_empty() {
+                        st.scoped_apps
+                            .entry(name)
+                            .and_modify(|v| v.push(value.clone()))
+                            .or_insert_with(|| vec![value]);
+                    } else {
+                        st.apps
+                            .entry(name)
+                            .and_modify(|v| v.push(value.clone()))
+                            .or_insert_with(|| vec![value]);
+                    }
                 }
             }
         }

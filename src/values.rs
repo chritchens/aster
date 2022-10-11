@@ -41,6 +41,7 @@ impl Values {
         let mut values = Values::new();
         let mut form: Vec<Token> = vec![];
         let mut form_count = 0;
+        let mut scope_path = Vec::new();
 
         for token in tokens.into_iter() {
             match token.kind {
@@ -60,7 +61,7 @@ impl Values {
                     if form_count != 0 {
                         form.push(token);
                     } else {
-                        let value = Value::new_empty(token)?;
+                        let value = Value::new_empty(&scope_path, token)?;
                         values.push(value);
                     }
                 }
@@ -68,7 +69,7 @@ impl Values {
                     if form_count != 0 {
                         form.push(token);
                     } else {
-                        let value = Value::new_keyword(token)?;
+                        let value = Value::new_keyword(&scope_path, token)?;
                         values.push(value);
                     }
                 }
@@ -76,7 +77,7 @@ impl Values {
                     if form_count != 0 {
                         form.push(token);
                     } else {
-                        let value = Value::new_uint(token)?;
+                        let value = Value::new_uint(&scope_path, token)?;
                         values.push(value);
                     }
                 }
@@ -84,7 +85,7 @@ impl Values {
                     if form_count != 0 {
                         form.push(token);
                     } else {
-                        let value = Value::new_int(token)?;
+                        let value = Value::new_int(&scope_path, token)?;
                         values.push(value);
                     }
                 }
@@ -92,7 +93,7 @@ impl Values {
                     if form_count != 0 {
                         form.push(token);
                     } else {
-                        let value = Value::new_float(token)?;
+                        let value = Value::new_float(&scope_path, token)?;
                         values.push(value);
                     }
                 }
@@ -100,7 +101,7 @@ impl Values {
                     if form_count != 0 {
                         form.push(token);
                     } else {
-                        let value = Value::new_char(token)?;
+                        let value = Value::new_char(&scope_path, token)?;
                         values.push(value);
                     }
                 }
@@ -108,7 +109,7 @@ impl Values {
                     if form_count != 0 {
                         form.push(token);
                     } else {
-                        let value = Value::new_string(token)?;
+                        let value = Value::new_string(&scope_path, token)?;
                         values.push(value);
                     }
                 }
@@ -116,7 +117,7 @@ impl Values {
                     if form_count != 0 {
                         form.push(token);
                     } else {
-                        let value = Value::new_symbol(token)?;
+                        let value = Value::new_symbol(&scope_path, token)?;
                         values.push(value);
                     }
                 }
@@ -129,7 +130,7 @@ impl Values {
                     form.push(token);
 
                     if form_count == 0 {
-                        let value = Value::new_app(form)?;
+                        let value = Value::new_app(&mut scope_path, form)?;
                         values.push(value);
 
                         form = Vec::new();
