@@ -72,11 +72,12 @@ fn path_suffix(s: &str) -> String {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Value {
     pub token: Token,
-    pub path: Option<String>,
+    pub scope_name: Option<String>,
     pub scope_path: Vec<usize>,
+    pub qualification: Option<String>,
     pub name: Option<String>,
-    pub prim: Option<PrimValue>,
     pub typing: Option<Type>,
+    pub prim: Option<PrimValue>,
     pub children: Vec<Value>,
 }
 
@@ -260,13 +261,13 @@ impl Value {
             }));
         }
 
-        let path = match token.kind {
+        let qualification = match token.kind {
             TokenKind::Keyword | TokenKind::ValueSymbol | TokenKind::TypeSymbol => None,
             TokenKind::PathSymbol => Some(path_prefix(&name)),
             _ => unreachable!(),
         };
 
-        if path.is_some() {
+        if qualification.is_some() {
             name = path_suffix(&name);
         }
 
@@ -280,7 +281,7 @@ impl Value {
         let mut value = Value::default();
         value.token = token;
         value.scope_path = scope_path.clone();
-        value.path = path;
+        value.qualification = qualification;
         value.name = Some(name);
 
         value.typing = Some(typing);
@@ -320,20 +321,20 @@ impl Value {
             }));
         }
 
-        let path = match head_token.kind {
+        let qualification = match head_token.kind {
             TokenKind::Keyword | TokenKind::ValueSymbol | TokenKind::TypeSymbol => None,
             TokenKind::PathSymbol => Some(path_prefix(&name)),
             _ => unreachable!(),
         };
 
-        if path.is_some() {
+        if qualification.is_some() {
             name = path_suffix(&name);
         }
 
         let mut value = Value::default();
         value.token = head_token;
         value.scope_path = scope_path.clone();
-        value.path = path;
+        value.qualification = qualification;
         value.name = Some(name);
 
         let len = tokens.len() - 1;

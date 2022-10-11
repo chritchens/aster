@@ -77,7 +77,7 @@ impl SymbolTable {
                         Keyword::Import => {
                             let mut name_segs = Vec::new();
 
-                            if let Some(path) = value.children[1].path.clone() {
+                            if let Some(path) = value.children[1].qualification.clone() {
                                 name_segs.push(path);
                             }
 
