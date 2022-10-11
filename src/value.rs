@@ -1,6 +1,6 @@
 use crate::error::{Error, ParsingError};
 use crate::result::Result;
-use crate::syntax::{path_prefix, path_suffix};
+use crate::syntax::SYMBOL_PATH_SEPARATOR;
 use crate::token::{Token, TokenKind};
 use crate::typing::Type;
 
@@ -43,6 +43,29 @@ impl PrimValue {
 
     pub fn new_string(s: &str) -> Self {
         PrimValue::String(s.to_string())
+    }
+}
+
+fn path_prefix(s: &str) -> String {
+    let mut v: Vec<&str> = s.split(SYMBOL_PATH_SEPARATOR).collect();
+    let len = v.len();
+
+    if len > 1 {
+        v.remove(len - 1);
+        v.join(".")
+    } else {
+        "".into()
+    }
+}
+
+fn path_suffix(s: &str) -> String {
+    let mut v: Vec<&str> = s.split(SYMBOL_PATH_SEPARATOR).collect();
+    let len = v.len();
+
+    if len > 1 {
+        v.remove(len - 1).into()
+    } else {
+        s.into()
     }
 }
 
