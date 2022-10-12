@@ -123,6 +123,13 @@ impl SymbolTable {
                             let name = value.children[1].name.clone().unwrap();
 
                             if !value.scope_path.is_empty() {
+                                if name == "Main" {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "invalid scoped Main type".into(),
+                                    }));
+                                }
+
                                 st.scoped_def_types.insert(name.clone());
 
                                 st.scoped_types
@@ -136,23 +143,30 @@ impl SymbolTable {
                                     .entry(name.clone())
                                     .and_modify(|v| v.push(value.clone()))
                                     .or_insert_with(|| vec![value.clone()]);
-                            }
 
-                            if name == "Main" {
-                                if st.main_type.is_some() {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "duplicate Main type".into(),
-                                    }));
+                                if name == "Main" {
+                                    if st.main_type.is_some() {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: value.token.loc(),
+                                            desc: "duplicate Main type".into(),
+                                        }));
+                                    }
+
+                                    st.main_type = Some(value);
                                 }
-
-                                st.main_type = Some(value);
                             }
                         }
                         Keyword::Defsig => {
                             let name = value.children[1].name.clone().unwrap();
 
                             if !value.scope_path.is_empty() {
+                                if name == "main" {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "invalid scoped main signature".into(),
+                                    }));
+                                }
+
                                 st.scoped_def_sigs.insert(name.clone());
 
                                 st.scoped_sigs
@@ -166,21 +180,28 @@ impl SymbolTable {
                                     .entry(name.clone())
                                     .and_modify(|v| v.push(value.clone()))
                                     .or_insert_with(|| vec![value.clone()]);
-                            }
 
-                            if name == "main" {
-                                if st.main_sig.is_some() {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "duplicate main signature".into(),
-                                    }));
+                                if name == "main" {
+                                    if st.main_sig.is_some() {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: value.token.loc(),
+                                            desc: "duplicate main signature".into(),
+                                        }));
+                                    }
+
+                                    st.main_sig = Some(value);
                                 }
-
-                                st.main_sig = Some(value);
                             }
                         }
                         Keyword::Defprim => {
                             let name = value.children[1].name.clone().unwrap();
+
+                            if name == "main" {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "invalid main".into(),
+                                }));
+                            }
 
                             if !value.scope_path.is_empty() {
                                 st.scoped_def_prims.insert(name.clone());
@@ -201,6 +222,13 @@ impl SymbolTable {
                         Keyword::Defsum => {
                             let name = value.children[1].name.clone().unwrap();
 
+                            if name == "main" {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "invalid main".into(),
+                                }));
+                            }
+
                             if !value.scope_path.is_empty() {
                                 st.scoped_def_sums.insert(name.clone());
 
@@ -220,6 +248,13 @@ impl SymbolTable {
                         Keyword::Defprod => {
                             let name = value.children[1].name.clone().unwrap();
 
+                            if name == "main" {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "invalid main".into(),
+                                }));
+                            }
+
                             if !value.scope_path.is_empty() {
                                 st.scoped_def_prods.insert(name.clone());
                                 st.scoped_prods
@@ -238,6 +273,13 @@ impl SymbolTable {
                             let name = value.children[1].name.clone().unwrap();
 
                             if !value.scope_path.is_empty() {
+                                if name == "main" {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "invalid scoped main function".into(),
+                                    }));
+                                }
+
                                 st.scoped_def_funs.insert(name.clone());
 
                                 st.scoped_funs
@@ -251,23 +293,30 @@ impl SymbolTable {
                                     .entry(name.clone())
                                     .and_modify(|v| v.push(value.clone()))
                                     .or_insert_with(|| vec![value.clone()]);
-                            }
 
-                            if name == "main" {
-                                if st.main_fun.is_some() {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "duplicate main function".into(),
-                                    }));
+                                if name == "main" {
+                                    if st.main_fun.is_some() {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: value.token.loc(),
+                                            desc: "duplicate main function".into(),
+                                        }));
+                                    }
+
+                                    st.main_fun = Some(value);
                                 }
-
-                                st.main_fun = Some(value);
                             }
                         }
                         Keyword::Defattrs => {
                             let name = value.children[1].name.clone().unwrap();
 
                             if !value.scope_path.is_empty() {
+                                if name == "main" {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "invalid scoped main attributes".into(),
+                                    }));
+                                }
+
                                 st.scoped_def_attrs.insert(name.clone());
 
                                 st.scoped_attrs
@@ -281,17 +330,17 @@ impl SymbolTable {
                                     .entry(name.clone())
                                     .and_modify(|v| v.push(value.clone()))
                                     .or_insert_with(|| vec![value.clone()]);
-                            }
 
-                            if name == "main" {
-                                if st.main_attrs.is_some() {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "duplicate main attributes".into(),
-                                    }));
+                                if name == "main" {
+                                    if st.main_attrs.is_some() {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: value.token.loc(),
+                                            desc: "duplicate main attributes".into(),
+                                        }));
+                                    }
+
+                                    st.main_attrs = Some(value);
                                 }
-
-                                st.main_attrs = Some(value);
                             }
                         }
                         Keyword::Def => {
@@ -321,6 +370,13 @@ impl SymbolTable {
                                 match keyword {
                                     Keyword::Type => {
                                         if !value.scope_path.is_empty() {
+                                            if name == "Main" {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: name_value.token.loc(),
+                                                    desc: "invalid scoped Main type".into(),
+                                                }));
+                                            }
+
                                             st.scoped_def_types.insert(name.clone());
 
                                             st.scoped_types
@@ -334,21 +390,28 @@ impl SymbolTable {
                                                 .entry(name.clone())
                                                 .and_modify(|v| v.push(value.clone()))
                                                 .or_insert_with(|| vec![value.clone()]);
-                                        }
 
-                                        if name == "Main" {
-                                            if st.main_type.is_some() {
-                                                return Err(Error::Semantic(SemanticError {
-                                                    loc: name_value.token.loc(),
-                                                    desc: "duplicate Main type".into(),
-                                                }));
+                                            if name == "Main" {
+                                                if st.main_type.is_some() {
+                                                    return Err(Error::Semantic(SemanticError {
+                                                        loc: name_value.token.loc(),
+                                                        desc: "duplicate Main type".into(),
+                                                    }));
+                                                }
+
+                                                st.main_type = Some(value);
                                             }
-
-                                            st.main_type = Some(value);
                                         }
                                     }
                                     Keyword::Sig => {
                                         if !value.scope_path.is_empty() {
+                                            if name == "main" {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: name_value.token.loc(),
+                                                    desc: "invalid scoped main signature".into(),
+                                                }));
+                                            }
+
                                             st.scoped_def_sigs.insert(name.clone());
 
                                             st.scoped_sigs
@@ -362,20 +425,27 @@ impl SymbolTable {
                                                 .entry(name.clone())
                                                 .and_modify(|v| v.push(value.clone()))
                                                 .or_insert_with(|| vec![value.clone()]);
-                                        }
 
-                                        if name == "main" {
-                                            if st.main_sig.is_some() {
-                                                return Err(Error::Semantic(SemanticError {
-                                                    loc: name_value.token.loc(),
-                                                    desc: "duplicate main signature".into(),
-                                                }));
+                                            if name == "main" {
+                                                if st.main_sig.is_some() {
+                                                    return Err(Error::Semantic(SemanticError {
+                                                        loc: name_value.token.loc(),
+                                                        desc: "duplicate main signature".into(),
+                                                    }));
+                                                }
+
+                                                st.main_sig = Some(value);
                                             }
-
-                                            st.main_sig = Some(value);
                                         }
                                     }
                                     Keyword::Prim => {
+                                        if name == "main" {
+                                            return Err(Error::Semantic(SemanticError {
+                                                loc: value.token.loc(),
+                                                desc: "invalid main".into(),
+                                            }));
+                                        }
+
                                         if !value.scope_path.is_empty() {
                                             st.scoped_def_prims.insert(name.clone());
 
@@ -393,6 +463,13 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::Sum => {
+                                        if name == "main" {
+                                            return Err(Error::Semantic(SemanticError {
+                                                loc: value.token.loc(),
+                                                desc: "invalid main".into(),
+                                            }));
+                                        }
+
                                         if !value.scope_path.is_empty() {
                                             st.scoped_def_sums.insert(name.clone());
 
@@ -410,6 +487,13 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::Prod => {
+                                        if name == "main" {
+                                            return Err(Error::Semantic(SemanticError {
+                                                loc: value.token.loc(),
+                                                desc: "invalid main".into(),
+                                            }));
+                                        }
+
                                         if !value.scope_path.is_empty() {
                                             st.scoped_def_prods.insert(name.clone());
 
@@ -428,6 +512,13 @@ impl SymbolTable {
                                     }
                                     Keyword::Fun => {
                                         if !value.scope_path.is_empty() {
+                                            if name == "main" {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: name_value.token.loc(),
+                                                    desc: "invalid scoped main function".into(),
+                                                }));
+                                            }
+
                                             st.scoped_def_funs.insert(name.clone());
 
                                             st.scoped_funs
@@ -441,21 +532,28 @@ impl SymbolTable {
                                                 .entry(name.clone())
                                                 .and_modify(|v| v.push(value.clone()))
                                                 .or_insert_with(|| vec![value.clone()]);
-                                        }
 
-                                        if name == "main" {
-                                            if st.main_fun.is_some() {
-                                                return Err(Error::Semantic(SemanticError {
-                                                    loc: name_value.token.loc(),
-                                                    desc: "duplicate main function".into(),
-                                                }));
+                                            if name == "main" {
+                                                if st.main_fun.is_some() {
+                                                    return Err(Error::Semantic(SemanticError {
+                                                        loc: name_value.token.loc(),
+                                                        desc: "duplicate main function".into(),
+                                                    }));
+                                                }
+
+                                                st.main_fun = Some(value);
                                             }
-
-                                            st.main_fun = Some(value);
                                         }
                                     }
                                     Keyword::App => {
                                         if !value.scope_path.is_empty() {
+                                            if name == "main" {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: name_value.token.loc(),
+                                                    desc: "invalid scoped main application".into(),
+                                                }));
+                                            }
+
                                             st.scoped_def_apps.insert(name.clone());
 
                                             st.scoped_apps
@@ -469,21 +567,28 @@ impl SymbolTable {
                                                 .entry(name.clone())
                                                 .and_modify(|v| v.push(value.clone()))
                                                 .or_insert_with(|| vec![value.clone()]);
-                                        }
 
-                                        if name == "main" {
-                                            if st.main_app.is_some() {
-                                                return Err(Error::Semantic(SemanticError {
-                                                    loc: name_value.token.loc(),
-                                                    desc: "duplicate main application".into(),
-                                                }));
+                                            if name == "main" {
+                                                if st.main_app.is_some() {
+                                                    return Err(Error::Semantic(SemanticError {
+                                                        loc: name_value.token.loc(),
+                                                        desc: "duplicate main application".into(),
+                                                    }));
+                                                }
+
+                                                st.main_app = Some(value);
                                             }
-
-                                            st.main_app = Some(value);
                                         }
                                     }
                                     Keyword::Attrs => {
                                         if !value.scope_path.is_empty() {
+                                            if name == "main" {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: name_value.token.loc(),
+                                                    desc: "invalid scoped main attributes".into(),
+                                                }));
+                                            }
+
                                             st.scoped_def_attrs.insert(name.clone());
 
                                             st.scoped_attrs
@@ -497,17 +602,17 @@ impl SymbolTable {
                                                 .entry(name.clone())
                                                 .and_modify(|v| v.push(value.clone()))
                                                 .or_insert_with(|| vec![value.clone()]);
-                                        }
 
-                                        if name == "main" {
-                                            if st.main_attrs.is_some() {
-                                                return Err(Error::Semantic(SemanticError {
-                                                    loc: name_value.token.loc(),
-                                                    desc: "duplicate main attributes".into(),
-                                                }));
+                                            if name == "main" {
+                                                if st.main_attrs.is_some() {
+                                                    return Err(Error::Semantic(SemanticError {
+                                                        loc: name_value.token.loc(),
+                                                        desc: "duplicate main attributes".into(),
+                                                    }));
+                                                }
+
+                                                st.main_attrs = Some(value);
                                             }
-
-                                            st.main_attrs = Some(value);
                                         }
                                     }
                                     _ => {
@@ -519,6 +624,13 @@ impl SymbolTable {
                                 }
                             } else if len == 1 {
                                 let name = value.name.clone().unwrap();
+
+                                if name == "main" {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "invalid main".into(),
+                                    }));
+                                }
 
                                 if !value.scope_path.is_empty() {
                                     st.scoped_def_prims.insert(name.clone());
@@ -546,15 +658,33 @@ impl SymbolTable {
                             let name = value.children[1].name.clone().unwrap();
 
                             if !value.scope_path.is_empty() {
+                                if name == "main" {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "invalid scoped main application".into(),
+                                    }));
+                                }
+
                                 st.scoped_apps
                                     .entry(name)
                                     .and_modify(|v| v.push(value.clone()))
                                     .or_insert_with(|| vec![value]);
                             } else {
                                 st.apps
-                                    .entry(name)
+                                    .entry(name.clone())
                                     .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
+                                    .or_insert_with(|| vec![value.clone()]);
+
+                                if name == "main" {
+                                    if st.main_app.is_some() {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: value.token.loc(),
+                                            desc: "duplicate main application".into(),
+                                        }));
+                                    }
+
+                                    st.main_app = Some(value);
+                                }
                             }
                         }
                         _ => {}
