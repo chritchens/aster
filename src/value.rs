@@ -72,7 +72,7 @@ fn path_suffix(s: &str) -> String {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct ValueScope {
     pub file: Option<String>,
-    pub tpl_name: String,
+    pub tpl_name: Option<String>,
     pub path: Vec<usize>,
 }
 
@@ -82,7 +82,7 @@ impl ValueScope {
     }
 
     pub fn is_tpl(&self) -> bool {
-        self.path.is_empty()
+        self.tpl_name.is_some() && self.path.len() == 1
     }
 }
 
@@ -100,6 +100,10 @@ pub struct Value {
 impl Value {
     pub fn new() -> Self {
         Value::default()
+    }
+
+    pub fn is_tpl(&self) -> bool {
+        self.scope.is_tpl()
     }
 
     pub fn new_empty(scope: &ValueScope, token: Token) -> Result<Self> {
@@ -305,6 +309,17 @@ impl Value {
         Ok(value)
     }
 
+    pub fn set_scope_path(&mut self, i: usize) {
+        self.scope.path.push(i);
+
+        for j in 0..self.children.len() {
+            if self.children.len() > 1 {
+                self.children[j].scope = self.scope.clone();
+                self.children[j].set_scope_path(j);
+            }
+        }
+    }
+
     pub fn new_app(scope: &mut ValueScope, tokens: Vec<Token>) -> Result<Self> {
         if tokens.len() < 3
             || tokens[0].kind != TokenKind::FormStart
@@ -335,6 +350,14 @@ impl Value {
                 loc: head_token.loc(),
                 desc: "expected a non-empty function name".into(),
             }));
+        }
+
+        let old_scope = scope.clone();
+
+        scope.file = head_token.file();
+
+        if scope.tpl_name.is_none() {
+            scope.tpl_name = Some(name.clone());
         }
 
         let qualification = match head_token.kind {
@@ -368,6 +391,7 @@ impl Value {
                     for child_token in tokens[idx..].iter() {
                         if child_token.kind == TokenKind::FormStart {
                             form_count += 1;
+                            scope.path.push(form_count - 1);
                             child_tokens.push(child_token.clone());
                             idx += 1;
                         } else if child_token.kind == TokenKind::FormEnd {
@@ -398,7 +422,10 @@ impl Value {
                     typing = typing.push_inner_type(loc, child_value.typing.unwrap())?;
                     value.typing = Some(typing);
                 }
-                TokenKind::FormEnd => break,
+                TokenKind::FormEnd => {
+                    scope.path.remove(scope.path.len() - 1);
+                    break;
+                }
                 TokenKind::EmptyLiteral => {
                     let child_value = Value::new_empty(scope, token.clone())?;
                     value.children.push(child_value.clone());
@@ -504,6 +531,9 @@ impl Value {
                 }
             }
         }
+
+        scope.tpl_name = old_scope.tpl_name;
+        scope.path = old_scope.path;
 
         Ok(value)
     }

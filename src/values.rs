@@ -139,6 +139,10 @@ impl Values {
             }
         }
 
+        for idx in 0..values.len() {
+            values[idx].set_scope_path(idx);
+        }
+
         Ok(values)
     }
 
@@ -160,6 +164,12 @@ impl ops::Index<usize> for Values {
 
     fn index(&self, idx: usize) -> &Self::Output {
         &self.0[idx]
+    }
+}
+
+impl ops::IndexMut<usize> for Values {
+    fn index_mut(&mut self, idx: usize) -> &mut Value {
+        &mut self.0[idx]
     }
 }
 
@@ -439,5 +449,65 @@ mod tests {
         assert!(values[1].children[1].is_fully_typed());
         assert!(!values[2].is_fully_typed());
         assert!(values[2].children[0].is_fully_typed());
+    }
+
+    #[test]
+    fn scoping() {
+        use super::Values;
+
+        let s = "(a (b c (d (x y z)))) (e (f g) (h i)) (j (l m) n) ";
+
+        let values = Values::from_str(s).unwrap();
+
+        assert_eq!(values.len(), 3);
+
+        let value_0 = values[0].clone();
+        let value_1 = values[1].clone();
+        let value_2 = values[2].clone();
+
+        assert_eq!(value_0.children.len(), 2);
+        assert_eq!(value_0.scope.tpl_name, Some("a".into()));
+        assert!(value_0.is_tpl());
+
+        for (idx, value_child) in value_0.children.iter().enumerate() {
+            assert_eq!(value_child.scope.file, value_0.scope.file);
+            assert_eq!(value_child.scope.tpl_name, value_0.scope.tpl_name);
+            assert!(!value_child.is_tpl());
+
+            let mut path = value_0.scope.path.clone();
+            path.push(idx);
+
+            assert_eq!(value_child.scope.path, path);
+        }
+
+        assert_eq!(value_1.children.len(), 3);
+        assert_eq!(value_1.scope.tpl_name, Some("e".into()));
+        assert!(value_1.is_tpl());
+
+        for (idx, value_child) in value_1.children.iter().enumerate() {
+            assert_eq!(value_child.scope.file, value_1.scope.file);
+            assert_eq!(value_child.scope.tpl_name, value_1.scope.tpl_name);
+            assert!(!value_child.is_tpl());
+
+            let mut path = value_1.scope.path.clone();
+            path.push(idx);
+
+            assert_eq!(value_child.scope.path, path);
+        }
+
+        assert_eq!(value_2.children.len(), 3);
+        assert_eq!(value_2.scope.tpl_name, Some("j".into()));
+        assert!(value_2.is_tpl());
+
+        for (idx, value_child) in value_2.children.iter().enumerate() {
+            assert_eq!(value_child.scope.file, value_2.scope.file);
+            assert_eq!(value_child.scope.tpl_name, value_2.scope.tpl_name);
+            assert!(!value_child.is_tpl());
+
+            let mut path = value_2.scope.path.clone();
+            path.push(idx);
+
+            assert_eq!(value_child.scope.path, path);
+        }
     }
 }
