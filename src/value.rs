@@ -86,7 +86,7 @@ impl Value {
         Value::default()
     }
 
-    pub fn new_empty(scope_path: &Vec<usize>, token: Token) -> Result<Self> {
+    pub fn new_empty(scope_path: &[usize], token: Token) -> Result<Self> {
         if token.kind != TokenKind::EmptyLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -97,14 +97,14 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.scope_path = scope_path.clone();
+        value.scope_path.extend_from_slice(scope_path);
         value.prim = Some(PrimValue::Empty);
         value.typing = Some(Type::Empty);
 
         Ok(value)
     }
 
-    pub fn new_keyword(scope_path: &Vec<usize>, token: Token) -> Result<Self> {
+    pub fn new_keyword(scope_path: &[usize], token: Token) -> Result<Self> {
         if token.kind != TokenKind::Keyword {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -131,14 +131,14 @@ impl Value {
         };
 
         value.token = token;
-        value.scope_path = scope_path.clone();
+        value.scope_path.extend_from_slice(scope_path);
         value.name = Some(name);
         value.typing = Some(typing);
 
         Ok(value)
     }
 
-    pub fn new_char(scope_path: &Vec<usize>, token: Token) -> Result<Self> {
+    pub fn new_char(scope_path: &[usize], token: Token) -> Result<Self> {
         if token.kind != TokenKind::CharLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -153,14 +153,14 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.scope_path = scope_path.clone();
+        value.scope_path.extend_from_slice(scope_path);
         value.prim = Some(PrimValue::new_char(&content));
         value.typing = Some(Type::Char);
 
         Ok(value)
     }
 
-    pub fn new_uint(scope_path: &Vec<usize>, token: Token) -> Result<Self> {
+    pub fn new_uint(scope_path: &[usize], token: Token) -> Result<Self> {
         if token.kind != TokenKind::UIntLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -173,14 +173,14 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.scope_path = scope_path.clone();
+        value.scope_path.extend_from_slice(scope_path);
         value.prim = Some(PrimValue::new_uint(&content));
         value.typing = Some(Type::UInt);
 
         Ok(value)
     }
 
-    pub fn new_int(scope_path: &Vec<usize>, token: Token) -> Result<Self> {
+    pub fn new_int(scope_path: &[usize], token: Token) -> Result<Self> {
         if token.kind != TokenKind::IntLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -193,14 +193,14 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.scope_path = scope_path.clone();
+        value.scope_path.extend_from_slice(scope_path);
         value.prim = Some(PrimValue::new_int(&content));
         value.typing = Some(Type::Int);
 
         Ok(value)
     }
 
-    pub fn new_float(scope_path: &Vec<usize>, token: Token) -> Result<Self> {
+    pub fn new_float(scope_path: &[usize], token: Token) -> Result<Self> {
         if token.kind != TokenKind::FloatLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -213,14 +213,14 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.scope_path = scope_path.clone();
+        value.scope_path.extend_from_slice(scope_path);
         value.prim = Some(PrimValue::new_float(&content));
         value.typing = Some(Type::Float);
 
         Ok(value)
     }
 
-    pub fn new_string(scope_path: &Vec<usize>, token: Token) -> Result<Self> {
+    pub fn new_string(scope_path: &[usize], token: Token) -> Result<Self> {
         if token.kind != TokenKind::StringLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -235,14 +235,14 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.scope_path = scope_path.clone();
+        value.scope_path.extend_from_slice(scope_path);
         value.prim = Some(PrimValue::new_string(&content));
         value.typing = Some(Type::String);
 
         Ok(value)
     }
 
-    pub fn new_symbol(scope_path: &Vec<usize>, token: Token) -> Result<Self> {
+    pub fn new_symbol(scope_path: &[usize], token: Token) -> Result<Self> {
         if token.kind != TokenKind::ValueSymbol
             && token.kind != TokenKind::TypeSymbol
             && token.kind != TokenKind::PathSymbol
@@ -280,7 +280,7 @@ impl Value {
 
         let mut value = Value::default();
         value.token = token;
-        value.scope_path = scope_path.clone();
+        value.scope_path.extend_from_slice(scope_path);
         value.qualification = qualification;
         value.name = Some(name);
 
@@ -333,7 +333,7 @@ impl Value {
 
         let mut value = Value::default();
         value.token = head_token;
-        value.scope_path = scope_path.clone();
+        value.scope_path.extend_from_slice(scope_path);
         value.qualification = qualification;
         value.name = Some(name);
 
