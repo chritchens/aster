@@ -70,10 +70,26 @@ fn path_suffix(s: &str) -> String {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
+pub struct ValueScope {
+    pub file: Option<String>,
+    pub tpl_name: String,
+    pub path: Vec<usize>,
+}
+
+impl ValueScope {
+    pub fn new() -> ValueScope {
+        ValueScope::default()
+    }
+
+    pub fn is_tpl(&self) -> bool {
+        self.path.is_empty()
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Value {
     pub token: Token,
-    pub scope_name: Option<String>,
-    pub scope_path: Vec<usize>,
+    pub scope: ValueScope,
     pub qualification: Option<String>,
     pub name: Option<String>,
     pub typing: Option<Type>,
@@ -86,7 +102,7 @@ impl Value {
         Value::default()
     }
 
-    pub fn new_empty(scope_path: &[usize], token: Token) -> Result<Self> {
+    pub fn new_empty(scope: &ValueScope, token: Token) -> Result<Self> {
         if token.kind != TokenKind::EmptyLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -97,14 +113,14 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.scope_path.extend_from_slice(scope_path);
+        value.scope = scope.clone();
         value.prim = Some(PrimValue::Empty);
         value.typing = Some(Type::Empty);
 
         Ok(value)
     }
 
-    pub fn new_keyword(scope_path: &[usize], token: Token) -> Result<Self> {
+    pub fn new_keyword(scope: &ValueScope, token: Token) -> Result<Self> {
         if token.kind != TokenKind::Keyword {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -131,14 +147,14 @@ impl Value {
         };
 
         value.token = token;
-        value.scope_path.extend_from_slice(scope_path);
+        value.scope = scope.clone();
         value.name = Some(name);
         value.typing = Some(typing);
 
         Ok(value)
     }
 
-    pub fn new_char(scope_path: &[usize], token: Token) -> Result<Self> {
+    pub fn new_char(scope: &ValueScope, token: Token) -> Result<Self> {
         if token.kind != TokenKind::CharLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -153,14 +169,14 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.scope_path.extend_from_slice(scope_path);
+        value.scope = scope.clone();
         value.prim = Some(PrimValue::new_char(&content));
         value.typing = Some(Type::Char);
 
         Ok(value)
     }
 
-    pub fn new_uint(scope_path: &[usize], token: Token) -> Result<Self> {
+    pub fn new_uint(scope: &ValueScope, token: Token) -> Result<Self> {
         if token.kind != TokenKind::UIntLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -173,14 +189,14 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.scope_path.extend_from_slice(scope_path);
+        value.scope = scope.clone();
         value.prim = Some(PrimValue::new_uint(&content));
         value.typing = Some(Type::UInt);
 
         Ok(value)
     }
 
-    pub fn new_int(scope_path: &[usize], token: Token) -> Result<Self> {
+    pub fn new_int(scope: &ValueScope, token: Token) -> Result<Self> {
         if token.kind != TokenKind::IntLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -193,14 +209,14 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.scope_path.extend_from_slice(scope_path);
+        value.scope = scope.clone();
         value.prim = Some(PrimValue::new_int(&content));
         value.typing = Some(Type::Int);
 
         Ok(value)
     }
 
-    pub fn new_float(scope_path: &[usize], token: Token) -> Result<Self> {
+    pub fn new_float(scope: &ValueScope, token: Token) -> Result<Self> {
         if token.kind != TokenKind::FloatLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -213,14 +229,14 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.scope_path.extend_from_slice(scope_path);
+        value.scope = scope.clone();
         value.prim = Some(PrimValue::new_float(&content));
         value.typing = Some(Type::Float);
 
         Ok(value)
     }
 
-    pub fn new_string(scope_path: &[usize], token: Token) -> Result<Self> {
+    pub fn new_string(scope: &ValueScope, token: Token) -> Result<Self> {
         if token.kind != TokenKind::StringLiteral {
             return Err(Error::Parsing(ParsingError {
                 loc: token.loc(),
@@ -235,14 +251,14 @@ impl Value {
         let mut value = Value::default();
 
         value.token = token;
-        value.scope_path.extend_from_slice(scope_path);
+        value.scope = scope.clone();
         value.prim = Some(PrimValue::new_string(&content));
         value.typing = Some(Type::String);
 
         Ok(value)
     }
 
-    pub fn new_symbol(scope_path: &[usize], token: Token) -> Result<Self> {
+    pub fn new_symbol(scope: &ValueScope, token: Token) -> Result<Self> {
         if token.kind != TokenKind::ValueSymbol
             && token.kind != TokenKind::TypeSymbol
             && token.kind != TokenKind::PathSymbol
@@ -280,7 +296,7 @@ impl Value {
 
         let mut value = Value::default();
         value.token = token;
-        value.scope_path.extend_from_slice(scope_path);
+        value.scope = scope.clone();
         value.qualification = qualification;
         value.name = Some(name);
 
@@ -289,7 +305,7 @@ impl Value {
         Ok(value)
     }
 
-    pub fn new_app(scope_path: &mut Vec<usize>, tokens: Vec<Token>) -> Result<Self> {
+    pub fn new_app(scope: &mut ValueScope, tokens: Vec<Token>) -> Result<Self> {
         if tokens.len() < 3
             || tokens[0].kind != TokenKind::FormStart
             || tokens.last().unwrap().kind != TokenKind::FormEnd
@@ -333,7 +349,7 @@ impl Value {
 
         let mut value = Value::default();
         value.token = head_token;
-        value.scope_path.extend_from_slice(scope_path);
+        value.scope = scope.clone();
         value.qualification = qualification;
         value.name = Some(name);
 
@@ -375,7 +391,7 @@ impl Value {
                         }));
                     }
 
-                    let child_value = Value::new_app(scope_path, child_tokens)?;
+                    let child_value = Value::new_app(scope, child_tokens)?;
                     value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
@@ -384,7 +400,7 @@ impl Value {
                 }
                 TokenKind::FormEnd => break,
                 TokenKind::EmptyLiteral => {
-                    let child_value = Value::new_empty(scope_path, token.clone())?;
+                    let child_value = Value::new_empty(scope, token.clone())?;
                     value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
@@ -394,7 +410,7 @@ impl Value {
                     idx += 1;
                 }
                 TokenKind::Keyword => {
-                    let child_value = Value::new_keyword(scope_path, token.clone())?;
+                    let child_value = Value::new_keyword(scope, token.clone())?;
                     value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
@@ -404,7 +420,7 @@ impl Value {
                     idx += 1;
                 }
                 TokenKind::UIntLiteral => {
-                    let child_value = Value::new_uint(scope_path, token.clone())?;
+                    let child_value = Value::new_uint(scope, token.clone())?;
                     value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
@@ -414,7 +430,7 @@ impl Value {
                     idx += 1;
                 }
                 TokenKind::IntLiteral => {
-                    let child_value = Value::new_int(scope_path, token.clone())?;
+                    let child_value = Value::new_int(scope, token.clone())?;
                     value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
@@ -424,7 +440,7 @@ impl Value {
                     idx += 1;
                 }
                 TokenKind::FloatLiteral => {
-                    let child_value = Value::new_float(scope_path, token.clone())?;
+                    let child_value = Value::new_float(scope, token.clone())?;
                     value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
@@ -434,7 +450,7 @@ impl Value {
                     idx += 1;
                 }
                 TokenKind::CharLiteral => {
-                    let child_value = Value::new_char(scope_path, token.clone())?;
+                    let child_value = Value::new_char(scope, token.clone())?;
                     value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
@@ -444,7 +460,7 @@ impl Value {
                     idx += 1;
                 }
                 TokenKind::StringLiteral => {
-                    let child_value = Value::new_string(scope_path, token.clone())?;
+                    let child_value = Value::new_string(scope, token.clone())?;
                     value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));
@@ -454,7 +470,7 @@ impl Value {
                     idx += 1;
                 }
                 TokenKind::ValueSymbol | TokenKind::TypeSymbol | TokenKind::PathSymbol => {
-                    let child_value = Value::new_symbol(scope_path, token.clone())?;
+                    let child_value = Value::new_symbol(scope, token.clone())?;
                     value.children.push(child_value.clone());
 
                     let mut typing = value.typing.unwrap_or_else(|| Type::App(vec![]));

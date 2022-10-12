@@ -123,7 +123,7 @@ impl SymbolTable {
                         Keyword::Deftype => {
                             let name = value.children[1].name.clone().unwrap();
 
-                            if !value.scope_path.is_empty() {
+                            if !value.scope.is_tpl() {
                                 if name == "Main" {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
@@ -160,7 +160,7 @@ impl SymbolTable {
                         Keyword::Defsig => {
                             let name = value.children[1].name.clone().unwrap();
 
-                            if !value.scope_path.is_empty() {
+                            if !value.scope.is_tpl() {
                                 if name == "main" {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
@@ -204,7 +204,7 @@ impl SymbolTable {
                                 }));
                             }
 
-                            if !value.scope_path.is_empty() {
+                            if !value.scope.is_tpl() {
                                 st.scoped_def_prims.insert(name.clone());
 
                                 st.scoped_prims
@@ -230,7 +230,7 @@ impl SymbolTable {
                                 }));
                             }
 
-                            if !value.scope_path.is_empty() {
+                            if !value.scope.is_tpl() {
                                 st.scoped_def_sums.insert(name.clone());
 
                                 st.scoped_sums
@@ -256,7 +256,7 @@ impl SymbolTable {
                                 }));
                             }
 
-                            if !value.scope_path.is_empty() {
+                            if !value.scope.is_tpl() {
                                 st.scoped_def_prods.insert(name.clone());
                                 st.scoped_prods
                                     .entry(name)
@@ -273,7 +273,7 @@ impl SymbolTable {
                         Keyword::Defun => {
                             let name = value.children[1].name.clone().unwrap();
 
-                            if !value.scope_path.is_empty() {
+                            if !value.scope.is_tpl() {
                                 if name == "main" {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
@@ -310,7 +310,7 @@ impl SymbolTable {
                         Keyword::Defattrs => {
                             let name = value.children[1].name.clone().unwrap();
 
-                            if !value.scope_path.is_empty() {
+                            if !value.scope.is_tpl() {
                                 if name == "main" {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
@@ -379,7 +379,7 @@ impl SymbolTable {
 
                                 match keyword {
                                     Keyword::Type => {
-                                        if !value.scope_path.is_empty() {
+                                        if !value.scope.is_tpl() {
                                             if name == "Main" {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: name_value.token.loc(),
@@ -414,7 +414,7 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::Sig => {
-                                        if !value.scope_path.is_empty() {
+                                        if !value.scope.is_tpl() {
                                             if name == "main" {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: name_value.token.loc(),
@@ -456,7 +456,7 @@ impl SymbolTable {
                                             }));
                                         }
 
-                                        if !value.scope_path.is_empty() {
+                                        if !value.scope.is_tpl() {
                                             st.scoped_def_prims.insert(name.clone());
 
                                             st.scoped_prims
@@ -480,7 +480,7 @@ impl SymbolTable {
                                             }));
                                         }
 
-                                        if !value.scope_path.is_empty() {
+                                        if !value.scope.is_tpl() {
                                             st.scoped_def_sums.insert(name.clone());
 
                                             st.scoped_sums
@@ -504,7 +504,7 @@ impl SymbolTable {
                                             }));
                                         }
 
-                                        if !value.scope_path.is_empty() {
+                                        if !value.scope.is_tpl() {
                                             st.scoped_def_prods.insert(name.clone());
 
                                             st.scoped_prods
@@ -521,7 +521,7 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::Fun => {
-                                        if !value.scope_path.is_empty() {
+                                        if !value.scope.is_tpl() {
                                             if name == "main" {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: name_value.token.loc(),
@@ -556,7 +556,7 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::App => {
-                                        if !value.scope_path.is_empty() {
+                                        if !value.scope.is_tpl() {
                                             if name == "main" {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: name_value.token.loc(),
@@ -591,7 +591,7 @@ impl SymbolTable {
                                         }
                                     }
                                     Keyword::Attrs => {
-                                        if !value.scope_path.is_empty() {
+                                        if !value.scope.is_tpl() {
                                             if name == "main" {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: name_value.token.loc(),
@@ -653,7 +653,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                if !value.scope_path.is_empty() {
+                                if !value.scope.is_tpl() {
                                     st.scoped_def_prims.insert(name.clone());
 
                                     st.scoped_prims
@@ -678,7 +678,7 @@ impl SymbolTable {
                         _ if value.prim.is_none() && value.children.len() > 1 => {
                             let name = value.children[1].name.clone().unwrap();
 
-                            if !value.scope_path.is_empty() {
+                            if !value.scope.is_tpl() {
                                 if name == "main" {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
@@ -713,7 +713,7 @@ impl SymbolTable {
                 } else if value.prim.is_none() && value.children.len() > 1 {
                     let name = value.children[0].name.clone().unwrap();
 
-                    if !value.scope_path.is_empty() {
+                    if !value.scope.is_tpl() {
                         st.scoped_apps
                             .entry(name)
                             .and_modify(|v| v.push(value.clone()))
