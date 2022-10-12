@@ -3,12 +3,12 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 47] = [
-    "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun", "defattrs",
-    "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "case", "caseMap", "size",
-    "load", "store", "cast", "dup", "drop", "panic", "Empty", "Prim", "UInt", "Int", "Float",
-    "Size", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod", "Sig", "Fun", "App",
-    "Attrs", "Type", "_",
+pub const KEYWORDS: [&str; 49] = [
+    "builtin", "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun",
+    "defattrs", "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "case",
+    "caseMap", "size", "load", "store", "cast", "dup", "drop", "panic", "Builtin", "Empty", "Prim",
+    "UInt", "Int", "Float", "Size", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod",
+    "Sig", "Fun", "App", "Attrs", "Type", "_",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -17,6 +17,7 @@ pub fn is_keyword(s: &str) -> bool {
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum Keyword {
+    Builtin,
     Import,
     Export,
     Deftype,
@@ -44,6 +45,7 @@ pub enum Keyword {
     Dup,
     Drop,
     Panic,
+    BuiltinT,
     EmptyT,
     PrimT,
     UIntT,
@@ -69,6 +71,7 @@ pub enum Keyword {
 impl fmt::Display for Keyword {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Keyword::Builtin => write!(f, "builtin"),
             Keyword::Import => write!(f, "import"),
             Keyword::Export => write!(f, "export"),
             Keyword::Deftype => write!(f, "deftype"),
@@ -96,6 +99,7 @@ impl fmt::Display for Keyword {
             Keyword::Dup => write!(f, "dup"),
             Keyword::Drop => write!(f, "drop"),
             Keyword::Panic => write!(f, "panic"),
+            Keyword::BuiltinT => write!(f, "Builtin"),
             Keyword::EmptyT => write!(f, "Empty"),
             Keyword::PrimT => write!(f, "Prim"),
             Keyword::UIntT => write!(f, "UInt"),
@@ -123,6 +127,7 @@ impl fmt::Display for Keyword {
 impl Keyword {
     pub fn from_str(s: &str) -> Result<Self> {
         match s {
+            "builtin" => Ok(Keyword::Builtin),
             "import" => Ok(Keyword::Import),
             "export" => Ok(Keyword::Export),
             "deftype" => Ok(Keyword::Deftype),
@@ -150,6 +155,7 @@ impl Keyword {
             "dup" => Ok(Keyword::Dup),
             "drop" => Ok(Keyword::Drop),
             "panic" => Ok(Keyword::Panic),
+            "Builtin" => Ok(Keyword::BuiltinT),
             "Empty" => Ok(Keyword::EmptyT),
             "Prim" => Ok(Keyword::PrimT),
             "UInt" => Ok(Keyword::UIntT),
