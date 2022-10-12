@@ -35,7 +35,8 @@ pub struct SymbolTable {
     pub main_sig: Option<Value>,
     pub main_fun: Option<Value>,
     pub main_app: Option<Value>,
-    pub main_attrs: Option<Value>,
+    pub main_fun_attrs: Option<Value>,
+    pub main_type_attrs: Option<Value>,
 
     pub scoped_def_types: BTreeSet<String>,
     pub scoped_def_prims: BTreeSet<String>,
@@ -332,14 +333,23 @@ impl SymbolTable {
                                     .or_insert_with(|| vec![value.clone()]);
 
                                 if name == "main" {
-                                    if st.main_attrs.is_some() {
+                                    if st.main_fun_attrs.is_some() {
                                         return Err(Error::Semantic(SemanticError {
                                             loc: value.token.loc(),
-                                            desc: "duplicate main attributes".into(),
+                                            desc: "duplicate main function attributes".into(),
                                         }));
                                     }
 
-                                    st.main_attrs = Some(value);
+                                    st.main_fun_attrs = Some(value);
+                                } else if name == "Main" {
+                                    if st.main_type_attrs.is_some() {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: value.token.loc(),
+                                            desc: "duplicate Main type attributes".into(),
+                                        }));
+                                    }
+
+                                    st.main_type_attrs = Some(value);
                                 }
                             }
                         }
@@ -604,14 +614,25 @@ impl SymbolTable {
                                                 .or_insert_with(|| vec![value.clone()]);
 
                                             if name == "main" {
-                                                if st.main_attrs.is_some() {
+                                                if st.main_fun_attrs.is_some() {
                                                     return Err(Error::Semantic(SemanticError {
                                                         loc: name_value.token.loc(),
-                                                        desc: "duplicate main attributes".into(),
+                                                        desc: "duplicate main function attributes"
+                                                            .into(),
                                                     }));
                                                 }
 
-                                                st.main_attrs = Some(value);
+                                                st.main_fun_attrs = Some(value);
+                                            } else if name == "Main" {
+                                                if st.main_type_attrs.is_some() {
+                                                    return Err(Error::Semantic(SemanticError {
+                                                        loc: name_value.token.loc(),
+                                                        desc: "duplicate Main type attributes"
+                                                            .into(),
+                                                    }));
+                                                }
+
+                                                st.main_type_attrs = Some(value);
                                             }
                                         }
                                     }
@@ -968,6 +989,20 @@ mod test {
         assert!(st.def_attrs.contains("sum"));
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
+
+        s = "(def Main (attrs attr1 attr2 attr3))";
+
+        values = Values::from_str(s).unwrap();
+
+        let value = values[0].clone();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.def_attrs.len(), 1);
+        assert!(st.def_attrs.contains("Main"));
+        assert_eq!(st.attrs.len(), 1);
+        assert!(st.attrs.contains_key("Main"));
+        assert_eq!(st.main_type_attrs, Some(value));
     }
 
     #[test]
