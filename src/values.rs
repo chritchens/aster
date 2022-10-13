@@ -428,7 +428,7 @@ mod tests {
     }
 
     #[test]
-    fn fully_typed() {
+    fn fully_typed_values() {
         use super::Values;
         use std::path::Path;
 
@@ -452,7 +452,7 @@ mod tests {
     }
 
     #[test]
-    fn scoping() {
+    fn values_scoping() {
         use super::Values;
 
         let s = "(a (b c (d (x y z)))) (e (f g) (h i)) (j (l m) n) ";
