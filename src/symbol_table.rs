@@ -675,54 +675,58 @@ impl SymbolTable {
                         }
                     }
                     _ => {
-                        if let Some(name) = value.children[1].name.clone() {
-                            if value.prim.is_some() {
-                                if name == "main" {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "invalid scoped main primitive".into(),
-                                    }));
-                                }
+                        let name = if value.children[1].name.is_some() {
+                            value.children[1].name.clone().unwrap()
+                        } else {
+                            "_".into()
+                        };
 
-                                if !value.scope.is_tpl() {
-                                    self.scoped_prims
-                                        .entry(name)
-                                        .and_modify(|v| v.push(value.clone()))
-                                        .or_insert_with(|| vec![value.clone()]);
-                                } else {
-                                    self.prims
-                                        .entry(name)
-                                        .and_modify(|v| v.push(value.clone()))
-                                        .or_insert_with(|| vec![value.clone()]);
-                                }
-                            } else if !value.scope.is_tpl() {
-                                if name == "main" {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "invalid scoped main application".into(),
-                                    }));
-                                }
+                        if value.prim.is_some() {
+                            if name == "main" {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "invalid scoped main primitive".into(),
+                                }));
+                            }
 
-                                self.scoped_apps
+                            if !value.scope.is_tpl() {
+                                self.scoped_prims
                                     .entry(name)
                                     .and_modify(|v| v.push(value.clone()))
                                     .or_insert_with(|| vec![value.clone()]);
                             } else {
-                                self.apps
-                                    .entry(name.clone())
+                                self.prims
+                                    .entry(name)
                                     .and_modify(|v| v.push(value.clone()))
                                     .or_insert_with(|| vec![value.clone()]);
+                            }
+                        } else if !value.scope.is_tpl() {
+                            if name == "main" {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "invalid scoped main application".into(),
+                                }));
+                            }
 
-                                if name == "main" {
-                                    if self.main_app.is_some() {
-                                        return Err(Error::Semantic(SemanticError {
-                                            loc: value.token.loc(),
-                                            desc: "duplicate main application".into(),
-                                        }));
-                                    }
+                            self.scoped_apps
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
+                        } else {
+                            self.apps
+                                .entry(name.clone())
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
 
-                                    self.main_app = Some(value.clone());
+                            if name == "main" {
+                                if self.main_app.is_some() {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "duplicate main application".into(),
+                                    }));
                                 }
+
+                                self.main_app = Some(value.clone());
                             }
                         }
                     }
