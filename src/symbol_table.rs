@@ -62,7 +62,9 @@ impl SymbolTable {
         SymbolTable::default()
     }
 
-    pub fn add_value(&mut self, mut value: Value) -> Result<()> {
+    pub fn add_value(&mut self, value_ref: &Value) -> Result<()> {
+        let mut value = value_ref.clone();
+
         if let Some(file) = value.token.file() {
             self.files.insert(file);
         }
@@ -89,7 +91,7 @@ impl SymbolTable {
                         self.imports
                             .entry(name)
                             .and_modify(|v| v.push(value.clone()))
-                            .or_insert_with(|| vec![value]);
+                            .or_insert_with(|| vec![value.clone()]);
                     }
                     Keyword::Export => {
                         value = value.children[1].clone();
@@ -115,7 +117,7 @@ impl SymbolTable {
                             self.exports
                                 .entry(name)
                                 .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value]);
+                                .or_insert_with(|| vec![value.clone()]);
                         }
                     }
                     Keyword::Deftype => {
@@ -151,7 +153,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                self.main_type = Some(value);
+                                self.main_type = Some(value.clone());
                             }
                         }
                     }
@@ -188,7 +190,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                self.main_sig = Some(value);
+                                self.main_sig = Some(value.clone());
                             }
                         }
                     }
@@ -208,14 +210,14 @@ impl SymbolTable {
                             self.scoped_prims
                                 .entry(name)
                                 .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value]);
+                                .or_insert_with(|| vec![value.clone()]);
                         } else {
                             self.def_prims.insert(name.clone());
 
                             self.prims
                                 .entry(name)
                                 .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value]);
+                                .or_insert_with(|| vec![value.clone()]);
                         }
                     }
                     Keyword::Defsum => {
@@ -234,14 +236,14 @@ impl SymbolTable {
                             self.scoped_sums
                                 .entry(name)
                                 .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value]);
+                                .or_insert_with(|| vec![value.clone()]);
                         } else {
                             self.def_sums.insert(name.clone());
 
                             self.sums
                                 .entry(name)
                                 .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value]);
+                                .or_insert_with(|| vec![value.clone()]);
                         }
                     }
                     Keyword::Defprod => {
@@ -259,13 +261,13 @@ impl SymbolTable {
                             self.scoped_prods
                                 .entry(name)
                                 .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value]);
+                                .or_insert_with(|| vec![value.clone()]);
                         } else {
                             self.def_prods.insert(name.clone());
                             self.prods
                                 .entry(name)
                                 .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value]);
+                                .or_insert_with(|| vec![value.clone()]);
                         }
                     }
                     Keyword::Defun => {
@@ -301,7 +303,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                self.main_fun = Some(value);
+                                self.main_fun = Some(value.clone());
                             }
                         }
                     }
@@ -338,7 +340,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                self.main_fun_attrs = Some(value);
+                                self.main_fun_attrs = Some(value.clone());
                             } else if name == "Main" {
                                 if self.main_type_attrs.is_some() {
                                     return Err(Error::Semantic(SemanticError {
@@ -347,7 +349,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                self.main_type_attrs = Some(value);
+                                self.main_type_attrs = Some(value.clone());
                             }
                         }
                     }
@@ -407,7 +409,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_type = Some(value);
+                                            self.main_type = Some(value.clone());
                                         }
                                     }
                                 }
@@ -442,7 +444,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_sig = Some(value);
+                                            self.main_sig = Some(value.clone());
                                         }
                                     }
                                 }
@@ -460,14 +462,14 @@ impl SymbolTable {
                                         self.scoped_prims
                                             .entry(name)
                                             .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value]);
+                                            .or_insert_with(|| vec![value.clone()]);
                                     } else {
                                         self.def_prims.insert(name.clone());
 
                                         self.prims
                                             .entry(name)
                                             .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value]);
+                                            .or_insert_with(|| vec![value.clone()]);
                                     }
                                 }
                                 Keyword::Sum => {
@@ -484,14 +486,14 @@ impl SymbolTable {
                                         self.scoped_sums
                                             .entry(name)
                                             .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value]);
+                                            .or_insert_with(|| vec![value.clone()]);
                                     } else {
                                         self.def_sums.insert(name.clone());
 
                                         self.sums
                                             .entry(name)
                                             .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value]);
+                                            .or_insert_with(|| vec![value.clone()]);
                                     }
                                 }
                                 Keyword::Prod => {
@@ -508,14 +510,14 @@ impl SymbolTable {
                                         self.scoped_prods
                                             .entry(name)
                                             .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value]);
+                                            .or_insert_with(|| vec![value.clone()]);
                                     } else {
                                         self.def_prods.insert(name.clone());
 
                                         self.prods
                                             .entry(name)
                                             .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value]);
+                                            .or_insert_with(|| vec![value.clone()]);
                                     }
                                 }
                                 Keyword::Fun => {
@@ -549,7 +551,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_fun = Some(value);
+                                            self.main_fun = Some(value.clone());
                                         }
                                     }
                                 }
@@ -584,7 +586,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_app = Some(value);
+                                            self.main_app = Some(value.clone());
                                         }
                                     }
                                 }
@@ -620,7 +622,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_fun_attrs = Some(value);
+                                            self.main_fun_attrs = Some(value.clone());
                                         } else if name == "Main" {
                                             if self.main_type_attrs.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
@@ -629,7 +631,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_type_attrs = Some(value);
+                                            self.main_type_attrs = Some(value.clone());
                                         }
                                     }
                                 }
@@ -656,14 +658,14 @@ impl SymbolTable {
                                 self.scoped_prims
                                     .entry(name)
                                     .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
+                                    .or_insert_with(|| vec![value.clone()]);
                             } else {
                                 self.def_prims.insert(name.clone());
 
                                 self.prims
                                     .entry(name)
                                     .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
+                                    .or_insert_with(|| vec![value.clone()]);
                             }
                         } else {
                             return Err(Error::Semantic(SemanticError {
@@ -673,54 +675,54 @@ impl SymbolTable {
                         }
                     }
                     _ => {
-                        let name = value.children[1].name.clone().unwrap();
-
-                        if value.prim.is_some() {
-                            if name == "main" {
-                                return Err(Error::Semantic(SemanticError {
-                                    loc: value.token.loc(),
-                                    desc: "invalid scoped main primitive".into(),
-                                }));
-                            }
-
-                            if !value.scope.is_tpl() {
-                                self.scoped_prims
-                                    .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
-                            } else {
-                                self.prims
-                                    .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
-                            }
-                        } else if !value.scope.is_tpl() {
-                            if name == "main" {
-                                return Err(Error::Semantic(SemanticError {
-                                    loc: value.token.loc(),
-                                    desc: "invalid scoped main application".into(),
-                                }));
-                            }
-
-                            self.scoped_apps
-                                .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value]);
-                        } else {
-                            self.apps
-                                .entry(name.clone())
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
-
-                            if name == "main" {
-                                if self.main_app.is_some() {
+                        if let Some(name) = value.children[1].name.clone() {
+                            if value.prim.is_some() {
+                                if name == "main" {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
-                                        desc: "duplicate main application".into(),
+                                        desc: "invalid scoped main primitive".into(),
                                     }));
                                 }
 
-                                self.main_app = Some(value);
+                                if !value.scope.is_tpl() {
+                                    self.scoped_prims
+                                        .entry(name)
+                                        .and_modify(|v| v.push(value.clone()))
+                                        .or_insert_with(|| vec![value.clone()]);
+                                } else {
+                                    self.prims
+                                        .entry(name)
+                                        .and_modify(|v| v.push(value.clone()))
+                                        .or_insert_with(|| vec![value.clone()]);
+                                }
+                            } else if !value.scope.is_tpl() {
+                                if name == "main" {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "invalid scoped main application".into(),
+                                    }));
+                                }
+
+                                self.scoped_apps
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value.clone()]);
+                            } else {
+                                self.apps
+                                    .entry(name.clone())
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value.clone()]);
+
+                                if name == "main" {
+                                    if self.main_app.is_some() {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: value.token.loc(),
+                                            desc: "duplicate main application".into(),
+                                        }));
+                                    }
+
+                                    self.main_app = Some(value.clone());
+                                }
                             }
                         }
                     }
@@ -739,7 +741,7 @@ impl SymbolTable {
                     self.scoped_apps
                         .entry(name)
                         .and_modify(|v| v.push(value.clone()))
-                        .or_insert_with(|| vec![value]);
+                        .or_insert_with(|| vec![value.clone()]);
                 } else {
                     self.apps
                         .entry(name.clone())
@@ -754,10 +756,14 @@ impl SymbolTable {
                             }));
                         }
 
-                        self.main_app = Some(value);
+                        self.main_app = Some(value.clone());
                     }
                 }
             }
+        }
+
+        for child_value in value.children.iter() {
+            self.add_value(child_value)?;
         }
 
         Ok(())
@@ -767,7 +773,7 @@ impl SymbolTable {
         let mut st = SymbolTable::new();
 
         for value in values.clone().into_iter() {
-            st.add_value(value)?;
+            st.add_value(&value)?;
         }
 
         Ok(st)
@@ -1003,6 +1009,17 @@ mod test {
         assert!(!st.def_apps.contains("f"));
         assert_eq!(st.apps.len(), 1);
         assert!(st.apps.contains_key("f"));
+
+        s = "(f x y (g z))";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.scoped_def_apps.len(), 0);
+        assert!(!st.scoped_def_apps.contains("g"));
+        assert_eq!(st.scoped_apps.len(), 1);
+        assert!(st.scoped_apps.contains_key("g"));
     }
 
     #[test]
