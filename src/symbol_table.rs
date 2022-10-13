@@ -729,19 +729,37 @@ impl SymbolTable {
                             }
                         }
                     }
-                } else if value.prim.is_none() && value.children.len() > 1 {
+                } else if value.prim.is_none() {
                     let name = value.children[0].name.clone().unwrap();
 
                     if !value.scope.is_tpl() {
+                        if name == "main" {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: value.token.loc(),
+                                desc: "invalid scoped main application".into(),
+                            }));
+                        }
+
                         st.scoped_apps
                             .entry(name)
                             .and_modify(|v| v.push(value.clone()))
                             .or_insert_with(|| vec![value]);
                     } else {
                         st.apps
-                            .entry(name)
+                            .entry(name.clone())
                             .and_modify(|v| v.push(value.clone()))
-                            .or_insert_with(|| vec![value]);
+                            .or_insert_with(|| vec![value.clone()]);
+
+                        if name == "main" {
+                            if st.main_app.is_some() {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "duplicate main application".into(),
+                                }));
+                            }
+
+                            st.main_app = Some(value);
+                        }
                     }
                 }
             }
