@@ -72,7 +72,8 @@ impl SymbolTable {
 
             if let Some(Type::App(types)) = value.typing.clone() {
                 if types[0] == Type::Builtin {
-                    let keyword = Keyword::from_str(&value.clone().name.unwrap())?;
+                    let name = value.clone().name.unwrap();
+                    let keyword = Keyword::from_str(&name)?;
 
                     match keyword {
                         Keyword::Import => {
@@ -675,10 +676,29 @@ impl SymbolTable {
                                 }));
                             }
                         }
-                        _ if value.prim.is_none() && value.children.len() > 1 => {
+                        _ => {
                             let name = value.children[1].name.clone().unwrap();
 
-                            if !value.scope.is_tpl() {
+                            if value.prim.is_some() {
+                                if name == "main" {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "invalid scoped main primitive".into(),
+                                    }));
+                                }
+
+                                if !value.scope.is_tpl() {
+                                    st.scoped_prims
+                                        .entry(name)
+                                        .and_modify(|v| v.push(value.clone()))
+                                        .or_insert_with(|| vec![value]);
+                                } else {
+                                    st.prims
+                                        .entry(name.clone())
+                                        .and_modify(|v| v.push(value.clone()))
+                                        .or_insert_with(|| vec![value.clone()]);
+                                }
+                            } else if !value.scope.is_tpl() {
                                 if name == "main" {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
@@ -708,7 +728,6 @@ impl SymbolTable {
                                 }
                             }
                         }
-                        _ => {}
                     }
                 } else if value.prim.is_none() && value.children.len() > 1 {
                     let name = value.children[0].name.clone().unwrap();
