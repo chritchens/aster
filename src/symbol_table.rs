@@ -62,707 +62,712 @@ impl SymbolTable {
         SymbolTable::default()
     }
 
-    pub fn from_values(values: &Values) -> Result<Self> {
-        let mut st = SymbolTable::new();
+    pub fn add_value(&mut self, mut value: Value) -> Result<()> {
+        if let Some(file) = value.token.file() {
+            self.files.insert(file);
+        }
 
-        for mut value in values.clone().into_iter() {
-            if let Some(file) = value.token.file() {
-                st.files.insert(file);
-            }
+        if let Some(Type::App(types)) = value.typing.clone() {
+            if types[0] == Type::Builtin {
+                let name = value.clone().name.unwrap();
+                let keyword = Keyword::from_str(&name)?;
 
-            if let Some(Type::App(types)) = value.typing.clone() {
-                if types[0] == Type::Builtin {
-                    let name = value.clone().name.unwrap();
-                    let keyword = Keyword::from_str(&name)?;
+                match keyword {
+                    Keyword::Import => {
+                        let mut name_segs = Vec::new();
 
-                    match keyword {
-                        Keyword::Import => {
-                            let mut name_segs = Vec::new();
+                        if let Some(path) = value.children[1].qualification.clone() {
+                            name_segs.push(path);
+                        }
 
-                            if let Some(path) = value.children[1].qualification.clone() {
-                                name_segs.push(path);
+                        name_segs.push(value.children[1].name.clone().unwrap());
+
+                        let name = name_segs.join(".");
+
+                        self.imp_paths.insert(name.clone());
+
+                        self.imports
+                            .entry(name)
+                            .and_modify(|v| v.push(value.clone()))
+                            .or_insert_with(|| vec![value]);
+                    }
+                    Keyword::Export => {
+                        value = value.children[1].clone();
+
+                        if value.children.len() > 1 {
+                            let len = value.children.len();
+
+                            for idx in 1..len {
+                                let child = value.children[idx].clone();
+
+                                let name = child.name.clone().unwrap();
+                                self.exp_defs.insert(name.clone());
+
+                                self.exports
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value.clone()]);
                             }
+                        } else {
+                            let name = value.name.clone().unwrap();
+                            self.exp_defs.insert(name.clone());
 
-                            name_segs.push(value.children[1].name.clone().unwrap());
-
-                            let name = name_segs.join(".");
-
-                            st.imp_paths.insert(name.clone());
-
-                            st.imports
+                            self.exports
                                 .entry(name)
                                 .and_modify(|v| v.push(value.clone()))
                                 .or_insert_with(|| vec![value]);
                         }
-                        Keyword::Export => {
-                            value = value.children[1].clone();
+                    }
+                    Keyword::Deftype => {
+                        let name = value.children[1].name.clone().unwrap();
 
-                            if value.children.len() > 1 {
-                                let len = value.children.len();
-
-                                for idx in 1..len {
-                                    let child = value.children[idx].clone();
-
-                                    let name = child.name.clone().unwrap();
-                                    st.exp_defs.insert(name.clone());
-
-                                    st.exports
-                                        .entry(name)
-                                        .and_modify(|v| v.push(value.clone()))
-                                        .or_insert_with(|| vec![value.clone()]);
-                                }
-                            } else {
-                                let name = value.name.clone().unwrap();
-                                st.exp_defs.insert(name.clone());
-
-                                st.exports
-                                    .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
-                            }
-                        }
-                        Keyword::Deftype => {
-                            let name = value.children[1].name.clone().unwrap();
-
-                            if !value.scope.is_tpl() {
-                                if name == "Main" {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "invalid scoped Main type".into(),
-                                    }));
-                                }
-
-                                st.scoped_def_types.insert(name.clone());
-
-                                st.scoped_types
-                                    .entry(name.clone())
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
-                            } else {
-                                st.def_types.insert(name.clone());
-
-                                st.types
-                                    .entry(name.clone())
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
-
-                                if name == "Main" {
-                                    if st.main_type.is_some() {
-                                        return Err(Error::Semantic(SemanticError {
-                                            loc: value.token.loc(),
-                                            desc: "duplicate Main type".into(),
-                                        }));
-                                    }
-
-                                    st.main_type = Some(value);
-                                }
-                            }
-                        }
-                        Keyword::Defsig => {
-                            let name = value.children[1].name.clone().unwrap();
-
-                            if !value.scope.is_tpl() {
-                                if name == "main" {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "invalid scoped main signature".into(),
-                                    }));
-                                }
-
-                                st.scoped_def_sigs.insert(name.clone());
-
-                                st.scoped_sigs
-                                    .entry(name.clone())
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
-                            } else {
-                                st.def_sigs.insert(name.clone());
-
-                                st.sigs
-                                    .entry(name.clone())
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
-
-                                if name == "main" {
-                                    if st.main_sig.is_some() {
-                                        return Err(Error::Semantic(SemanticError {
-                                            loc: value.token.loc(),
-                                            desc: "duplicate main signature".into(),
-                                        }));
-                                    }
-
-                                    st.main_sig = Some(value);
-                                }
-                            }
-                        }
-                        Keyword::Defprim => {
-                            let name = value.children[1].name.clone().unwrap();
-
-                            if name == "main" {
+                        if !value.scope.is_tpl() {
+                            if name == "Main" {
                                 return Err(Error::Semantic(SemanticError {
                                     loc: value.token.loc(),
-                                    desc: "invalid main".into(),
+                                    desc: "invalid scoped Main type".into(),
                                 }));
                             }
 
-                            if !value.scope.is_tpl() {
-                                st.scoped_def_prims.insert(name.clone());
+                            self.scoped_def_types.insert(name.clone());
 
-                                st.scoped_prims
-                                    .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
-                            } else {
-                                st.def_prims.insert(name.clone());
+                            self.scoped_types
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
+                        } else {
+                            self.def_types.insert(name.clone());
 
-                                st.prims
-                                    .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
-                            }
-                        }
-                        Keyword::Defsum => {
-                            let name = value.children[1].name.clone().unwrap();
+                            self.types
+                                .entry(name.clone())
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
 
-                            if name == "main" {
-                                return Err(Error::Semantic(SemanticError {
-                                    loc: value.token.loc(),
-                                    desc: "invalid main".into(),
-                                }));
-                            }
-
-                            if !value.scope.is_tpl() {
-                                st.scoped_def_sums.insert(name.clone());
-
-                                st.scoped_sums
-                                    .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
-                            } else {
-                                st.def_sums.insert(name.clone());
-
-                                st.sums
-                                    .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
-                            }
-                        }
-                        Keyword::Defprod => {
-                            let name = value.children[1].name.clone().unwrap();
-
-                            if name == "main" {
-                                return Err(Error::Semantic(SemanticError {
-                                    loc: value.token.loc(),
-                                    desc: "invalid main".into(),
-                                }));
-                            }
-
-                            if !value.scope.is_tpl() {
-                                st.scoped_def_prods.insert(name.clone());
-                                st.scoped_prods
-                                    .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
-                            } else {
-                                st.def_prods.insert(name.clone());
-                                st.prods
-                                    .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
-                            }
-                        }
-                        Keyword::Defun => {
-                            let name = value.children[1].name.clone().unwrap();
-
-                            if !value.scope.is_tpl() {
-                                if name == "main" {
+                            if name == "Main" {
+                                if self.main_type.is_some() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
-                                        desc: "invalid scoped main function".into(),
+                                        desc: "duplicate Main type".into(),
                                     }));
                                 }
 
-                                st.scoped_def_funs.insert(name.clone());
-
-                                st.scoped_funs
-                                    .entry(name.clone())
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
-                            } else {
-                                st.def_funs.insert(name.clone());
-
-                                st.funs
-                                    .entry(name.clone())
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
-
-                                if name == "main" {
-                                    if st.main_fun.is_some() {
-                                        return Err(Error::Semantic(SemanticError {
-                                            loc: value.token.loc(),
-                                            desc: "duplicate main function".into(),
-                                        }));
-                                    }
-
-                                    st.main_fun = Some(value);
-                                }
-                            }
-                        }
-                        Keyword::Defattrs => {
-                            let name = value.children[1].name.clone().unwrap();
-
-                            if !value.scope.is_tpl() {
-                                if name == "main" {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "invalid scoped main attributes".into(),
-                                    }));
-                                }
-
-                                st.scoped_def_attrs.insert(name.clone());
-
-                                st.scoped_attrs
-                                    .entry(name.clone())
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
-                            } else {
-                                st.def_attrs.insert(name.clone());
-
-                                st.attrs
-                                    .entry(name.clone())
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
-
-                                if name == "main" {
-                                    if st.main_fun_attrs.is_some() {
-                                        return Err(Error::Semantic(SemanticError {
-                                            loc: value.token.loc(),
-                                            desc: "duplicate main function attributes".into(),
-                                        }));
-                                    }
-
-                                    st.main_fun_attrs = Some(value);
-                                } else if name == "Main" {
-                                    if st.main_type_attrs.is_some() {
-                                        return Err(Error::Semantic(SemanticError {
-                                            loc: value.token.loc(),
-                                            desc: "duplicate Main type attributes".into(),
-                                        }));
-                                    }
-
-                                    st.main_type_attrs = Some(value);
-                                }
-                            }
-                        }
-                        Keyword::Def => {
-                            if value.children.len() != 3 {
-                                return Err(Error::Semantic(SemanticError {
-                                    loc: value.token.loc(),
-                                    desc: "invalid definition".into(),
-                                }));
-                            }
-
-                            let name = value.children[1].name.clone().unwrap();
-                            let name_value = value.children[2].clone();
-
-                            let len = name_value.children.len();
-
-                            if len >= 2 {
-                                if name_value.children[0].name.is_none() {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "expected a keyword".into(),
-                                    }));
-                                }
-
-                                let kind = name_value.children[0].name.clone().unwrap();
-                                let keyword = Keyword::from_string(kind)?;
-
-                                match keyword {
-                                    Keyword::Type => {
-                                        if !value.scope.is_tpl() {
-                                            if name == "Main" {
-                                                return Err(Error::Semantic(SemanticError {
-                                                    loc: name_value.token.loc(),
-                                                    desc: "invalid scoped Main type".into(),
-                                                }));
-                                            }
-
-                                            st.scoped_def_types.insert(name.clone());
-
-                                            st.scoped_types
-                                                .entry(name.clone())
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value.clone()]);
-                                        } else {
-                                            st.def_types.insert(name.clone());
-
-                                            st.types
-                                                .entry(name.clone())
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value.clone()]);
-
-                                            if name == "Main" {
-                                                if st.main_type.is_some() {
-                                                    return Err(Error::Semantic(SemanticError {
-                                                        loc: name_value.token.loc(),
-                                                        desc: "duplicate Main type".into(),
-                                                    }));
-                                                }
-
-                                                st.main_type = Some(value);
-                                            }
-                                        }
-                                    }
-                                    Keyword::Sig => {
-                                        if !value.scope.is_tpl() {
-                                            if name == "main" {
-                                                return Err(Error::Semantic(SemanticError {
-                                                    loc: name_value.token.loc(),
-                                                    desc: "invalid scoped main signature".into(),
-                                                }));
-                                            }
-
-                                            st.scoped_def_sigs.insert(name.clone());
-
-                                            st.scoped_sigs
-                                                .entry(name.clone())
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value.clone()]);
-                                        } else {
-                                            st.def_sigs.insert(name.clone());
-
-                                            st.sigs
-                                                .entry(name.clone())
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value.clone()]);
-
-                                            if name == "main" {
-                                                if st.main_sig.is_some() {
-                                                    return Err(Error::Semantic(SemanticError {
-                                                        loc: name_value.token.loc(),
-                                                        desc: "duplicate main signature".into(),
-                                                    }));
-                                                }
-
-                                                st.main_sig = Some(value);
-                                            }
-                                        }
-                                    }
-                                    Keyword::Prim => {
-                                        if name == "main" {
-                                            return Err(Error::Semantic(SemanticError {
-                                                loc: value.token.loc(),
-                                                desc: "invalid main".into(),
-                                            }));
-                                        }
-
-                                        if !value.scope.is_tpl() {
-                                            st.scoped_def_prims.insert(name.clone());
-
-                                            st.scoped_prims
-                                                .entry(name)
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value]);
-                                        } else {
-                                            st.def_prims.insert(name.clone());
-
-                                            st.prims
-                                                .entry(name)
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value]);
-                                        }
-                                    }
-                                    Keyword::Sum => {
-                                        if name == "main" {
-                                            return Err(Error::Semantic(SemanticError {
-                                                loc: value.token.loc(),
-                                                desc: "invalid main".into(),
-                                            }));
-                                        }
-
-                                        if !value.scope.is_tpl() {
-                                            st.scoped_def_sums.insert(name.clone());
-
-                                            st.scoped_sums
-                                                .entry(name)
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value]);
-                                        } else {
-                                            st.def_sums.insert(name.clone());
-
-                                            st.sums
-                                                .entry(name)
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value]);
-                                        }
-                                    }
-                                    Keyword::Prod => {
-                                        if name == "main" {
-                                            return Err(Error::Semantic(SemanticError {
-                                                loc: value.token.loc(),
-                                                desc: "invalid main".into(),
-                                            }));
-                                        }
-
-                                        if !value.scope.is_tpl() {
-                                            st.scoped_def_prods.insert(name.clone());
-
-                                            st.scoped_prods
-                                                .entry(name)
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value]);
-                                        } else {
-                                            st.def_prods.insert(name.clone());
-
-                                            st.prods
-                                                .entry(name)
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value]);
-                                        }
-                                    }
-                                    Keyword::Fun => {
-                                        if !value.scope.is_tpl() {
-                                            if name == "main" {
-                                                return Err(Error::Semantic(SemanticError {
-                                                    loc: name_value.token.loc(),
-                                                    desc: "invalid scoped main function".into(),
-                                                }));
-                                            }
-
-                                            st.scoped_def_funs.insert(name.clone());
-
-                                            st.scoped_funs
-                                                .entry(name.clone())
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value.clone()]);
-                                        } else {
-                                            st.def_funs.insert(name.clone());
-
-                                            st.funs
-                                                .entry(name.clone())
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value.clone()]);
-
-                                            if name == "main" {
-                                                if st.main_fun.is_some() {
-                                                    return Err(Error::Semantic(SemanticError {
-                                                        loc: name_value.token.loc(),
-                                                        desc: "duplicate main function".into(),
-                                                    }));
-                                                }
-
-                                                st.main_fun = Some(value);
-                                            }
-                                        }
-                                    }
-                                    Keyword::App => {
-                                        if !value.scope.is_tpl() {
-                                            if name == "main" {
-                                                return Err(Error::Semantic(SemanticError {
-                                                    loc: name_value.token.loc(),
-                                                    desc: "invalid scoped main application".into(),
-                                                }));
-                                            }
-
-                                            st.scoped_def_apps.insert(name.clone());
-
-                                            st.scoped_apps
-                                                .entry(name.clone())
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value.clone()]);
-                                        } else {
-                                            st.def_apps.insert(name.clone());
-
-                                            st.apps
-                                                .entry(name.clone())
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value.clone()]);
-
-                                            if name == "main" {
-                                                if st.main_app.is_some() {
-                                                    return Err(Error::Semantic(SemanticError {
-                                                        loc: name_value.token.loc(),
-                                                        desc: "duplicate main application".into(),
-                                                    }));
-                                                }
-
-                                                st.main_app = Some(value);
-                                            }
-                                        }
-                                    }
-                                    Keyword::Attrs => {
-                                        if !value.scope.is_tpl() {
-                                            if name == "main" {
-                                                return Err(Error::Semantic(SemanticError {
-                                                    loc: name_value.token.loc(),
-                                                    desc: "invalid scoped main attributes".into(),
-                                                }));
-                                            }
-
-                                            st.scoped_def_attrs.insert(name.clone());
-
-                                            st.scoped_attrs
-                                                .entry(name.clone())
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value.clone()]);
-                                        } else {
-                                            st.def_attrs.insert(name.clone());
-
-                                            st.attrs
-                                                .entry(name.clone())
-                                                .and_modify(|v| v.push(value.clone()))
-                                                .or_insert_with(|| vec![value.clone()]);
-
-                                            if name == "main" {
-                                                if st.main_fun_attrs.is_some() {
-                                                    return Err(Error::Semantic(SemanticError {
-                                                        loc: name_value.token.loc(),
-                                                        desc: "duplicate main function attributes"
-                                                            .into(),
-                                                    }));
-                                                }
-
-                                                st.main_fun_attrs = Some(value);
-                                            } else if name == "Main" {
-                                                if st.main_type_attrs.is_some() {
-                                                    return Err(Error::Semantic(SemanticError {
-                                                        loc: name_value.token.loc(),
-                                                        desc: "duplicate Main type attributes"
-                                                            .into(),
-                                                    }));
-                                                }
-
-                                                st.main_type_attrs = Some(value);
-                                            }
-                                        }
-                                    }
-                                    _ => {
-                                        return Err(Error::Semantic(SemanticError {
-                                            loc: name_value.token.loc(),
-                                            desc: "unexpected keyword".into(),
-                                        }));
-                                    }
-                                }
-                            } else if len == 1 {
-                                let name = value.name.clone().unwrap();
-
-                                if name == "main" {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "invalid main".into(),
-                                    }));
-                                }
-
-                                if !value.scope.is_tpl() {
-                                    st.scoped_def_prims.insert(name.clone());
-
-                                    st.scoped_prims
-                                        .entry(name)
-                                        .and_modify(|v| v.push(value.clone()))
-                                        .or_insert_with(|| vec![value]);
-                                } else {
-                                    st.def_prims.insert(name.clone());
-
-                                    st.prims
-                                        .entry(name)
-                                        .and_modify(|v| v.push(value.clone()))
-                                        .or_insert_with(|| vec![value]);
-                                }
-                            } else {
-                                return Err(Error::Semantic(SemanticError {
-                                    loc: name_value.token.loc(),
-                                    desc: "invalid definition".into(),
-                                }));
-                            }
-                        }
-                        _ => {
-                            let name = value.children[1].name.clone().unwrap();
-
-                            if value.prim.is_some() {
-                                if name == "main" {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "invalid scoped main primitive".into(),
-                                    }));
-                                }
-
-                                if !value.scope.is_tpl() {
-                                    st.scoped_prims
-                                        .entry(name)
-                                        .and_modify(|v| v.push(value.clone()))
-                                        .or_insert_with(|| vec![value]);
-                                } else {
-                                    st.prims
-                                        .entry(name.clone())
-                                        .and_modify(|v| v.push(value.clone()))
-                                        .or_insert_with(|| vec![value.clone()]);
-                                }
-                            } else if !value.scope.is_tpl() {
-                                if name == "main" {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: value.token.loc(),
-                                        desc: "invalid scoped main application".into(),
-                                    }));
-                                }
-
-                                st.scoped_apps
-                                    .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value]);
-                            } else {
-                                st.apps
-                                    .entry(name.clone())
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
-
-                                if name == "main" {
-                                    if st.main_app.is_some() {
-                                        return Err(Error::Semantic(SemanticError {
-                                            loc: value.token.loc(),
-                                            desc: "duplicate main application".into(),
-                                        }));
-                                    }
-
-                                    st.main_app = Some(value);
-                                }
+                                self.main_type = Some(value);
                             }
                         }
                     }
-                } else if value.prim.is_none() {
-                    let name = value.children[0].name.clone().unwrap();
+                    Keyword::Defsig => {
+                        let name = value.children[1].name.clone().unwrap();
 
-                    if !value.scope.is_tpl() {
+                        if !value.scope.is_tpl() {
+                            if name == "main" {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "invalid scoped main signature".into(),
+                                }));
+                            }
+
+                            self.scoped_def_sigs.insert(name.clone());
+
+                            self.scoped_sigs
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
+                        } else {
+                            self.def_sigs.insert(name.clone());
+
+                            self.sigs
+                                .entry(name.clone())
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
+
+                            if name == "main" {
+                                if self.main_sig.is_some() {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "duplicate main signature".into(),
+                                    }));
+                                }
+
+                                self.main_sig = Some(value);
+                            }
+                        }
+                    }
+                    Keyword::Defprim => {
+                        let name = value.children[1].name.clone().unwrap();
+
                         if name == "main" {
                             return Err(Error::Semantic(SemanticError {
                                 loc: value.token.loc(),
-                                desc: "invalid scoped main application".into(),
+                                desc: "invalid main".into(),
                             }));
                         }
 
-                        st.scoped_apps
-                            .entry(name)
-                            .and_modify(|v| v.push(value.clone()))
-                            .or_insert_with(|| vec![value]);
-                    } else {
-                        st.apps
-                            .entry(name.clone())
-                            .and_modify(|v| v.push(value.clone()))
-                            .or_insert_with(|| vec![value.clone()]);
+                        if !value.scope.is_tpl() {
+                            self.scoped_def_prims.insert(name.clone());
+
+                            self.scoped_prims
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value]);
+                        } else {
+                            self.def_prims.insert(name.clone());
+
+                            self.prims
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value]);
+                        }
+                    }
+                    Keyword::Defsum => {
+                        let name = value.children[1].name.clone().unwrap();
 
                         if name == "main" {
-                            if st.main_app.is_some() {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: value.token.loc(),
+                                desc: "invalid main".into(),
+                            }));
+                        }
+
+                        if !value.scope.is_tpl() {
+                            self.scoped_def_sums.insert(name.clone());
+
+                            self.scoped_sums
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value]);
+                        } else {
+                            self.def_sums.insert(name.clone());
+
+                            self.sums
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value]);
+                        }
+                    }
+                    Keyword::Defprod => {
+                        let name = value.children[1].name.clone().unwrap();
+
+                        if name == "main" {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: value.token.loc(),
+                                desc: "invalid main".into(),
+                            }));
+                        }
+
+                        if !value.scope.is_tpl() {
+                            self.scoped_def_prods.insert(name.clone());
+                            self.scoped_prods
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value]);
+                        } else {
+                            self.def_prods.insert(name.clone());
+                            self.prods
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value]);
+                        }
+                    }
+                    Keyword::Defun => {
+                        let name = value.children[1].name.clone().unwrap();
+
+                        if !value.scope.is_tpl() {
+                            if name == "main" {
                                 return Err(Error::Semantic(SemanticError {
                                     loc: value.token.loc(),
-                                    desc: "duplicate main application".into(),
+                                    desc: "invalid scoped main function".into(),
                                 }));
                             }
 
-                            st.main_app = Some(value);
+                            self.scoped_def_funs.insert(name.clone());
+
+                            self.scoped_funs
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
+                        } else {
+                            self.def_funs.insert(name.clone());
+
+                            self.funs
+                                .entry(name.clone())
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
+
+                            if name == "main" {
+                                if self.main_fun.is_some() {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "duplicate main function".into(),
+                                    }));
+                                }
+
+                                self.main_fun = Some(value);
+                            }
+                        }
+                    }
+                    Keyword::Defattrs => {
+                        let name = value.children[1].name.clone().unwrap();
+
+                        if !value.scope.is_tpl() {
+                            if name == "main" {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "invalid scoped main attributes".into(),
+                                }));
+                            }
+
+                            self.scoped_def_attrs.insert(name.clone());
+
+                            self.scoped_attrs
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
+                        } else {
+                            self.def_attrs.insert(name.clone());
+
+                            self.attrs
+                                .entry(name.clone())
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
+
+                            if name == "main" {
+                                if self.main_fun_attrs.is_some() {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "duplicate main function attributes".into(),
+                                    }));
+                                }
+
+                                self.main_fun_attrs = Some(value);
+                            } else if name == "Main" {
+                                if self.main_type_attrs.is_some() {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "duplicate Main type attributes".into(),
+                                    }));
+                                }
+
+                                self.main_type_attrs = Some(value);
+                            }
+                        }
+                    }
+                    Keyword::Def => {
+                        if value.children.len() != 3 {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: value.token.loc(),
+                                desc: "invalid definition".into(),
+                            }));
+                        }
+
+                        let name = value.children[1].name.clone().unwrap();
+                        let name_value = value.children[2].clone();
+
+                        let len = name_value.children.len();
+
+                        if len >= 2 {
+                            if name_value.children[0].name.is_none() {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "expected a keyword".into(),
+                                }));
+                            }
+
+                            let kind = name_value.children[0].name.clone().unwrap();
+                            let keyword = Keyword::from_string(kind)?;
+
+                            match keyword {
+                                Keyword::Type => {
+                                    if !value.scope.is_tpl() {
+                                        if name == "Main" {
+                                            return Err(Error::Semantic(SemanticError {
+                                                loc: name_value.token.loc(),
+                                                desc: "invalid scoped Main type".into(),
+                                            }));
+                                        }
+
+                                        self.scoped_def_types.insert(name.clone());
+
+                                        self.scoped_types
+                                            .entry(name)
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
+                                    } else {
+                                        self.def_types.insert(name.clone());
+
+                                        self.types
+                                            .entry(name.clone())
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
+
+                                        if name == "Main" {
+                                            if self.main_type.is_some() {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: name_value.token.loc(),
+                                                    desc: "duplicate Main type".into(),
+                                                }));
+                                            }
+
+                                            self.main_type = Some(value);
+                                        }
+                                    }
+                                }
+                                Keyword::Sig => {
+                                    if !value.scope.is_tpl() {
+                                        if name == "main" {
+                                            return Err(Error::Semantic(SemanticError {
+                                                loc: name_value.token.loc(),
+                                                desc: "invalid scoped main signature".into(),
+                                            }));
+                                        }
+
+                                        self.scoped_def_sigs.insert(name.clone());
+
+                                        self.scoped_sigs
+                                            .entry(name)
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
+                                    } else {
+                                        self.def_sigs.insert(name.clone());
+
+                                        self.sigs
+                                            .entry(name.clone())
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
+
+                                        if name == "main" {
+                                            if self.main_sig.is_some() {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: name_value.token.loc(),
+                                                    desc: "duplicate main signature".into(),
+                                                }));
+                                            }
+
+                                            self.main_sig = Some(value);
+                                        }
+                                    }
+                                }
+                                Keyword::Prim => {
+                                    if name == "main" {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: value.token.loc(),
+                                            desc: "invalid main".into(),
+                                        }));
+                                    }
+
+                                    if !value.scope.is_tpl() {
+                                        self.scoped_def_prims.insert(name.clone());
+
+                                        self.scoped_prims
+                                            .entry(name)
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value]);
+                                    } else {
+                                        self.def_prims.insert(name.clone());
+
+                                        self.prims
+                                            .entry(name)
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value]);
+                                    }
+                                }
+                                Keyword::Sum => {
+                                    if name == "main" {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: value.token.loc(),
+                                            desc: "invalid main".into(),
+                                        }));
+                                    }
+
+                                    if !value.scope.is_tpl() {
+                                        self.scoped_def_sums.insert(name.clone());
+
+                                        self.scoped_sums
+                                            .entry(name)
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value]);
+                                    } else {
+                                        self.def_sums.insert(name.clone());
+
+                                        self.sums
+                                            .entry(name)
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value]);
+                                    }
+                                }
+                                Keyword::Prod => {
+                                    if name == "main" {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: value.token.loc(),
+                                            desc: "invalid main".into(),
+                                        }));
+                                    }
+
+                                    if !value.scope.is_tpl() {
+                                        self.scoped_def_prods.insert(name.clone());
+
+                                        self.scoped_prods
+                                            .entry(name)
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value]);
+                                    } else {
+                                        self.def_prods.insert(name.clone());
+
+                                        self.prods
+                                            .entry(name)
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value]);
+                                    }
+                                }
+                                Keyword::Fun => {
+                                    if !value.scope.is_tpl() {
+                                        if name == "main" {
+                                            return Err(Error::Semantic(SemanticError {
+                                                loc: name_value.token.loc(),
+                                                desc: "invalid scoped main function".into(),
+                                            }));
+                                        }
+
+                                        self.scoped_def_funs.insert(name.clone());
+
+                                        self.scoped_funs
+                                            .entry(name)
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
+                                    } else {
+                                        self.def_funs.insert(name.clone());
+
+                                        self.funs
+                                            .entry(name.clone())
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
+
+                                        if name == "main" {
+                                            if self.main_fun.is_some() {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: name_value.token.loc(),
+                                                    desc: "duplicate main function".into(),
+                                                }));
+                                            }
+
+                                            self.main_fun = Some(value);
+                                        }
+                                    }
+                                }
+                                Keyword::App => {
+                                    if !value.scope.is_tpl() {
+                                        if name == "main" {
+                                            return Err(Error::Semantic(SemanticError {
+                                                loc: name_value.token.loc(),
+                                                desc: "invalid scoped main application".into(),
+                                            }));
+                                        }
+
+                                        self.scoped_def_apps.insert(name.clone());
+
+                                        self.scoped_apps
+                                            .entry(name)
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
+                                    } else {
+                                        self.def_apps.insert(name.clone());
+
+                                        self.apps
+                                            .entry(name.clone())
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
+
+                                        if name == "main" {
+                                            if self.main_app.is_some() {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: name_value.token.loc(),
+                                                    desc: "duplicate main application".into(),
+                                                }));
+                                            }
+
+                                            self.main_app = Some(value);
+                                        }
+                                    }
+                                }
+                                Keyword::Attrs => {
+                                    if !value.scope.is_tpl() {
+                                        if name == "main" {
+                                            return Err(Error::Semantic(SemanticError {
+                                                loc: name_value.token.loc(),
+                                                desc: "invalid scoped main attributes".into(),
+                                            }));
+                                        }
+
+                                        self.scoped_def_attrs.insert(name.clone());
+
+                                        self.scoped_attrs
+                                            .entry(name)
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
+                                    } else {
+                                        self.def_attrs.insert(name.clone());
+
+                                        self.attrs
+                                            .entry(name.clone())
+                                            .and_modify(|v| v.push(value.clone()))
+                                            .or_insert_with(|| vec![value.clone()]);
+
+                                        if name == "main" {
+                                            if self.main_fun_attrs.is_some() {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: name_value.token.loc(),
+                                                    desc: "duplicate main function attributes"
+                                                        .into(),
+                                                }));
+                                            }
+
+                                            self.main_fun_attrs = Some(value);
+                                        } else if name == "Main" {
+                                            if self.main_type_attrs.is_some() {
+                                                return Err(Error::Semantic(SemanticError {
+                                                    loc: name_value.token.loc(),
+                                                    desc: "duplicate Main type attributes".into(),
+                                                }));
+                                            }
+
+                                            self.main_type_attrs = Some(value);
+                                        }
+                                    }
+                                }
+                                _ => {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: name_value.token.loc(),
+                                        desc: "unexpected keyword".into(),
+                                    }));
+                                }
+                            }
+                        } else if len == 1 {
+                            let name = value.name.clone().unwrap();
+
+                            if name == "main" {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "invalid main".into(),
+                                }));
+                            }
+
+                            if !value.scope.is_tpl() {
+                                self.scoped_def_prims.insert(name.clone());
+
+                                self.scoped_prims
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
+                            } else {
+                                self.def_prims.insert(name.clone());
+
+                                self.prims
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
+                            }
+                        } else {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: name_value.token.loc(),
+                                desc: "invalid definition".into(),
+                            }));
+                        }
+                    }
+                    _ => {
+                        let name = value.children[1].name.clone().unwrap();
+
+                        if value.prim.is_some() {
+                            if name == "main" {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "invalid scoped main primitive".into(),
+                                }));
+                            }
+
+                            if !value.scope.is_tpl() {
+                                self.scoped_prims
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value]);
+                            } else {
+                                self.prims
+                                    .entry(name)
+                                    .and_modify(|v| v.push(value.clone()))
+                                    .or_insert_with(|| vec![value.clone()]);
+                            }
+                        } else if !value.scope.is_tpl() {
+                            if name == "main" {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: value.token.loc(),
+                                    desc: "invalid scoped main application".into(),
+                                }));
+                            }
+
+                            self.scoped_apps
+                                .entry(name)
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value]);
+                        } else {
+                            self.apps
+                                .entry(name.clone())
+                                .and_modify(|v| v.push(value.clone()))
+                                .or_insert_with(|| vec![value.clone()]);
+
+                            if name == "main" {
+                                if self.main_app.is_some() {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: value.token.loc(),
+                                        desc: "duplicate main application".into(),
+                                    }));
+                                }
+
+                                self.main_app = Some(value);
+                            }
                         }
                     }
                 }
+            } else if value.prim.is_none() {
+                let name = value.children[0].name.clone().unwrap();
+
+                if !value.scope.is_tpl() {
+                    if name == "main" {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: value.token.loc(),
+                            desc: "invalid scoped main application".into(),
+                        }));
+                    }
+
+                    self.scoped_apps
+                        .entry(name)
+                        .and_modify(|v| v.push(value.clone()))
+                        .or_insert_with(|| vec![value]);
+                } else {
+                    self.apps
+                        .entry(name.clone())
+                        .and_modify(|v| v.push(value.clone()))
+                        .or_insert_with(|| vec![value.clone()]);
+
+                    if name == "main" {
+                        if self.main_app.is_some() {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: value.token.loc(),
+                                desc: "duplicate main application".into(),
+                            }));
+                        }
+
+                        self.main_app = Some(value);
+                    }
+                }
             }
+        }
+
+        Ok(())
+    }
+
+    pub fn from_values(values: &Values) -> Result<Self> {
+        let mut st = SymbolTable::new();
+
+        for value in values.clone().into_iter() {
+            st.add_value(value)?;
         }
 
         Ok(st)
