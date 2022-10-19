@@ -8,6 +8,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct SymbolTable {
+    pub values: Values,
+
     pub files: BTreeSet<String>,
     pub imp_paths: BTreeSet<String>,
     pub exp_defs: BTreeSet<String>,
@@ -20,23 +22,23 @@ pub struct SymbolTable {
     pub def_apps: BTreeSet<String>,
     pub def_attrs: BTreeSet<String>,
 
-    pub imports: BTreeMap<String, Vec<Value>>,
-    pub exports: BTreeMap<String, Vec<Value>>,
-    pub types: BTreeMap<String, Vec<Value>>,
-    pub prims: BTreeMap<String, Vec<Value>>,
-    pub sums: BTreeMap<String, Vec<Value>>,
-    pub prods: BTreeMap<String, Vec<Value>>,
-    pub sigs: BTreeMap<String, Vec<Value>>,
-    pub funs: BTreeMap<String, Vec<Value>>,
-    pub apps: BTreeMap<String, Vec<Value>>,
-    pub attrs: BTreeMap<String, Vec<Value>>,
+    pub imports: BTreeMap<String, Vec<usize>>,
+    pub exports: BTreeMap<String, Vec<usize>>,
+    pub types: BTreeMap<String, Vec<usize>>,
+    pub prims: BTreeMap<String, Vec<usize>>,
+    pub sums: BTreeMap<String, Vec<usize>>,
+    pub prods: BTreeMap<String, Vec<usize>>,
+    pub sigs: BTreeMap<String, Vec<usize>>,
+    pub funs: BTreeMap<String, Vec<usize>>,
+    pub apps: BTreeMap<String, Vec<usize>>,
+    pub attrs: BTreeMap<String, Vec<usize>>,
 
-    pub main_type: Option<Value>,
-    pub main_sig: Option<Value>,
-    pub main_fun: Option<Value>,
-    pub main_app: Option<Value>,
-    pub main_fun_attrs: Option<Value>,
-    pub main_type_attrs: Option<Value>,
+    pub main_type: Option<usize>,
+    pub main_sig: Option<usize>,
+    pub main_fun: Option<usize>,
+    pub main_app: Option<usize>,
+    pub main_fun_attrs: Option<usize>,
+    pub main_type_attrs: Option<usize>,
 
     pub scoped_def_types: BTreeSet<String>,
     pub scoped_def_prims: BTreeSet<String>,
@@ -47,14 +49,14 @@ pub struct SymbolTable {
     pub scoped_def_apps: BTreeSet<String>,
     pub scoped_def_attrs: BTreeSet<String>,
 
-    pub scoped_types: BTreeMap<String, Vec<Value>>,
-    pub scoped_prims: BTreeMap<String, Vec<Value>>,
-    pub scoped_sums: BTreeMap<String, Vec<Value>>,
-    pub scoped_prods: BTreeMap<String, Vec<Value>>,
-    pub scoped_sigs: BTreeMap<String, Vec<Value>>,
-    pub scoped_funs: BTreeMap<String, Vec<Value>>,
-    pub scoped_apps: BTreeMap<String, Vec<Value>>,
-    pub scoped_attrs: BTreeMap<String, Vec<Value>>,
+    pub scoped_types: BTreeMap<String, Vec<usize>>,
+    pub scoped_prims: BTreeMap<String, Vec<usize>>,
+    pub scoped_sums: BTreeMap<String, Vec<usize>>,
+    pub scoped_prods: BTreeMap<String, Vec<usize>>,
+    pub scoped_sigs: BTreeMap<String, Vec<usize>>,
+    pub scoped_funs: BTreeMap<String, Vec<usize>>,
+    pub scoped_apps: BTreeMap<String, Vec<usize>>,
+    pub scoped_attrs: BTreeMap<String, Vec<usize>>,
 }
 
 impl SymbolTable {
@@ -64,6 +66,9 @@ impl SymbolTable {
 
     pub fn add_value(&mut self, value_ref: &Value) -> Result<()> {
         let mut value = value_ref.clone();
+
+        self.values.push(value.clone());
+        let value_idx = self.values.len() - 1;
 
         if let Some(file) = value.token.file() {
             self.files.insert(file);
@@ -90,8 +95,8 @@ impl SymbolTable {
 
                         self.imports
                             .entry(name)
-                            .and_modify(|v| v.push(value.clone()))
-                            .or_insert_with(|| vec![value.clone()]);
+                            .and_modify(|v| v.push(value_idx))
+                            .or_insert_with(|| vec![value_idx]);
                     }
                     Keyword::Export => {
                         value = value.children[1].clone();
@@ -107,8 +112,8 @@ impl SymbolTable {
 
                                 self.exports
                                     .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
+                                    .and_modify(|v| v.push(value_idx))
+                                    .or_insert_with(|| vec![value_idx]);
                             }
                         } else {
                             let name = value.name.clone().unwrap();
@@ -116,8 +121,8 @@ impl SymbolTable {
 
                             self.exports
                                 .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
                         }
                     }
                     Keyword::Deftype => {
@@ -135,15 +140,15 @@ impl SymbolTable {
 
                             self.scoped_types
                                 .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
                         } else {
                             self.def_types.insert(name.clone());
 
                             self.types
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
 
                             if name == "Main" {
                                 if self.main_type.is_some() {
@@ -153,7 +158,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                self.main_type = Some(value.clone());
+                                self.main_type = Some(value_idx);
                             }
                         }
                     }
@@ -172,15 +177,15 @@ impl SymbolTable {
 
                             self.scoped_sigs
                                 .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
                         } else {
                             self.def_sigs.insert(name.clone());
 
                             self.sigs
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
 
                             if name == "main" {
                                 if self.main_sig.is_some() {
@@ -190,7 +195,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                self.main_sig = Some(value.clone());
+                                self.main_sig = Some(value_idx);
                             }
                         }
                     }
@@ -209,15 +214,15 @@ impl SymbolTable {
 
                             self.scoped_prims
                                 .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
                         } else {
                             self.def_prims.insert(name.clone());
 
                             self.prims
                                 .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
                         }
                     }
                     Keyword::Defsum => {
@@ -235,15 +240,15 @@ impl SymbolTable {
 
                             self.scoped_sums
                                 .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
                         } else {
                             self.def_sums.insert(name.clone());
 
                             self.sums
                                 .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
                         }
                     }
                     Keyword::Defprod => {
@@ -260,14 +265,14 @@ impl SymbolTable {
                             self.scoped_def_prods.insert(name.clone());
                             self.scoped_prods
                                 .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
                         } else {
                             self.def_prods.insert(name.clone());
                             self.prods
                                 .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
                         }
                     }
                     Keyword::Defun => {
@@ -285,15 +290,15 @@ impl SymbolTable {
 
                             self.scoped_funs
                                 .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
                         } else {
                             self.def_funs.insert(name.clone());
 
                             self.funs
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
 
                             if name == "main" {
                                 if self.main_fun.is_some() {
@@ -303,7 +308,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                self.main_fun = Some(value.clone());
+                                self.main_fun = Some(value_idx);
                             }
                         }
                     }
@@ -322,15 +327,15 @@ impl SymbolTable {
 
                             self.scoped_attrs
                                 .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
                         } else {
                             self.def_attrs.insert(name.clone());
 
                             self.attrs
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
 
                             if name == "main" {
                                 if self.main_fun_attrs.is_some() {
@@ -340,7 +345,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                self.main_fun_attrs = Some(value.clone());
+                                self.main_fun_attrs = Some(value_idx);
                             } else if name == "Main" {
                                 if self.main_type_attrs.is_some() {
                                     return Err(Error::Semantic(SemanticError {
@@ -349,7 +354,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                self.main_type_attrs = Some(value.clone());
+                                self.main_type_attrs = Some(value_idx);
                             }
                         }
                     }
@@ -391,15 +396,15 @@ impl SymbolTable {
 
                                         self.scoped_types
                                             .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
                                     } else {
                                         self.def_types.insert(name.clone());
 
                                         self.types
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
 
                                         if name == "Main" {
                                             if self.main_type.is_some() {
@@ -409,7 +414,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_type = Some(value.clone());
+                                            self.main_type = Some(value_idx);
                                         }
                                     }
                                 }
@@ -426,15 +431,15 @@ impl SymbolTable {
 
                                         self.scoped_sigs
                                             .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
                                     } else {
                                         self.def_sigs.insert(name.clone());
 
                                         self.sigs
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
 
                                         if name == "main" {
                                             if self.main_sig.is_some() {
@@ -444,7 +449,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_sig = Some(value.clone());
+                                            self.main_sig = Some(value_idx);
                                         }
                                     }
                                 }
@@ -461,15 +466,15 @@ impl SymbolTable {
 
                                         self.scoped_prims
                                             .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
                                     } else {
                                         self.def_prims.insert(name.clone());
 
                                         self.prims
                                             .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
                                     }
                                 }
                                 Keyword::Sum => {
@@ -485,15 +490,15 @@ impl SymbolTable {
 
                                         self.scoped_sums
                                             .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
                                     } else {
                                         self.def_sums.insert(name.clone());
 
                                         self.sums
                                             .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
                                     }
                                 }
                                 Keyword::Prod => {
@@ -509,15 +514,15 @@ impl SymbolTable {
 
                                         self.scoped_prods
                                             .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
                                     } else {
                                         self.def_prods.insert(name.clone());
 
                                         self.prods
                                             .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
                                     }
                                 }
                                 Keyword::Fun => {
@@ -533,15 +538,15 @@ impl SymbolTable {
 
                                         self.scoped_funs
                                             .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
                                     } else {
                                         self.def_funs.insert(name.clone());
 
                                         self.funs
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
 
                                         if name == "main" {
                                             if self.main_fun.is_some() {
@@ -551,7 +556,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_fun = Some(value.clone());
+                                            self.main_fun = Some(value_idx);
                                         }
                                     }
                                 }
@@ -568,15 +573,15 @@ impl SymbolTable {
 
                                         self.scoped_apps
                                             .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
                                     } else {
                                         self.def_apps.insert(name.clone());
 
                                         self.apps
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
 
                                         if name == "main" {
                                             if self.main_app.is_some() {
@@ -586,7 +591,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_app = Some(value.clone());
+                                            self.main_app = Some(value_idx);
                                         }
                                     }
                                 }
@@ -603,15 +608,15 @@ impl SymbolTable {
 
                                         self.scoped_attrs
                                             .entry(name)
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
                                     } else {
                                         self.def_attrs.insert(name.clone());
 
                                         self.attrs
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(value.clone()))
-                                            .or_insert_with(|| vec![value.clone()]);
+                                            .and_modify(|v| v.push(value_idx))
+                                            .or_insert_with(|| vec![value_idx]);
 
                                         if name == "main" {
                                             if self.main_fun_attrs.is_some() {
@@ -622,7 +627,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_fun_attrs = Some(value.clone());
+                                            self.main_fun_attrs = Some(value_idx);
                                         } else if name == "Main" {
                                             if self.main_type_attrs.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
@@ -631,7 +636,7 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_type_attrs = Some(value.clone());
+                                            self.main_type_attrs = Some(value_idx);
                                         }
                                     }
                                 }
@@ -657,15 +662,15 @@ impl SymbolTable {
 
                                 self.scoped_prims
                                     .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
+                                    .and_modify(|v| v.push(value_idx))
+                                    .or_insert_with(|| vec![value_idx]);
                             } else {
                                 self.def_prims.insert(name.clone());
 
                                 self.prims
                                     .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
+                                    .and_modify(|v| v.push(value_idx))
+                                    .or_insert_with(|| vec![value_idx]);
                             }
                         } else {
                             return Err(Error::Semantic(SemanticError {
@@ -692,13 +697,13 @@ impl SymbolTable {
                             if !value.scope.is_tpl() {
                                 self.scoped_prims
                                     .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
+                                    .and_modify(|v| v.push(value_idx))
+                                    .or_insert_with(|| vec![value_idx]);
                             } else {
                                 self.prims
                                     .entry(name)
-                                    .and_modify(|v| v.push(value.clone()))
-                                    .or_insert_with(|| vec![value.clone()]);
+                                    .and_modify(|v| v.push(value_idx))
+                                    .or_insert_with(|| vec![value_idx]);
                             }
                         } else if !value.scope.is_tpl() {
                             if name == "main" {
@@ -710,13 +715,13 @@ impl SymbolTable {
 
                             self.scoped_apps
                                 .entry(name)
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
                         } else {
                             self.apps
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(value.clone()))
-                                .or_insert_with(|| vec![value.clone()]);
+                                .and_modify(|v| v.push(value_idx))
+                                .or_insert_with(|| vec![value_idx]);
 
                             if name == "main" {
                                 if self.main_app.is_some() {
@@ -726,7 +731,7 @@ impl SymbolTable {
                                     }));
                                 }
 
-                                self.main_app = Some(value.clone());
+                                self.main_app = Some(value_idx);
                             }
                         }
                     }
@@ -744,13 +749,13 @@ impl SymbolTable {
 
                     self.scoped_apps
                         .entry(name)
-                        .and_modify(|v| v.push(value.clone()))
-                        .or_insert_with(|| vec![value.clone()]);
+                        .and_modify(|v| v.push(value_idx))
+                        .or_insert_with(|| vec![value_idx]);
                 } else {
                     self.apps
                         .entry(name.clone())
-                        .and_modify(|v| v.push(value.clone()))
-                        .or_insert_with(|| vec![value.clone()]);
+                        .and_modify(|v| v.push(value_idx))
+                        .or_insert_with(|| vec![value_idx]);
 
                     if name == "main" {
                         if self.main_app.is_some() {
@@ -760,7 +765,7 @@ impl SymbolTable {
                             }));
                         }
 
-                        self.main_app = Some(value.clone());
+                        self.main_app = Some(value_idx);
                     }
                 }
             }
@@ -781,6 +786,10 @@ impl SymbolTable {
         }
 
         Ok(st)
+    }
+
+    pub fn position(&self, value: Value) -> Option<usize> {
+        self.values.position(value)
     }
 }
 
@@ -1065,7 +1074,7 @@ mod test {
         assert!(st.def_attrs.contains("Main"));
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("Main"));
-        assert_eq!(st.main_type_attrs, Some(value));
+        assert_eq!(st.main_type_attrs, st.position(value));
     }
 
     #[test]

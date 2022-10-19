@@ -30,6 +30,10 @@ impl Values {
         self.0.push(value)
     }
 
+    pub fn position(&self, value: Value) -> Option<usize> {
+        self.clone().into_iter().position(|v| v == value)
+    }
+
     pub fn from_str(s: &str) -> Result<Self> {
         let mut tokens = Tokens::from_str(s)?;
 
