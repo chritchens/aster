@@ -22,6 +22,15 @@ pub struct SymbolTable {
     pub def_apps: BTreeSet<String>,
     pub def_attrs: BTreeSet<String>,
 
+    pub scoped_def_types: BTreeSet<String>,
+    pub scoped_def_prims: BTreeSet<String>,
+    pub scoped_def_sums: BTreeSet<String>,
+    pub scoped_def_prods: BTreeSet<String>,
+    pub scoped_def_sigs: BTreeSet<String>,
+    pub scoped_def_funs: BTreeSet<String>,
+    pub scoped_def_apps: BTreeSet<String>,
+    pub scoped_def_attrs: BTreeSet<String>,
+
     pub imports: BTreeMap<String, Vec<usize>>,
     pub exports: BTreeMap<String, Vec<usize>>,
     pub types: BTreeMap<String, Vec<usize>>,
@@ -33,22 +42,6 @@ pub struct SymbolTable {
     pub apps: BTreeMap<String, Vec<usize>>,
     pub attrs: BTreeMap<String, Vec<usize>>,
 
-    pub main_type: Option<usize>,
-    pub main_sig: Option<usize>,
-    pub main_fun: Option<usize>,
-    pub main_app: Option<usize>,
-    pub main_fun_attrs: Option<usize>,
-    pub main_type_attrs: Option<usize>,
-
-    pub scoped_def_types: BTreeSet<String>,
-    pub scoped_def_prims: BTreeSet<String>,
-    pub scoped_def_sums: BTreeSet<String>,
-    pub scoped_def_prods: BTreeSet<String>,
-    pub scoped_def_sigs: BTreeSet<String>,
-    pub scoped_def_funs: BTreeSet<String>,
-    pub scoped_def_apps: BTreeSet<String>,
-    pub scoped_def_attrs: BTreeSet<String>,
-
     pub scoped_types: BTreeMap<String, Vec<usize>>,
     pub scoped_prims: BTreeMap<String, Vec<usize>>,
     pub scoped_sums: BTreeMap<String, Vec<usize>>,
@@ -57,6 +50,13 @@ pub struct SymbolTable {
     pub scoped_funs: BTreeMap<String, Vec<usize>>,
     pub scoped_apps: BTreeMap<String, Vec<usize>>,
     pub scoped_attrs: BTreeMap<String, Vec<usize>>,
+
+    pub main_type: Option<usize>,
+    pub main_sig: Option<usize>,
+    pub main_fun: Option<usize>,
+    pub main_app: Option<usize>,
+    pub main_fun_attrs: Option<usize>,
+    pub main_type_attrs: Option<usize>,
 }
 
 impl SymbolTable {
