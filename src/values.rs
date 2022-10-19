@@ -26,6 +26,10 @@ impl Values {
         self.len() == 0
     }
 
+    pub fn files(&self) -> Vec<String> {
+        self.0.iter().map(|value| value.file()).collect()
+    }
+
     pub fn push(&mut self, value: Value) {
         self.0.push(value)
     }

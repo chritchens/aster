@@ -1,6 +1,6 @@
 use crate::error::{Error, SemanticError};
 use crate::result::Result;
-use crate::syntax::Keyword;
+use crate::syntax::{Keyword, WILDCARD};
 use crate::typing::Type;
 use crate::value::Value;
 use crate::values::Values;
@@ -74,12 +74,8 @@ impl SymbolTable {
         self.values.push(value.clone());
         let value_idx = self.values.len() - 1;
 
-        let mut file = "_".into();
-
-        if let Some(f) = value.token.file() {
-            self.files.insert(f.clone());
-            file = f;
-        }
+        let file = value.token.file();
+        self.files.insert(file.clone());
 
         if let Some(Type::App(types)) = value.typing.clone() {
             if types[0] == Type::Builtin {
@@ -1219,7 +1215,7 @@ impl SymbolTable {
                         let name = if value.children[1].name.is_some() {
                             value.children[1].name.clone().unwrap()
                         } else {
-                            "_".into()
+                            WILDCARD.to_string()
                         };
 
                         if value.prim.is_some() {
@@ -1384,6 +1380,7 @@ mod test {
     #[test]
     fn symbol_table_imports() {
         use super::SymbolTable;
+        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let s = "(import std.io)";
@@ -1392,8 +1389,8 @@ mod test {
 
         let st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.imp_paths.get("_").unwrap().len(), 1);
-        assert!(st.imp_paths.get("_").unwrap().contains("std.io"));
+        assert_eq!(st.imp_paths.get(EMPTY).unwrap().len(), 1);
+        assert!(st.imp_paths.get(EMPTY).unwrap().contains("std.io"));
         assert_eq!(st.imports.len(), 1);
         assert!(st.imports.contains_key("std.io"));
     }
@@ -1401,6 +1398,7 @@ mod test {
     #[test]
     fn symbol_table_exports() {
         use super::SymbolTable;
+        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(export >>)";
@@ -1409,8 +1407,8 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.exp_defs.get("_").unwrap().len(), 1);
-        assert!(st.exp_defs.get("_").unwrap().contains(">>"));
+        assert_eq!(st.exp_defs.get(EMPTY).unwrap().len(), 1);
+        assert!(st.exp_defs.get(EMPTY).unwrap().contains(">>"));
         assert_eq!(st.exports.len(), 1);
         assert!(st.exports.contains_key(">>"));
 
@@ -1420,10 +1418,10 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.exp_defs.get("_").unwrap().len(), 3);
-        assert!(st.exp_defs.get("_").unwrap().contains("a"));
-        assert!(st.exp_defs.get("_").unwrap().contains("b"));
-        assert!(st.exp_defs.get("_").unwrap().contains("c"));
+        assert_eq!(st.exp_defs.get(EMPTY).unwrap().len(), 3);
+        assert!(st.exp_defs.get(EMPTY).unwrap().contains("a"));
+        assert!(st.exp_defs.get(EMPTY).unwrap().contains("b"));
+        assert!(st.exp_defs.get(EMPTY).unwrap().contains("c"));
         assert_eq!(st.exports.len(), 3);
         assert!(st.exports.contains_key("b"));
     }
@@ -1431,6 +1429,7 @@ mod test {
     #[test]
     fn symbol_table_types() {
         use super::SymbolTable;
+        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(deftype RGB (Prod UInt UInt UInt))";
@@ -1439,8 +1438,8 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_types.get("_").unwrap().len(), 1);
-        assert!(st.def_types.get("_").unwrap().contains("RGB"));
+        assert_eq!(st.def_types.get(EMPTY).unwrap().len(), 1);
+        assert!(st.def_types.get(EMPTY).unwrap().contains("RGB"));
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
 
@@ -1450,8 +1449,8 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_types.get("_").unwrap().len(), 1);
-        assert!(st.def_types.get("_").unwrap().contains("RGB"));
+        assert_eq!(st.def_types.get(EMPTY).unwrap().len(), 1);
+        assert!(st.def_types.get(EMPTY).unwrap().contains("RGB"));
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
     }
@@ -1459,6 +1458,7 @@ mod test {
     #[test]
     fn symbol_table_prims() {
         use super::SymbolTable;
+        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(defprim i 0)";
@@ -1467,8 +1467,8 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_prims.get("_").unwrap().len(), 1);
-        assert!(st.def_prims.get("_").unwrap().contains("i"));
+        assert_eq!(st.def_prims.get(EMPTY).unwrap().len(), 1);
+        assert!(st.def_prims.get(EMPTY).unwrap().contains("i"));
         assert_eq!(st.prims.len(), 1);
         assert!(st.prims.contains_key("i"));
 
@@ -1478,8 +1478,8 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_prims.get("_").unwrap().len(), 1);
-        assert!(st.def_prims.get("_").unwrap().contains("i"));
+        assert_eq!(st.def_prims.get(EMPTY).unwrap().len(), 1);
+        assert!(st.def_prims.get(EMPTY).unwrap().contains("i"));
         assert_eq!(st.prims.len(), 1);
         assert!(st.prims.contains_key("i"));
     }
@@ -1487,6 +1487,7 @@ mod test {
     #[test]
     fn symbol_table_sums() {
         use super::SymbolTable;
+        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(defsum predicate true)";
@@ -1495,8 +1496,8 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_sums.get("_").unwrap().len(), 1);
-        assert!(st.def_sums.get("_").unwrap().contains("predicate"));
+        assert_eq!(st.def_sums.get(EMPTY).unwrap().len(), 1);
+        assert!(st.def_sums.get(EMPTY).unwrap().contains("predicate"));
         assert_eq!(st.sums.len(), 1);
         assert!(st.sums.contains_key("predicate"));
 
@@ -1506,8 +1507,8 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_sums.get("_").unwrap().len(), 1);
-        assert!(st.def_sums.get("_").unwrap().contains("predicate"));
+        assert_eq!(st.def_sums.get(EMPTY).unwrap().len(), 1);
+        assert!(st.def_sums.get(EMPTY).unwrap().contains("predicate"));
         assert_eq!(st.sums.len(), 1);
         assert!(st.sums.contains_key("predicate"));
     }
@@ -1515,6 +1516,7 @@ mod test {
     #[test]
     fn symbol_table_prods() {
         use super::SymbolTable;
+        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(defprod result 1 ())";
@@ -1523,8 +1525,8 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_prods.get("_").unwrap().len(), 1);
-        assert!(st.def_prods.get("_").unwrap().contains("result"));
+        assert_eq!(st.def_prods.get(EMPTY).unwrap().len(), 1);
+        assert!(st.def_prods.get(EMPTY).unwrap().contains("result"));
         assert_eq!(st.prods.len(), 1);
         assert!(st.prods.contains_key("result"));
 
@@ -1534,8 +1536,8 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_prods.get("_").unwrap().len(), 1);
-        assert!(st.def_prods.get("_").unwrap().contains("result"));
+        assert_eq!(st.def_prods.get(EMPTY).unwrap().len(), 1);
+        assert!(st.def_prods.get(EMPTY).unwrap().contains("result"));
         assert_eq!(st.prods.len(), 1);
         assert!(st.prods.contains_key("result"));
     }
@@ -1543,6 +1545,7 @@ mod test {
     #[test]
     fn symbol_table_funs() {
         use super::SymbolTable;
+        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(defun rShift x i (>> x i))";
@@ -1551,8 +1554,8 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_funs.get("_").unwrap().len(), 1);
-        assert!(st.def_funs.get("_").unwrap().contains("rShift"));
+        assert_eq!(st.def_funs.get(EMPTY).unwrap().len(), 1);
+        assert!(st.def_funs.get(EMPTY).unwrap().contains("rShift"));
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("rShift"));
 
@@ -1562,8 +1565,8 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_funs.get("_").unwrap().len(), 1);
-        assert!(st.def_funs.get("_").unwrap().contains("rShift"));
+        assert_eq!(st.def_funs.get(EMPTY).unwrap().len(), 1);
+        assert!(st.def_funs.get(EMPTY).unwrap().contains("rShift"));
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("rShift"));
     }
@@ -1571,6 +1574,7 @@ mod test {
     #[test]
     fn symbol_table_apps() {
         use super::SymbolTable;
+        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(def res (app f x y z))";
@@ -1580,7 +1584,7 @@ mod test {
         let mut st = SymbolTable::from_values(&values).unwrap();
 
         assert_eq!(st.def_apps.len(), 1);
-        assert!(st.def_apps.get("_").unwrap().contains("res"));
+        assert!(st.def_apps.get(EMPTY).unwrap().contains("res"));
         assert_eq!(st.apps.len(), 1);
         assert!(st.apps.contains_key("res"));
 
@@ -1591,7 +1595,7 @@ mod test {
         st = SymbolTable::from_values(&values).unwrap();
 
         assert_eq!(st.def_apps.len(), 0);
-        assert!(!st.def_apps.contains_key("_"));
+        assert!(!st.def_apps.contains_key(EMPTY));
         assert_eq!(st.apps.len(), 1);
         assert!(st.apps.contains_key("f"));
 
@@ -1602,7 +1606,7 @@ mod test {
         st = SymbolTable::from_values(&values).unwrap();
 
         assert_eq!(st.scoped_def_apps.len(), 0);
-        assert!(!st.scoped_def_apps.contains_key("_"));
+        assert!(!st.scoped_def_apps.contains_key(EMPTY));
         assert_eq!(st.scoped_apps.len(), 1);
         assert!(st.scoped_apps.contains_key("g"));
     }
@@ -1610,6 +1614,7 @@ mod test {
     #[test]
     fn symbol_table_attrs() {
         use super::SymbolTable;
+        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(defattrs sum attr1 attr2 attr3)";
@@ -1619,7 +1624,7 @@ mod test {
         let mut st = SymbolTable::from_values(&values).unwrap();
 
         assert_eq!(st.def_attrs.len(), 1);
-        assert!(st.def_attrs.get("_").unwrap().contains("sum"));
+        assert!(st.def_attrs.get(EMPTY).unwrap().contains("sum"));
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
 
@@ -1630,7 +1635,7 @@ mod test {
         st = SymbolTable::from_values(&values).unwrap();
 
         assert_eq!(st.def_attrs.len(), 1);
-        assert!(st.def_attrs.get("_").unwrap().contains("sum"));
+        assert!(st.def_attrs.get(EMPTY).unwrap().contains("sum"));
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
 
@@ -1643,15 +1648,16 @@ mod test {
         st = SymbolTable::from_values(&values).unwrap();
 
         assert_eq!(st.def_attrs.len(), 1);
-        assert!(st.def_attrs.get("_").unwrap().contains("Main"));
+        assert!(st.def_attrs.get(EMPTY).unwrap().contains("Main"));
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("Main"));
-        assert_eq!(st.main_type_attrs.get("_"), st.position(value).as_ref());
+        assert_eq!(st.main_type_attrs.get(EMPTY), st.position(value).as_ref());
     }
 
     #[test]
     fn symbol_table_main() {
         use super::SymbolTable;
+        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(defsig main (Fun IO IO))\n(defun main io (id io))";
@@ -1660,13 +1666,13 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert!(st.main_sig.get("_").is_some());
+        assert!(st.main_sig.get(EMPTY).is_some());
         assert_eq!(st.def_sigs.len(), 1);
-        assert!(st.def_sigs.get("_").unwrap().contains("main"));
+        assert!(st.def_sigs.get(EMPTY).unwrap().contains("main"));
         assert_eq!(st.sigs.len(), 1);
         assert!(st.sigs.contains_key("main"));
         assert_eq!(st.def_funs.len(), 1);
-        assert!(st.def_funs.get("_").unwrap().contains("main"));
+        assert!(st.def_funs.get(EMPTY).unwrap().contains("main"));
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
 
@@ -1676,13 +1682,13 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert!(st.main_sig.get("_").is_some());
+        assert!(st.main_sig.get(EMPTY).is_some());
         assert_eq!(st.def_sigs.len(), 1);
-        assert!(st.def_sigs.get("_").unwrap().contains("main"));
+        assert!(st.def_sigs.get(EMPTY).unwrap().contains("main"));
         assert_eq!(st.sigs.len(), 1);
         assert!(st.sigs.contains_key("main"));
         assert_eq!(st.def_funs.len(), 1);
-        assert!(st.def_funs.get("_").unwrap().contains("main"));
+        assert!(st.def_funs.get(EMPTY).unwrap().contains("main"));
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
     }

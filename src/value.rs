@@ -71,7 +71,7 @@ fn path_suffix(s: &str) -> String {
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct ValueScope {
-    pub file: Option<String>,
+    pub file: String,
     pub tpl_name: Option<String>,
     pub path: Vec<usize>,
 }
@@ -100,6 +100,10 @@ pub struct Value {
 impl Value {
     pub fn new() -> Self {
         Value::default()
+    }
+
+    pub fn file(&self) -> String {
+        self.token.file()
     }
 
     pub fn is_tpl(&self) -> bool {

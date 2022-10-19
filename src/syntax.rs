@@ -438,3 +438,15 @@ pub const FORM_END: char = ')';
 pub fn is_form_end(s: &str) -> bool {
     s == FORM_END.to_string()
 }
+
+pub const WILDCARD: char = '_';
+
+pub fn is_wildcard(s: &str) -> bool {
+    s == WILDCARD.to_string()
+}
+
+pub const EMPTY: &str = "";
+
+pub fn is_empty(s: &str) -> bool {
+    s == EMPTY
+}

@@ -1,6 +1,7 @@
 use crate::chunk::StringChunk;
 use crate::chunks::StringChunks;
 use crate::loc::Loc;
+use crate::syntax::EMPTY;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum TokenKind {
@@ -100,11 +101,11 @@ impl Token {
         Token::new_from_kind(TokenKind::FormEnd)
     }
 
-    pub fn file(&self) -> Option<String> {
+    pub fn file(&self) -> String {
         if !self.chunks.files.is_empty() {
-            Some(self.chunks.files[0].clone())
+            self.chunks.files[0].clone()
         } else {
-            None
+            EMPTY.into()
         }
     }
 
