@@ -31,25 +31,25 @@ pub struct SymbolTable {
     pub scoped_def_apps: BTreeSet<String>,
     pub scoped_def_attrs: BTreeSet<String>,
 
-    pub imports: BTreeMap<String, Vec<usize>>,
-    pub exports: BTreeMap<String, Vec<usize>>,
-    pub types: BTreeMap<String, Vec<usize>>,
-    pub prims: BTreeMap<String, Vec<usize>>,
-    pub sums: BTreeMap<String, Vec<usize>>,
-    pub prods: BTreeMap<String, Vec<usize>>,
-    pub sigs: BTreeMap<String, Vec<usize>>,
-    pub funs: BTreeMap<String, Vec<usize>>,
-    pub apps: BTreeMap<String, Vec<usize>>,
-    pub attrs: BTreeMap<String, Vec<usize>>,
+    pub imports: BTreeMap<String, BTreeSet<usize>>,
+    pub exports: BTreeMap<String, BTreeSet<usize>>,
+    pub types: BTreeMap<String, BTreeSet<usize>>,
+    pub prims: BTreeMap<String, BTreeSet<usize>>,
+    pub sums: BTreeMap<String, BTreeSet<usize>>,
+    pub prods: BTreeMap<String, BTreeSet<usize>>,
+    pub sigs: BTreeMap<String, BTreeSet<usize>>,
+    pub funs: BTreeMap<String, BTreeSet<usize>>,
+    pub apps: BTreeMap<String, BTreeSet<usize>>,
+    pub attrs: BTreeMap<String, BTreeSet<usize>>,
 
-    pub scoped_types: BTreeMap<String, Vec<usize>>,
-    pub scoped_prims: BTreeMap<String, Vec<usize>>,
-    pub scoped_sums: BTreeMap<String, Vec<usize>>,
-    pub scoped_prods: BTreeMap<String, Vec<usize>>,
-    pub scoped_sigs: BTreeMap<String, Vec<usize>>,
-    pub scoped_funs: BTreeMap<String, Vec<usize>>,
-    pub scoped_apps: BTreeMap<String, Vec<usize>>,
-    pub scoped_attrs: BTreeMap<String, Vec<usize>>,
+    pub scoped_types: BTreeMap<String, BTreeSet<usize>>,
+    pub scoped_prims: BTreeMap<String, BTreeSet<usize>>,
+    pub scoped_sums: BTreeMap<String, BTreeSet<usize>>,
+    pub scoped_prods: BTreeMap<String, BTreeSet<usize>>,
+    pub scoped_sigs: BTreeMap<String, BTreeSet<usize>>,
+    pub scoped_funs: BTreeMap<String, BTreeSet<usize>>,
+    pub scoped_apps: BTreeMap<String, BTreeSet<usize>>,
+    pub scoped_attrs: BTreeMap<String, BTreeSet<usize>>,
 
     pub main_type: Option<usize>,
     pub main_sig: Option<usize>,
@@ -95,8 +95,14 @@ impl SymbolTable {
 
                         self.imports
                             .entry(name)
-                            .and_modify(|v| v.push(value_idx))
-                            .or_insert_with(|| vec![value_idx]);
+                            .and_modify(|s| {
+                                s.insert(value_idx);
+                            })
+                            .or_insert_with(|| {
+                                let mut s = BTreeSet::new();
+                                s.insert(value_idx);
+                                s
+                            });
                     }
                     Keyword::Export => {
                         value = value.children[1].clone();
@@ -112,8 +118,14 @@ impl SymbolTable {
 
                                 self.exports
                                     .entry(name)
-                                    .and_modify(|v| v.push(value_idx))
-                                    .or_insert_with(|| vec![value_idx]);
+                                    .and_modify(|s| {
+                                        s.insert(value_idx);
+                                    })
+                                    .or_insert_with(|| {
+                                        let mut s = BTreeSet::new();
+                                        s.insert(value_idx);
+                                        s
+                                    });
                             }
                         } else {
                             let name = value.name.clone().unwrap();
@@ -121,8 +133,14 @@ impl SymbolTable {
 
                             self.exports
                                 .entry(name)
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
                         }
                     }
                     Keyword::Deftype => {
@@ -140,15 +158,27 @@ impl SymbolTable {
 
                             self.scoped_types
                                 .entry(name)
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
                         } else {
                             self.def_types.insert(name.clone());
 
                             self.types
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
 
                             if name == "Main" {
                                 if self.main_type.is_some() {
@@ -177,15 +207,27 @@ impl SymbolTable {
 
                             self.scoped_sigs
                                 .entry(name)
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
                         } else {
                             self.def_sigs.insert(name.clone());
 
                             self.sigs
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
 
                             if name == "main" {
                                 if self.main_sig.is_some() {
@@ -214,15 +256,27 @@ impl SymbolTable {
 
                             self.scoped_prims
                                 .entry(name)
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
                         } else {
                             self.def_prims.insert(name.clone());
 
                             self.prims
                                 .entry(name)
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
                         }
                     }
                     Keyword::Defsum => {
@@ -240,15 +294,27 @@ impl SymbolTable {
 
                             self.scoped_sums
                                 .entry(name)
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
                         } else {
                             self.def_sums.insert(name.clone());
 
                             self.sums
                                 .entry(name)
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
                         }
                     }
                     Keyword::Defprod => {
@@ -265,14 +331,26 @@ impl SymbolTable {
                             self.scoped_def_prods.insert(name.clone());
                             self.scoped_prods
                                 .entry(name)
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
                         } else {
                             self.def_prods.insert(name.clone());
                             self.prods
                                 .entry(name)
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
                         }
                     }
                     Keyword::Defun => {
@@ -290,15 +368,27 @@ impl SymbolTable {
 
                             self.scoped_funs
                                 .entry(name)
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
                         } else {
                             self.def_funs.insert(name.clone());
 
                             self.funs
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
 
                             if name == "main" {
                                 if self.main_fun.is_some() {
@@ -327,15 +417,27 @@ impl SymbolTable {
 
                             self.scoped_attrs
                                 .entry(name)
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
                         } else {
                             self.def_attrs.insert(name.clone());
 
                             self.attrs
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
 
                             if name == "main" {
                                 if self.main_fun_attrs.is_some() {
@@ -396,15 +498,27 @@ impl SymbolTable {
 
                                         self.scoped_types
                                             .entry(name)
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
                                     } else {
                                         self.def_types.insert(name.clone());
 
                                         self.types
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
 
                                         if name == "Main" {
                                             if self.main_type.is_some() {
@@ -431,15 +545,27 @@ impl SymbolTable {
 
                                         self.scoped_sigs
                                             .entry(name)
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
                                     } else {
                                         self.def_sigs.insert(name.clone());
 
                                         self.sigs
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
 
                                         if name == "main" {
                                             if self.main_sig.is_some() {
@@ -466,15 +592,27 @@ impl SymbolTable {
 
                                         self.scoped_prims
                                             .entry(name)
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
                                     } else {
                                         self.def_prims.insert(name.clone());
 
                                         self.prims
                                             .entry(name)
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
                                     }
                                 }
                                 Keyword::Sum => {
@@ -490,15 +628,27 @@ impl SymbolTable {
 
                                         self.scoped_sums
                                             .entry(name)
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
                                     } else {
                                         self.def_sums.insert(name.clone());
 
                                         self.sums
                                             .entry(name)
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
                                     }
                                 }
                                 Keyword::Prod => {
@@ -514,15 +664,27 @@ impl SymbolTable {
 
                                         self.scoped_prods
                                             .entry(name)
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
                                     } else {
                                         self.def_prods.insert(name.clone());
 
                                         self.prods
                                             .entry(name)
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
                                     }
                                 }
                                 Keyword::Fun => {
@@ -538,15 +700,27 @@ impl SymbolTable {
 
                                         self.scoped_funs
                                             .entry(name)
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
                                     } else {
                                         self.def_funs.insert(name.clone());
 
                                         self.funs
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
 
                                         if name == "main" {
                                             if self.main_fun.is_some() {
@@ -573,15 +747,27 @@ impl SymbolTable {
 
                                         self.scoped_apps
                                             .entry(name)
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
                                     } else {
                                         self.def_apps.insert(name.clone());
 
                                         self.apps
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
 
                                         if name == "main" {
                                             if self.main_app.is_some() {
@@ -608,15 +794,27 @@ impl SymbolTable {
 
                                         self.scoped_attrs
                                             .entry(name)
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
                                     } else {
                                         self.def_attrs.insert(name.clone());
 
                                         self.attrs
                                             .entry(name.clone())
-                                            .and_modify(|v| v.push(value_idx))
-                                            .or_insert_with(|| vec![value_idx]);
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
 
                                         if name == "main" {
                                             if self.main_fun_attrs.is_some() {
@@ -662,15 +860,27 @@ impl SymbolTable {
 
                                 self.scoped_prims
                                     .entry(name)
-                                    .and_modify(|v| v.push(value_idx))
-                                    .or_insert_with(|| vec![value_idx]);
+                                    .and_modify(|s| {
+                                        s.insert(value_idx);
+                                    })
+                                    .or_insert_with(|| {
+                                        let mut s = BTreeSet::new();
+                                        s.insert(value_idx);
+                                        s
+                                    });
                             } else {
                                 self.def_prims.insert(name.clone());
 
                                 self.prims
                                     .entry(name)
-                                    .and_modify(|v| v.push(value_idx))
-                                    .or_insert_with(|| vec![value_idx]);
+                                    .and_modify(|s| {
+                                        s.insert(value_idx);
+                                    })
+                                    .or_insert_with(|| {
+                                        let mut s = BTreeSet::new();
+                                        s.insert(value_idx);
+                                        s
+                                    });
                             }
                         } else {
                             return Err(Error::Semantic(SemanticError {
@@ -697,13 +907,25 @@ impl SymbolTable {
                             if !value.scope.is_tpl() {
                                 self.scoped_prims
                                     .entry(name)
-                                    .and_modify(|v| v.push(value_idx))
-                                    .or_insert_with(|| vec![value_idx]);
+                                    .and_modify(|s| {
+                                        s.insert(value_idx);
+                                    })
+                                    .or_insert_with(|| {
+                                        let mut s = BTreeSet::new();
+                                        s.insert(value_idx);
+                                        s
+                                    });
                             } else {
                                 self.prims
                                     .entry(name)
-                                    .and_modify(|v| v.push(value_idx))
-                                    .or_insert_with(|| vec![value_idx]);
+                                    .and_modify(|s| {
+                                        s.insert(value_idx);
+                                    })
+                                    .or_insert_with(|| {
+                                        let mut s = BTreeSet::new();
+                                        s.insert(value_idx);
+                                        s
+                                    });
                             }
                         } else if !value.scope.is_tpl() {
                             if name == "main" {
@@ -715,13 +937,25 @@ impl SymbolTable {
 
                             self.scoped_apps
                                 .entry(name)
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
                         } else {
                             self.apps
                                 .entry(name.clone())
-                                .and_modify(|v| v.push(value_idx))
-                                .or_insert_with(|| vec![value_idx]);
+                                .and_modify(|s| {
+                                    s.insert(value_idx);
+                                })
+                                .or_insert_with(|| {
+                                    let mut s = BTreeSet::new();
+                                    s.insert(value_idx);
+                                    s
+                                });
 
                             if name == "main" {
                                 if self.main_app.is_some() {
@@ -749,13 +983,25 @@ impl SymbolTable {
 
                     self.scoped_apps
                         .entry(name)
-                        .and_modify(|v| v.push(value_idx))
-                        .or_insert_with(|| vec![value_idx]);
+                        .and_modify(|s| {
+                            s.insert(value_idx);
+                        })
+                        .or_insert_with(|| {
+                            let mut s = BTreeSet::new();
+                            s.insert(value_idx);
+                            s
+                        });
                 } else {
                     self.apps
                         .entry(name.clone())
-                        .and_modify(|v| v.push(value_idx))
-                        .or_insert_with(|| vec![value_idx]);
+                        .and_modify(|s| {
+                            s.insert(value_idx);
+                        })
+                        .or_insert_with(|| {
+                            let mut s = BTreeSet::new();
+                            s.insert(value_idx);
+                            s
+                        });
 
                     if name == "main" {
                         if self.main_app.is_some() {
