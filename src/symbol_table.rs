@@ -8,32 +8,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct SymbolTable {
+    pub file: Option<String>,
+
     pub values: Values,
 
-    pub files: BTreeSet<String>,
-
-    // maps from a file name to a set of names
-    pub imp_paths: BTreeMap<String, BTreeSet<String>>,
-    pub exp_defs: BTreeMap<String, BTreeSet<String>>,
-    pub def_types: BTreeMap<String, BTreeSet<String>>,
-    pub def_prims: BTreeMap<String, BTreeSet<String>>,
-    pub def_sums: BTreeMap<String, BTreeSet<String>>,
-    pub def_prods: BTreeMap<String, BTreeSet<String>>,
-    pub def_sigs: BTreeMap<String, BTreeSet<String>>,
-    pub def_funs: BTreeMap<String, BTreeSet<String>>,
-    pub def_apps: BTreeMap<String, BTreeSet<String>>,
-    pub def_attrs: BTreeMap<String, BTreeSet<String>>,
-
-    pub scoped_def_types: BTreeMap<String, BTreeSet<String>>,
-    pub scoped_def_prims: BTreeMap<String, BTreeSet<String>>,
-    pub scoped_def_sums: BTreeMap<String, BTreeSet<String>>,
-    pub scoped_def_prods: BTreeMap<String, BTreeSet<String>>,
-    pub scoped_def_sigs: BTreeMap<String, BTreeSet<String>>,
-    pub scoped_def_funs: BTreeMap<String, BTreeSet<String>>,
-    pub scoped_def_apps: BTreeMap<String, BTreeSet<String>>,
-    pub scoped_def_attrs: BTreeMap<String, BTreeSet<String>>,
-
-    // maps from a value name to a set of value indexes
     pub imports: BTreeMap<String, BTreeSet<usize>>,
     pub exports: BTreeMap<String, BTreeSet<usize>>,
     pub types: BTreeMap<String, BTreeSet<usize>>,
@@ -54,13 +32,12 @@ pub struct SymbolTable {
     pub scoped_apps: BTreeMap<String, BTreeSet<usize>>,
     pub scoped_attrs: BTreeMap<String, BTreeSet<usize>>,
 
-    // maps from a value name to a value index
-    pub main_type: BTreeMap<String, usize>,
-    pub main_sig: BTreeMap<String, usize>,
-    pub main_fun: BTreeMap<String, usize>,
-    pub main_app: BTreeMap<String, usize>,
-    pub main_fun_attrs: BTreeMap<String, usize>,
-    pub main_type_attrs: BTreeMap<String, usize>,
+    pub main_type: Option<usize>,
+    pub main_sig: Option<usize>,
+    pub main_fun: Option<usize>,
+    pub main_app: Option<usize>,
+    pub main_fun_attrs: Option<usize>,
+    pub main_type_attrs: Option<usize>,
 }
 
 impl SymbolTable {
@@ -75,7 +52,9 @@ impl SymbolTable {
         let value_idx = self.values.len() - 1;
 
         let file = value.token.file();
-        self.files.insert(file.clone());
+        if self.file.is_none() {
+            self.file = Some(file);
+        }
 
         if let Some(Type::App(types)) = value.typing.clone() {
             if types[0] == Type::Builtin {
@@ -93,17 +72,6 @@ impl SymbolTable {
                         name_segs.push(value.children[1].name.clone().unwrap());
 
                         let name = name_segs.join(".");
-
-                        self.imp_paths
-                            .entry(file)
-                            .and_modify(|s| {
-                                s.insert(name.clone());
-                            })
-                            .or_insert_with(|| {
-                                let mut s = BTreeSet::new();
-                                s.insert(name.clone());
-                                s
-                            });
 
                         self.imports
                             .entry(name)
@@ -127,17 +95,6 @@ impl SymbolTable {
 
                                 let name = child.name.clone().unwrap();
 
-                                self.exp_defs
-                                    .entry(file.clone())
-                                    .and_modify(|s| {
-                                        s.insert(name.clone());
-                                    })
-                                    .or_insert_with(|| {
-                                        let mut s = BTreeSet::new();
-                                        s.insert(name.clone());
-                                        s
-                                    });
-
                                 self.exports
                                     .entry(name)
                                     .and_modify(|s| {
@@ -151,17 +108,6 @@ impl SymbolTable {
                             }
                         } else {
                             let name = value.name.clone().unwrap();
-
-                            self.exp_defs
-                                .entry(file)
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
 
                             self.exports
                                 .entry(name)
@@ -186,17 +132,6 @@ impl SymbolTable {
                                 }));
                             }
 
-                            self.scoped_def_types
-                                .entry(file)
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.scoped_types
                                 .entry(name)
                                 .and_modify(|s| {
@@ -208,17 +143,6 @@ impl SymbolTable {
                                     s
                                 });
                         } else {
-                            self.def_types
-                                .entry(file.clone())
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.types
                                 .entry(name.clone())
                                 .and_modify(|s| {
@@ -231,14 +155,14 @@ impl SymbolTable {
                                 });
 
                             if name == "Main" {
-                                if self.main_type.get(&file).is_some() {
+                                if self.main_type.is_some() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
                                         desc: "duplicate Main type".into(),
                                     }));
                                 }
 
-                                self.main_type.insert(file, value_idx);
+                                self.main_type = Some(value_idx);
                             }
                         }
                     }
@@ -253,17 +177,6 @@ impl SymbolTable {
                                 }));
                             }
 
-                            self.scoped_def_sigs
-                                .entry(file)
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.scoped_sigs
                                 .entry(name)
                                 .and_modify(|s| {
@@ -275,17 +188,6 @@ impl SymbolTable {
                                     s
                                 });
                         } else {
-                            self.def_sigs
-                                .entry(file.clone())
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.sigs
                                 .entry(name.clone())
                                 .and_modify(|s| {
@@ -298,14 +200,14 @@ impl SymbolTable {
                                 });
 
                             if name == "main" {
-                                if self.main_sig.get(&file).is_some() {
+                                if self.main_sig.is_some() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
                                         desc: "duplicate main signature".into(),
                                     }));
                                 }
 
-                                self.main_sig.insert(file, value_idx);
+                                self.main_sig = Some(value_idx);
                             }
                         }
                     }
@@ -320,17 +222,6 @@ impl SymbolTable {
                         }
 
                         if !value.scope.is_tpl() {
-                            self.scoped_def_prims
-                                .entry(file)
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.scoped_prims
                                 .entry(name)
                                 .and_modify(|s| {
@@ -342,17 +233,6 @@ impl SymbolTable {
                                     s
                                 });
                         } else {
-                            self.def_prims
-                                .entry(file)
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.prims
                                 .entry(name)
                                 .and_modify(|s| {
@@ -376,17 +256,6 @@ impl SymbolTable {
                         }
 
                         if !value.scope.is_tpl() {
-                            self.scoped_def_sums
-                                .entry(file)
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.scoped_sums
                                 .entry(name)
                                 .and_modify(|s| {
@@ -398,17 +267,6 @@ impl SymbolTable {
                                     s
                                 });
                         } else {
-                            self.def_sums
-                                .entry(file)
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.sums
                                 .entry(name)
                                 .and_modify(|s| {
@@ -432,17 +290,6 @@ impl SymbolTable {
                         }
 
                         if !value.scope.is_tpl() {
-                            self.scoped_def_prods
-                                .entry(file)
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.scoped_prods
                                 .entry(name)
                                 .and_modify(|s| {
@@ -454,17 +301,6 @@ impl SymbolTable {
                                     s
                                 });
                         } else {
-                            self.def_prods
-                                .entry(file)
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.prods
                                 .entry(name)
                                 .and_modify(|s| {
@@ -488,17 +324,6 @@ impl SymbolTable {
                                 }));
                             }
 
-                            self.scoped_def_funs
-                                .entry(file)
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.scoped_funs
                                 .entry(name)
                                 .and_modify(|s| {
@@ -510,17 +335,6 @@ impl SymbolTable {
                                     s
                                 });
                         } else {
-                            self.def_funs
-                                .entry(file.clone())
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.funs
                                 .entry(name.clone())
                                 .and_modify(|s| {
@@ -533,14 +347,14 @@ impl SymbolTable {
                                 });
 
                             if name == "main" {
-                                if self.main_fun.get(&file).is_some() {
+                                if self.main_fun.is_some() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
                                         desc: "duplicate main function".into(),
                                     }));
                                 }
 
-                                self.main_fun.insert(file, value_idx);
+                                self.main_fun = Some(value_idx);
                             }
                         }
                     }
@@ -555,17 +369,6 @@ impl SymbolTable {
                                 }));
                             }
 
-                            self.scoped_def_attrs
-                                .entry(file)
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.scoped_attrs
                                 .entry(name)
                                 .and_modify(|s| {
@@ -577,17 +380,6 @@ impl SymbolTable {
                                     s
                                 });
                         } else {
-                            self.def_attrs
-                                .entry(file.clone())
-                                .and_modify(|s| {
-                                    s.insert(name.clone());
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(name.clone());
-                                    s
-                                });
-
                             self.attrs
                                 .entry(name.clone())
                                 .and_modify(|s| {
@@ -600,23 +392,23 @@ impl SymbolTable {
                                 });
 
                             if name == "main" {
-                                if self.main_fun_attrs.get(&file).is_some() {
+                                if self.main_fun_attrs.is_some() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
                                         desc: "duplicate main function attributes".into(),
                                     }));
                                 }
 
-                                self.main_fun_attrs.insert(file, value_idx);
+                                self.main_fun_attrs = Some(value_idx);
                             } else if name == "Main" {
-                                if self.main_type_attrs.get(&file).is_some() {
+                                if self.main_type_attrs.is_some() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
                                         desc: "duplicate Main type attributes".into(),
                                     }));
                                 }
 
-                                self.main_type_attrs.insert(file, value_idx);
+                                self.main_type_attrs = Some(value_idx);
                             }
                         }
                     }
@@ -654,17 +446,6 @@ impl SymbolTable {
                                             }));
                                         }
 
-                                        self.scoped_def_types
-                                            .entry(file)
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.scoped_types
                                             .entry(name)
                                             .and_modify(|s| {
@@ -676,17 +457,6 @@ impl SymbolTable {
                                                 s
                                             });
                                     } else {
-                                        self.def_types
-                                            .entry(file.clone())
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.types
                                             .entry(name.clone())
                                             .and_modify(|s| {
@@ -699,14 +469,14 @@ impl SymbolTable {
                                             });
 
                                         if name == "Main" {
-                                            if self.main_type.get(&file).is_some() {
+                                            if self.main_type.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: name_value.token.loc(),
                                                     desc: "duplicate Main type".into(),
                                                 }));
                                             }
 
-                                            self.main_type.insert(file, value_idx);
+                                            self.main_type = Some(value_idx);
                                         }
                                     }
                                 }
@@ -719,17 +489,6 @@ impl SymbolTable {
                                             }));
                                         }
 
-                                        self.scoped_def_sigs
-                                            .entry(file)
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.scoped_sigs
                                             .entry(name)
                                             .and_modify(|s| {
@@ -741,17 +500,6 @@ impl SymbolTable {
                                                 s
                                             });
                                     } else {
-                                        self.def_sigs
-                                            .entry(file.clone())
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.sigs
                                             .entry(name.clone())
                                             .and_modify(|s| {
@@ -764,14 +512,14 @@ impl SymbolTable {
                                             });
 
                                         if name == "main" {
-                                            if self.main_sig.get(&file).is_some() {
+                                            if self.main_sig.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: name_value.token.loc(),
                                                     desc: "duplicate main signature".into(),
                                                 }));
                                             }
 
-                                            self.main_sig.insert(file, value_idx);
+                                            self.main_sig = Some(value_idx);
                                         }
                                     }
                                 }
@@ -784,17 +532,6 @@ impl SymbolTable {
                                     }
 
                                     if !value.scope.is_tpl() {
-                                        self.scoped_def_prims
-                                            .entry(file)
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.scoped_prims
                                             .entry(name)
                                             .and_modify(|s| {
@@ -806,17 +543,6 @@ impl SymbolTable {
                                                 s
                                             });
                                     } else {
-                                        self.def_prims
-                                            .entry(file)
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.prims
                                             .entry(name)
                                             .and_modify(|s| {
@@ -838,17 +564,6 @@ impl SymbolTable {
                                     }
 
                                     if !value.scope.is_tpl() {
-                                        self.scoped_def_sums
-                                            .entry(file)
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.scoped_sums
                                             .entry(name)
                                             .and_modify(|s| {
@@ -860,17 +575,6 @@ impl SymbolTable {
                                                 s
                                             });
                                     } else {
-                                        self.def_sums
-                                            .entry(file)
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.sums
                                             .entry(name)
                                             .and_modify(|s| {
@@ -892,17 +596,6 @@ impl SymbolTable {
                                     }
 
                                     if !value.scope.is_tpl() {
-                                        self.scoped_def_prods
-                                            .entry(file)
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.scoped_prods
                                             .entry(name)
                                             .and_modify(|s| {
@@ -914,17 +607,6 @@ impl SymbolTable {
                                                 s
                                             });
                                     } else {
-                                        self.def_prods
-                                            .entry(file)
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.prods
                                             .entry(name)
                                             .and_modify(|s| {
@@ -946,17 +628,6 @@ impl SymbolTable {
                                             }));
                                         }
 
-                                        self.scoped_def_funs
-                                            .entry(file)
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.scoped_funs
                                             .entry(name)
                                             .and_modify(|s| {
@@ -968,17 +639,6 @@ impl SymbolTable {
                                                 s
                                             });
                                     } else {
-                                        self.def_funs
-                                            .entry(file.clone())
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.funs
                                             .entry(name.clone())
                                             .and_modify(|s| {
@@ -991,14 +651,14 @@ impl SymbolTable {
                                             });
 
                                         if name == "main" {
-                                            if self.main_fun.get(&file).is_some() {
+                                            if self.main_fun.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: name_value.token.loc(),
                                                     desc: "duplicate main function".into(),
                                                 }));
                                             }
 
-                                            self.main_fun.insert(file, value_idx);
+                                            self.main_fun = Some(value_idx);
                                         }
                                     }
                                 }
@@ -1011,17 +671,6 @@ impl SymbolTable {
                                             }));
                                         }
 
-                                        self.scoped_def_apps
-                                            .entry(file)
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.scoped_apps
                                             .entry(name)
                                             .and_modify(|s| {
@@ -1033,17 +682,6 @@ impl SymbolTable {
                                                 s
                                             });
                                     } else {
-                                        self.def_apps
-                                            .entry(file.clone())
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.apps
                                             .entry(name.clone())
                                             .and_modify(|s| {
@@ -1056,14 +694,14 @@ impl SymbolTable {
                                             });
 
                                         if name == "main" {
-                                            if self.main_app.get(&file).is_some() {
+                                            if self.main_app.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: name_value.token.loc(),
                                                     desc: "duplicate main application".into(),
                                                 }));
                                             }
 
-                                            self.main_app.insert(file, value_idx);
+                                            self.main_app = Some(value_idx);
                                         }
                                     }
                                 }
@@ -1076,17 +714,6 @@ impl SymbolTable {
                                             }));
                                         }
 
-                                        self.scoped_def_attrs
-                                            .entry(file)
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.scoped_attrs
                                             .entry(name)
                                             .and_modify(|s| {
@@ -1098,17 +725,6 @@ impl SymbolTable {
                                                 s
                                             });
                                     } else {
-                                        self.def_attrs
-                                            .entry(file.clone())
-                                            .and_modify(|s| {
-                                                s.insert(name.clone());
-                                            })
-                                            .or_insert_with(|| {
-                                                let mut s = BTreeSet::new();
-                                                s.insert(name.clone());
-                                                s
-                                            });
-
                                         self.attrs
                                             .entry(name.clone())
                                             .and_modify(|s| {
@@ -1121,7 +737,7 @@ impl SymbolTable {
                                             });
 
                                         if name == "main" {
-                                            if self.main_fun_attrs.get(&file).is_some() {
+                                            if self.main_fun_attrs.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: name_value.token.loc(),
                                                     desc: "duplicate main function attributes"
@@ -1129,16 +745,16 @@ impl SymbolTable {
                                                 }));
                                             }
 
-                                            self.main_fun_attrs.insert(file, value_idx);
+                                            self.main_fun_attrs = Some(value_idx);
                                         } else if name == "Main" {
-                                            if self.main_type_attrs.get(&file).is_some() {
+                                            if self.main_type_attrs.is_some() {
                                                 return Err(Error::Semantic(SemanticError {
                                                     loc: name_value.token.loc(),
                                                     desc: "duplicate Main type attributes".into(),
                                                 }));
                                             }
 
-                                            self.main_type_attrs.insert(file, value_idx);
+                                            self.main_type_attrs = Some(value_idx);
                                         }
                                     }
                                 }
@@ -1160,17 +776,6 @@ impl SymbolTable {
                             }
 
                             if !value.scope.is_tpl() {
-                                self.scoped_def_prims
-                                    .entry(file)
-                                    .and_modify(|s| {
-                                        s.insert(name.clone());
-                                    })
-                                    .or_insert_with(|| {
-                                        let mut s = BTreeSet::new();
-                                        s.insert(name.clone());
-                                        s
-                                    });
-
                                 self.scoped_prims
                                     .entry(name)
                                     .and_modify(|s| {
@@ -1182,17 +787,6 @@ impl SymbolTable {
                                         s
                                     });
                             } else {
-                                self.def_prims
-                                    .entry(file)
-                                    .and_modify(|s| {
-                                        s.insert(name.clone());
-                                    })
-                                    .or_insert_with(|| {
-                                        let mut s = BTreeSet::new();
-                                        s.insert(name.clone());
-                                        s
-                                    });
-
                                 self.prims
                                     .entry(name)
                                     .and_modify(|s| {
@@ -1280,14 +874,14 @@ impl SymbolTable {
                                 });
 
                             if name == "main" {
-                                if self.main_app.get(&file).is_some() {
+                                if self.main_app.is_some() {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: value.token.loc(),
                                         desc: "duplicate main application".into(),
                                     }));
                                 }
 
-                                self.main_app.insert(file, value_idx);
+                                self.main_app = Some(value_idx);
                             }
                         }
                     }
@@ -1326,14 +920,14 @@ impl SymbolTable {
                         });
 
                     if name == "main" {
-                        if self.main_app.get(&file).is_some() {
+                        if self.main_app.is_some() {
                             return Err(Error::Semantic(SemanticError {
                                 loc: value.token.loc(),
                                 desc: "duplicate main application".into(),
                             }));
                         }
 
-                        self.main_app.insert(file, value_idx);
+                        self.main_app = Some(value_idx);
                     }
                 }
             }
@@ -1348,8 +942,16 @@ impl SymbolTable {
 
     pub fn from_values(values: &Values) -> Result<Self> {
         let mut st = SymbolTable::new();
+        let file = values[0].file();
 
         for value in values.clone().into_iter() {
+            if value.file() != file {
+                return Err(Error::Semantic(SemanticError {
+                    loc: value.token.loc(),
+                    desc: "invalid value file".into(),
+                }));
+            }
+
             st.add_value(&value)?;
         }
 
@@ -1358,6 +960,54 @@ impl SymbolTable {
 
     pub fn position(&self, value: Value) -> Option<usize> {
         self.values.position(value)
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Default)]
+pub struct GlobalSymbolTable {
+    pub files: BTreeSet<String>,
+
+    pub symbol_tables: BTreeMap<String, SymbolTable>,
+}
+
+impl GlobalSymbolTable {
+    pub fn new() -> GlobalSymbolTable {
+        GlobalSymbolTable::default()
+    }
+
+    pub fn add_value(&mut self, value: Value) -> Result<()> {
+        let file = value.file();
+
+        if !self.files.contains(&file) {
+            self.files.insert(file.clone());
+
+            let mut st = SymbolTable::new();
+            st.add_value(&value)?;
+
+            self.symbol_tables.insert(file, st);
+        } else {
+            let mut st = self.symbol_tables.get(&file).unwrap().to_owned();
+            st.add_value(&value)?;
+            self.symbol_tables.insert(file, st);
+        }
+
+        Ok(())
+    }
+
+    pub fn add_values(&mut self, values: Values) -> Result<()> {
+        for value in values {
+            self.add_value(value)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn from_values(values: Values) -> Result<GlobalSymbolTable> {
+        let mut gst = GlobalSymbolTable::new();
+
+        gst.add_values(values)?;
+
+        Ok(gst)
     }
 }
 
@@ -1380,7 +1030,6 @@ mod test {
     #[test]
     fn symbol_table_imports() {
         use super::SymbolTable;
-        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let s = "(import std.io)";
@@ -1389,8 +1038,6 @@ mod test {
 
         let st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.imp_paths.get(EMPTY).unwrap().len(), 1);
-        assert!(st.imp_paths.get(EMPTY).unwrap().contains("std.io"));
         assert_eq!(st.imports.len(), 1);
         assert!(st.imports.contains_key("std.io"));
     }
@@ -1398,7 +1045,6 @@ mod test {
     #[test]
     fn symbol_table_exports() {
         use super::SymbolTable;
-        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(export >>)";
@@ -1407,8 +1053,6 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.exp_defs.get(EMPTY).unwrap().len(), 1);
-        assert!(st.exp_defs.get(EMPTY).unwrap().contains(">>"));
         assert_eq!(st.exports.len(), 1);
         assert!(st.exports.contains_key(">>"));
 
@@ -1418,18 +1062,15 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.exp_defs.get(EMPTY).unwrap().len(), 3);
-        assert!(st.exp_defs.get(EMPTY).unwrap().contains("a"));
-        assert!(st.exp_defs.get(EMPTY).unwrap().contains("b"));
-        assert!(st.exp_defs.get(EMPTY).unwrap().contains("c"));
         assert_eq!(st.exports.len(), 3);
+        assert!(st.exports.contains_key("a"));
         assert!(st.exports.contains_key("b"));
+        assert!(st.exports.contains_key("c"));
     }
 
     #[test]
     fn symbol_table_types() {
         use super::SymbolTable;
-        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(deftype RGB (Prod UInt UInt UInt))";
@@ -1438,8 +1079,6 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_types.get(EMPTY).unwrap().len(), 1);
-        assert!(st.def_types.get(EMPTY).unwrap().contains("RGB"));
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
 
@@ -1449,8 +1088,6 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_types.get(EMPTY).unwrap().len(), 1);
-        assert!(st.def_types.get(EMPTY).unwrap().contains("RGB"));
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
     }
@@ -1458,7 +1095,6 @@ mod test {
     #[test]
     fn symbol_table_prims() {
         use super::SymbolTable;
-        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(defprim i 0)";
@@ -1467,8 +1103,6 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_prims.get(EMPTY).unwrap().len(), 1);
-        assert!(st.def_prims.get(EMPTY).unwrap().contains("i"));
         assert_eq!(st.prims.len(), 1);
         assert!(st.prims.contains_key("i"));
 
@@ -1478,8 +1112,6 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_prims.get(EMPTY).unwrap().len(), 1);
-        assert!(st.def_prims.get(EMPTY).unwrap().contains("i"));
         assert_eq!(st.prims.len(), 1);
         assert!(st.prims.contains_key("i"));
     }
@@ -1487,7 +1119,6 @@ mod test {
     #[test]
     fn symbol_table_sums() {
         use super::SymbolTable;
-        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(defsum predicate true)";
@@ -1496,8 +1127,6 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_sums.get(EMPTY).unwrap().len(), 1);
-        assert!(st.def_sums.get(EMPTY).unwrap().contains("predicate"));
         assert_eq!(st.sums.len(), 1);
         assert!(st.sums.contains_key("predicate"));
 
@@ -1507,8 +1136,6 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_sums.get(EMPTY).unwrap().len(), 1);
-        assert!(st.def_sums.get(EMPTY).unwrap().contains("predicate"));
         assert_eq!(st.sums.len(), 1);
         assert!(st.sums.contains_key("predicate"));
     }
@@ -1516,7 +1143,6 @@ mod test {
     #[test]
     fn symbol_table_prods() {
         use super::SymbolTable;
-        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(defprod result 1 ())";
@@ -1525,8 +1151,6 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_prods.get(EMPTY).unwrap().len(), 1);
-        assert!(st.def_prods.get(EMPTY).unwrap().contains("result"));
         assert_eq!(st.prods.len(), 1);
         assert!(st.prods.contains_key("result"));
 
@@ -1536,8 +1160,6 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_prods.get(EMPTY).unwrap().len(), 1);
-        assert!(st.def_prods.get(EMPTY).unwrap().contains("result"));
         assert_eq!(st.prods.len(), 1);
         assert!(st.prods.contains_key("result"));
     }
@@ -1545,7 +1167,6 @@ mod test {
     #[test]
     fn symbol_table_funs() {
         use super::SymbolTable;
-        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(defun rShift x i (>> x i))";
@@ -1554,8 +1175,6 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_funs.get(EMPTY).unwrap().len(), 1);
-        assert!(st.def_funs.get(EMPTY).unwrap().contains("rShift"));
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("rShift"));
 
@@ -1565,8 +1184,6 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_funs.get(EMPTY).unwrap().len(), 1);
-        assert!(st.def_funs.get(EMPTY).unwrap().contains("rShift"));
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("rShift"));
     }
@@ -1574,7 +1191,6 @@ mod test {
     #[test]
     fn symbol_table_apps() {
         use super::SymbolTable;
-        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(def res (app f x y z))";
@@ -1583,8 +1199,6 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_apps.len(), 1);
-        assert!(st.def_apps.get(EMPTY).unwrap().contains("res"));
         assert_eq!(st.apps.len(), 1);
         assert!(st.apps.contains_key("res"));
 
@@ -1594,8 +1208,6 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_apps.len(), 0);
-        assert!(!st.def_apps.contains_key(EMPTY));
         assert_eq!(st.apps.len(), 1);
         assert!(st.apps.contains_key("f"));
 
@@ -1605,8 +1217,6 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.scoped_def_apps.len(), 0);
-        assert!(!st.scoped_def_apps.contains_key(EMPTY));
         assert_eq!(st.scoped_apps.len(), 1);
         assert!(st.scoped_apps.contains_key("g"));
     }
@@ -1614,7 +1224,6 @@ mod test {
     #[test]
     fn symbol_table_attrs() {
         use super::SymbolTable;
-        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(defattrs sum attr1 attr2 attr3)";
@@ -1623,8 +1232,6 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_attrs.len(), 1);
-        assert!(st.def_attrs.get(EMPTY).unwrap().contains("sum"));
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
 
@@ -1634,8 +1241,6 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_attrs.len(), 1);
-        assert!(st.def_attrs.get(EMPTY).unwrap().contains("sum"));
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
 
@@ -1647,17 +1252,14 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.def_attrs.len(), 1);
-        assert!(st.def_attrs.get(EMPTY).unwrap().contains("Main"));
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("Main"));
-        assert_eq!(st.main_type_attrs.get(EMPTY), st.position(value).as_ref());
+        assert_eq!(st.main_type_attrs, st.position(value));
     }
 
     #[test]
     fn symbol_table_main() {
         use super::SymbolTable;
-        use crate::syntax::EMPTY;
         use crate::values::Values;
 
         let mut s = "(defsig main (Fun IO IO))\n(defun main io (id io))";
@@ -1666,13 +1268,9 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert!(st.main_sig.get(EMPTY).is_some());
-        assert_eq!(st.def_sigs.len(), 1);
-        assert!(st.def_sigs.get(EMPTY).unwrap().contains("main"));
+        assert!(st.main_sig.is_some());
         assert_eq!(st.sigs.len(), 1);
         assert!(st.sigs.contains_key("main"));
-        assert_eq!(st.def_funs.len(), 1);
-        assert!(st.def_funs.get(EMPTY).unwrap().contains("main"));
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
 
@@ -1682,13 +1280,9 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert!(st.main_sig.get(EMPTY).is_some());
-        assert_eq!(st.def_sigs.len(), 1);
-        assert!(st.def_sigs.get(EMPTY).unwrap().contains("main"));
+        assert!(st.main_sig.is_some());
         assert_eq!(st.sigs.len(), 1);
         assert!(st.sigs.contains_key("main"));
-        assert_eq!(st.def_funs.len(), 1);
-        assert!(st.def_funs.get(EMPTY).unwrap().contains("main"));
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
     }
