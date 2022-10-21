@@ -58,20 +58,12 @@ impl SymbolTable {
 
         if let Some(Type::App(types)) = value.typing.clone() {
             if types[0] == Type::Builtin {
-                let name = value.clone().name.unwrap();
+                let name = value.qualified_name();
                 let keyword = Keyword::from_str(&name)?;
 
                 match keyword {
                     Keyword::Import => {
-                        let mut name_segs = Vec::new();
-
-                        if let Some(path) = value.children[1].qualification.clone() {
-                            name_segs.push(path);
-                        }
-
-                        name_segs.push(value.children[1].name.clone().unwrap());
-
-                        let name = name_segs.join(".");
+                        let name = value.children[1].qualified_name();
 
                         self.imports
                             .entry(name)
@@ -93,7 +85,7 @@ impl SymbolTable {
                             for idx in 1..len {
                                 let child = value.children[idx].clone();
 
-                                let name = child.name.clone().unwrap();
+                                let name = child.qualified_name();
 
                                 self.exports
                                     .entry(name)
@@ -107,7 +99,7 @@ impl SymbolTable {
                                     });
                             }
                         } else {
-                            let name = value.name.clone().unwrap();
+                            let name = value.qualified_name();
 
                             self.exports
                                 .entry(name)
@@ -122,7 +114,7 @@ impl SymbolTable {
                         }
                     }
                     Keyword::Deftype => {
-                        let name = value.children[1].name.clone().unwrap();
+                        let name = value.children[1].qualified_name();
 
                         if !value.scope.is_tpl() {
                             if name == "Main" {
@@ -167,7 +159,7 @@ impl SymbolTable {
                         }
                     }
                     Keyword::Defsig => {
-                        let name = value.children[1].name.clone().unwrap();
+                        let name = value.children[1].qualified_name();
 
                         if !value.scope.is_tpl() {
                             if name == "main" {
@@ -212,7 +204,7 @@ impl SymbolTable {
                         }
                     }
                     Keyword::Defprim => {
-                        let name = value.children[1].name.clone().unwrap();
+                        let name = value.children[1].qualified_name();
 
                         if name == "main" {
                             return Err(Error::Semantic(SemanticError {
@@ -246,7 +238,7 @@ impl SymbolTable {
                         }
                     }
                     Keyword::Defsum => {
-                        let name = value.children[1].name.clone().unwrap();
+                        let name = value.children[1].qualified_name();
 
                         if name == "main" {
                             return Err(Error::Semantic(SemanticError {
@@ -280,7 +272,7 @@ impl SymbolTable {
                         }
                     }
                     Keyword::Defprod => {
-                        let name = value.children[1].name.clone().unwrap();
+                        let name = value.children[1].qualified_name();
 
                         if name == "main" {
                             return Err(Error::Semantic(SemanticError {
@@ -314,7 +306,7 @@ impl SymbolTable {
                         }
                     }
                     Keyword::Defun => {
-                        let name = value.children[1].name.clone().unwrap();
+                        let name = value.children[1].qualified_name();
 
                         if !value.scope.is_tpl() {
                             if name == "main" {
@@ -359,7 +351,7 @@ impl SymbolTable {
                         }
                     }
                     Keyword::Defattrs => {
-                        let name = value.children[1].name.clone().unwrap();
+                        let name = value.children[1].qualified_name();
 
                         if !value.scope.is_tpl() {
                             if name == "main" {
@@ -420,7 +412,7 @@ impl SymbolTable {
                             }));
                         }
 
-                        let name = value.children[1].name.clone().unwrap();
+                        let name = value.children[1].qualified_name();
                         let name_value = value.children[2].clone();
 
                         let len = name_value.children.len();
@@ -766,7 +758,7 @@ impl SymbolTable {
                                 }
                             }
                         } else if len == 1 {
-                            let name = value.name.clone().unwrap();
+                            let name = value.qualified_name();
 
                             if name == "main" {
                                 return Err(Error::Semantic(SemanticError {
@@ -807,7 +799,7 @@ impl SymbolTable {
                     }
                     _ => {
                         let name = if value.children[1].name.is_some() {
-                            value.children[1].name.clone().unwrap()
+                            value.children[1].qualified_name()
                         } else {
                             WILDCARD.to_string()
                         };
@@ -887,7 +879,7 @@ impl SymbolTable {
                     }
                 }
             } else if value.prim.is_none() {
-                let name = value.children[0].name.clone().unwrap();
+                let name = value.children[0].qualified_name();
 
                 if !value.scope.is_tpl() {
                     if name == "main" {

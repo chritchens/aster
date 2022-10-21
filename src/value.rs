@@ -106,6 +106,18 @@ impl Value {
         self.token.file()
     }
 
+    pub fn qualified_name(&self) -> String {
+        let mut qualified_name = Vec::new();
+
+        if let Some(path) = self.qualification.clone() {
+            qualified_name.push(path);
+        }
+
+        qualified_name.push(self.name.clone().unwrap());
+
+        qualified_name.join(".")
+    }
+
     pub fn is_tpl(&self) -> bool {
         self.scope.is_tpl()
     }
