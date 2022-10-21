@@ -3,6 +3,7 @@ use crate::result::Result;
 use crate::syntax::{Keyword, WILDCARD};
 use crate::typing::Type;
 use crate::value::Value;
+use crate::value::{path_prefix, path_suffix};
 use crate::values::Values;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -953,6 +954,39 @@ impl SymbolTable {
     pub fn position(&self, value: Value) -> Option<usize> {
         self.values.position(value)
     }
+
+    pub fn is_defined(&self, qualified_name: &str) -> bool {
+        let unqualified_name = path_suffix(qualified_name);
+
+        if unqualified_name != qualified_name {
+            let qualification = path_prefix(qualified_name);
+            self.imports.contains_key(&qualification)
+        } else if unqualified_name == "main" {
+            self.main_sig.is_some()
+                || self.main_fun.is_some()
+                || self.main_fun_attrs.is_some()
+                || self.main_app.is_some()
+        } else if unqualified_name == "Main" {
+            self.main_type.is_some() || self.main_type_attrs.is_some()
+        } else {
+            self.types.contains_key(&unqualified_name)
+                || self.prims.contains_key(&unqualified_name)
+                || self.sums.contains_key(&unqualified_name)
+                || self.prods.contains_key(&unqualified_name)
+                || self.sigs.contains_key(&unqualified_name)
+                || self.funs.contains_key(&unqualified_name)
+                || self.apps.contains_key(&unqualified_name)
+                || self.attrs.contains_key(&unqualified_name)
+        }
+    }
+
+    pub fn is_defined_in_scope(&self, tpl_name: &str, name: &str) -> bool {
+        if !self.is_defined(tpl_name) {
+            return false;
+        }
+
+        !self.values.find_in_scope(tpl_name, name).is_empty()
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
@@ -1073,6 +1107,7 @@ mod test {
 
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
+        assert!(st.is_defined("RGB"));
 
         s = "(def RGB (type (Prod UInt UInt UInt)))";
 
@@ -1082,6 +1117,7 @@ mod test {
 
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
+        assert!(st.is_defined("RGB"));
     }
 
     #[test]
@@ -1097,6 +1133,7 @@ mod test {
 
         assert_eq!(st.prims.len(), 1);
         assert!(st.prims.contains_key("i"));
+        assert!(st.is_defined("i"));
 
         s = "(def i (prim 0))";
 
@@ -1106,6 +1143,7 @@ mod test {
 
         assert_eq!(st.prims.len(), 1);
         assert!(st.prims.contains_key("i"));
+        assert!(st.is_defined("i"));
     }
 
     #[test]
@@ -1121,6 +1159,7 @@ mod test {
 
         assert_eq!(st.sums.len(), 1);
         assert!(st.sums.contains_key("predicate"));
+        assert!(st.is_defined("predicate"));
 
         s = "(def predicate (sum true))";
 
@@ -1130,6 +1169,7 @@ mod test {
 
         assert_eq!(st.sums.len(), 1);
         assert!(st.sums.contains_key("predicate"));
+        assert!(st.is_defined("predicate"));
     }
 
     #[test]
@@ -1145,6 +1185,7 @@ mod test {
 
         assert_eq!(st.prods.len(), 1);
         assert!(st.prods.contains_key("result"));
+        assert!(st.is_defined("result"));
 
         s = "(def result (prod 1 ()))";
 
@@ -1154,6 +1195,7 @@ mod test {
 
         assert_eq!(st.prods.len(), 1);
         assert!(st.prods.contains_key("result"));
+        assert!(st.is_defined("result"));
     }
 
     #[test]
@@ -1169,6 +1211,7 @@ mod test {
 
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("rShift"));
+        assert!(st.is_defined("rShift"));
 
         s = "(def rShift (fun x i (>> x i)))";
 
@@ -1178,6 +1221,7 @@ mod test {
 
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("rShift"));
+        assert!(st.is_defined("rShift"));
     }
 
     #[test]
@@ -1193,6 +1237,7 @@ mod test {
 
         assert_eq!(st.apps.len(), 1);
         assert!(st.apps.contains_key("res"));
+        assert!(st.is_defined("res"));
 
         s = "(f x y z)";
 
@@ -1235,6 +1280,7 @@ mod test {
 
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
+        assert!(st.is_defined("sum"));
 
         s = "(def Main (attrs attr1 attr2 attr3))";
 
@@ -1246,6 +1292,7 @@ mod test {
 
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("Main"));
+        assert!(st.is_defined("Main"));
         assert_eq!(st.main_type_attrs, st.position(value));
     }
 
@@ -1265,6 +1312,7 @@ mod test {
         assert!(st.sigs.contains_key("main"));
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
+        assert!(st.is_defined("main"));
 
         s = "(def main (sig (Fun IO IO)))\n(def main (fun io (id io)))";
 
@@ -1277,5 +1325,6 @@ mod test {
         assert!(st.sigs.contains_key("main"));
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
+        assert!(st.is_defined("main"));
     }
 }

@@ -38,6 +38,29 @@ impl Values {
         self.clone().into_iter().position(|v| v == value)
     }
 
+    pub fn find_qualified(&self, name: &str) -> Vec<Value> {
+        self.clone()
+            .into_iter()
+            .filter(|value| value.qualified_name() == name)
+            .collect()
+    }
+
+    pub fn find_unqualified(&self, name: &str) -> Vec<Value> {
+        self.clone()
+            .into_iter()
+            .filter(|value| value.name == Some(name.into()))
+            .collect()
+    }
+
+    pub fn find_in_scope(&self, tpl_name: &str, name: &str) -> Vec<Value> {
+        self.clone()
+            .into_iter()
+            .filter(|value| {
+                value.scope.tpl_name == Some(tpl_name.into()) && value.name == Some(name.into())
+            })
+            .collect()
+    }
+
     pub fn from_str(s: &str) -> Result<Self> {
         let mut tokens = Tokens::from_str(s)?;
 

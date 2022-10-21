@@ -46,7 +46,7 @@ impl PrimValue {
     }
 }
 
-fn path_prefix(s: &str) -> String {
+pub fn path_prefix(s: &str) -> String {
     let mut v: Vec<&str> = s.split(SYMBOL_PATH_SEPARATOR).collect();
     let len = v.len();
 
@@ -58,7 +58,7 @@ fn path_prefix(s: &str) -> String {
     }
 }
 
-fn path_suffix(s: &str) -> String {
+pub fn path_suffix(s: &str) -> String {
     let mut v: Vec<&str> = s.split(SYMBOL_PATH_SEPARATOR).collect();
     let len = v.len();
 
