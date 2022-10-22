@@ -7,6 +7,18 @@ use crate::value::{add_prefix, path_prefix, path_suffix};
 use crate::values::Values;
 use std::collections::{BTreeMap, BTreeSet};
 
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+pub enum STElementKind {
+    Prim,
+    Sum,
+    Prod,
+    Sig,
+    Fun,
+    App,
+    Attr,
+    Type,
+}
+
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct SymbolTable {
     pub file: Option<String>,
@@ -1099,15 +1111,45 @@ impl SymbolTable {
             .is_empty()
     }
 
-    pub fn is_well_defined(&self, tpl_name: &str, qualified_name: Option<&str>) -> bool {
+    pub fn is_well_defined(
+        &self,
+        tpl_name: &str,
+        kind: STElementKind,
+        qualified_name: Option<&str>,
+    ) -> bool {
         if let Some(defined) = qualified_name {
-            if !self.is_defined(defined) {
-                false
-            } else {
-                !self
+            if !self.is_defined(defined)
+                || self
                     .values
                     .find_qualified_with_keyword(tpl_name, defined)
                     .is_empty()
+            {
+                false
+            } else if defined != "main" && defined != "Main" {
+                match kind {
+                    STElementKind::Prim => self.prims.contains_key(defined),
+                    STElementKind::Sum => self.sums.contains_key(defined),
+                    STElementKind::Prod => self.prods.contains_key(defined),
+                    STElementKind::Sig => self.sigs.contains_key(defined),
+                    STElementKind::Fun => self.funs.contains_key(defined),
+                    STElementKind::App => self.apps.contains_key(defined),
+                    STElementKind::Type => self.types.contains_key(defined),
+                    STElementKind::Attr => self.attrs.contains_key(defined),
+                }
+            } else if defined == "main" {
+                match kind {
+                    STElementKind::Sig => self.main_sig.is_some(),
+                    STElementKind::Fun => self.main_fun.is_some(),
+                    STElementKind::App => self.main_app.is_some(),
+                    STElementKind::Attr => self.main_fun_attrs.is_some(),
+                    _ => false,
+                }
+            } else {
+                match kind {
+                    STElementKind::Type => self.main_type.is_some(),
+                    STElementKind::Attr => self.main_type_attrs.is_some(),
+                    _ => false,
+                }
             }
         } else {
             if !self.is_defined(tpl_name) {
@@ -1124,9 +1166,10 @@ impl SymbolTable {
         tpl_def: Option<&str>,
         tpl_path: &[usize],
         keyword: Option<&str>,
+        kind: STElementKind,
         name: &str,
     ) -> bool {
-        if !self.is_well_defined(tpl_name, tpl_def) {
+        if !self.is_well_defined(tpl_name, kind, tpl_def) {
             return false;
         }
 
@@ -1301,6 +1344,7 @@ mod test {
 
     #[test]
     fn symbol_table_types() {
+        use super::STElementKind;
         use super::SymbolTable;
         use crate::values::Values;
 
@@ -1313,7 +1357,7 @@ mod test {
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
         assert!(st.is_defined("RGB"));
-        assert!(st.is_well_defined("deftype", Some("RGB")));
+        assert!(st.is_well_defined("deftype", STElementKind::Type, Some("RGB")));
 
         s = "(def RGB (type (Prod UInt UInt UInt)))";
 
@@ -1324,11 +1368,12 @@ mod test {
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
         assert!(st.is_defined("RGB"));
-        assert!(st.is_well_defined("def", Some("RGB")));
+        assert!(st.is_well_defined("def", STElementKind::Type, Some("RGB")));
     }
 
     #[test]
     fn symbol_table_prims() {
+        use super::STElementKind;
         use super::SymbolTable;
         use crate::values::Values;
 
@@ -1341,7 +1386,7 @@ mod test {
         assert_eq!(st.prims.len(), 1);
         assert!(st.prims.contains_key("i"));
         assert!(st.is_defined("i"));
-        assert!(st.is_well_defined("defprim", Some("i")));
+        assert!(st.is_well_defined("defprim", STElementKind::Prim, Some("i")));
 
         s = "(def i (prim 0))";
 
@@ -1352,11 +1397,12 @@ mod test {
         assert_eq!(st.prims.len(), 1);
         assert!(st.prims.contains_key("i"));
         assert!(st.is_defined("i"));
-        assert!(st.is_well_defined("def", Some("i")));
+        assert!(st.is_well_defined("def", STElementKind::Prim, Some("i")));
     }
 
     #[test]
     fn symbol_table_sums() {
+        use super::STElementKind;
         use super::SymbolTable;
         use crate::values::Values;
 
@@ -1369,7 +1415,7 @@ mod test {
         assert_eq!(st.sums.len(), 1);
         assert!(st.sums.contains_key("predicate"));
         assert!(st.is_defined("predicate"));
-        assert!(st.is_well_defined("defsum", Some("predicate")));
+        assert!(st.is_well_defined("defsum", STElementKind::Sum, Some("predicate")));
 
         s = "(def predicate (sum true))";
 
@@ -1380,11 +1426,12 @@ mod test {
         assert_eq!(st.sums.len(), 1);
         assert!(st.sums.contains_key("predicate"));
         assert!(st.is_defined("predicate"));
-        assert!(st.is_well_defined("def", Some("predicate")));
+        assert!(st.is_well_defined("def", STElementKind::Sum, Some("predicate")));
     }
 
     #[test]
     fn symbol_table_prods() {
+        use super::STElementKind;
         use super::SymbolTable;
         use crate::values::Values;
 
@@ -1397,7 +1444,7 @@ mod test {
         assert_eq!(st.prods.len(), 1);
         assert!(st.prods.contains_key("result"));
         assert!(st.is_defined("result"));
-        assert!(st.is_well_defined("defprod", Some("result")));
+        assert!(st.is_well_defined("defprod", STElementKind::Prod, Some("result")));
 
         s = "(def result (prod 1 ()))";
 
@@ -1408,11 +1455,12 @@ mod test {
         assert_eq!(st.prods.len(), 1);
         assert!(st.prods.contains_key("result"));
         assert!(st.is_defined("result"));
-        assert!(st.is_well_defined("def", Some("result")));
+        assert!(st.is_well_defined("def", STElementKind::Prod, Some("result")));
     }
 
     #[test]
     fn symbol_table_funs() {
+        use super::STElementKind;
         use super::SymbolTable;
         use crate::values::Values;
 
@@ -1425,7 +1473,7 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("rShift"));
         assert!(st.is_defined("rShift"));
-        assert!(st.is_well_defined("defun", Some("rShift")));
+        assert!(st.is_well_defined("defun", STElementKind::Fun, Some("rShift")));
 
         s = "(def rShift (fun x i (>> x i)))";
 
@@ -1436,11 +1484,12 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("rShift"));
         assert!(st.is_defined("rShift"));
-        assert!(st.is_well_defined("def", Some("rShift")));
+        assert!(st.is_well_defined("def", STElementKind::Fun, Some("rShift")));
     }
 
     #[test]
     fn symbol_table_apps() {
+        use super::STElementKind;
         use super::SymbolTable;
         use crate::values::Values;
 
@@ -1453,7 +1502,7 @@ mod test {
         assert_eq!(st.apps.len(), 1);
         assert!(st.apps.contains_key("res"));
         assert!(st.is_defined("res"));
-        assert!(st.is_well_defined("def", Some("res")));
+        assert!(st.is_well_defined("def", STElementKind::App, Some("res")));
 
         s = "(f x y z)";
 
@@ -1476,6 +1525,7 @@ mod test {
 
     #[test]
     fn symbol_table_attrs() {
+        use super::STElementKind;
         use super::SymbolTable;
         use crate::values::Values;
 
@@ -1487,7 +1537,7 @@ mod test {
 
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
-        assert!(st.is_well_defined("defattrs", Some("sum")));
+        assert!(st.is_well_defined("defattrs", STElementKind::Attr, Some("sum")));
 
         s = "(def sum (attrs attr1 attr2 attr3))";
 
@@ -1498,7 +1548,7 @@ mod test {
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
         assert!(st.is_defined("sum"));
-        assert!(st.is_well_defined("def", Some("sum")));
+        assert!(st.is_well_defined("def", STElementKind::Attr, Some("sum")));
 
         s = "(def Main (attrs attr1 attr2 attr3))";
 
@@ -1512,11 +1562,12 @@ mod test {
         assert!(st.attrs.contains_key("Main"));
         assert!(st.is_defined("Main"));
         assert_eq!(st.main_type_attrs, st.position(value));
-        assert!(st.is_well_defined("def", Some("Main")));
+        assert!(st.is_well_defined("def", STElementKind::Attr, Some("Main")));
     }
 
     #[test]
     fn symbol_table_main() {
+        use super::STElementKind;
         use super::SymbolTable;
         use crate::values::Values;
 
@@ -1532,7 +1583,7 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
         assert!(st.is_defined("main"));
-        assert!(st.is_well_defined("defsig", Some("main")));
+        assert!(st.is_well_defined("defsig", STElementKind::Sig, Some("main")));
 
         s = "(def main (sig (Fun IO IO)))\n(def main (fun io (id io)))";
 
@@ -1546,11 +1597,12 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
         assert!(st.is_defined("main"));
-        assert!(st.is_well_defined("def", Some("main")));
+        assert!(st.is_well_defined("def", STElementKind::Fun, Some("main")));
     }
 
     #[test]
     fn symbol_table_scoping() {
+        use super::STElementKind;
         use super::SymbolTable;
         use crate::values::Values;
 
@@ -1567,8 +1619,15 @@ mod test {
         assert!(st.funs.get("f") < st.scoped_apps.get("+"));
         assert!(st.scoped_funs.get("g") < st.scoped_apps.get("g"));
         assert!(st.is_defined("f"));
-        assert!(st.is_well_defined("defun", Some("f")));
+        assert!(st.is_well_defined("defun", STElementKind::Fun, Some("f")));
         assert!(st.is_defined_in_scope("defun", Some("f"), &[0], "g"));
-        assert!(st.is_well_defined_in_scope("defun", Some("f"), &[0], Some("defun"), "g"));
+        assert!(st.is_well_defined_in_scope(
+            "defun",
+            Some("f"),
+            &[0],
+            Some("defun"),
+            STElementKind::Fun,
+            "g"
+        ));
     }
 }
