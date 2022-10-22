@@ -1,5 +1,5 @@
 #! An example on how booleans can be built using primitives.
-(import std.io (printf, stdIO))
+(import std.io (prod printf stdIO))
 
 (deftype True Prim)
 (deftype False Prim)
