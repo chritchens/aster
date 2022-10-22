@@ -1113,8 +1113,8 @@ impl SymbolTable {
 
     pub fn is_well_defined(
         &self,
-        tpl_name: &str,
         kind: STElementKind,
+        tpl_name: &str,
         qualified_name: Option<&str>,
     ) -> bool {
         if let Some(defined) = qualified_name {
@@ -1165,11 +1165,11 @@ impl SymbolTable {
         tpl_name: &str,
         tpl_def: Option<&str>,
         tpl_path: &[usize],
-        keyword: Option<&str>,
         kind: STElementKind,
+        keyword: Option<&str>,
         name: &str,
     ) -> bool {
-        if !self.is_well_defined(tpl_name, kind, tpl_def) {
+        if !self.is_well_defined(kind, tpl_name, tpl_def) {
             return false;
         }
 
@@ -1357,7 +1357,7 @@ mod test {
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
         assert!(st.is_defined("RGB"));
-        assert!(st.is_well_defined("deftype", STElementKind::Type, Some("RGB")));
+        assert!(st.is_well_defined(STElementKind::Type, "deftype", Some("RGB")));
 
         s = "(def RGB (type (Prod UInt UInt UInt)))";
 
@@ -1368,7 +1368,7 @@ mod test {
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
         assert!(st.is_defined("RGB"));
-        assert!(st.is_well_defined("def", STElementKind::Type, Some("RGB")));
+        assert!(st.is_well_defined(STElementKind::Type, "def", Some("RGB")));
     }
 
     #[test]
@@ -1386,7 +1386,7 @@ mod test {
         assert_eq!(st.prims.len(), 1);
         assert!(st.prims.contains_key("i"));
         assert!(st.is_defined("i"));
-        assert!(st.is_well_defined("defprim", STElementKind::Prim, Some("i")));
+        assert!(st.is_well_defined(STElementKind::Prim, "defprim", Some("i")));
 
         s = "(def i (prim 0))";
 
@@ -1397,7 +1397,7 @@ mod test {
         assert_eq!(st.prims.len(), 1);
         assert!(st.prims.contains_key("i"));
         assert!(st.is_defined("i"));
-        assert!(st.is_well_defined("def", STElementKind::Prim, Some("i")));
+        assert!(st.is_well_defined(STElementKind::Prim, "def", Some("i")));
     }
 
     #[test]
@@ -1415,7 +1415,7 @@ mod test {
         assert_eq!(st.sums.len(), 1);
         assert!(st.sums.contains_key("predicate"));
         assert!(st.is_defined("predicate"));
-        assert!(st.is_well_defined("defsum", STElementKind::Sum, Some("predicate")));
+        assert!(st.is_well_defined(STElementKind::Sum, "defsum", Some("predicate")));
 
         s = "(def predicate (sum true))";
 
@@ -1426,7 +1426,7 @@ mod test {
         assert_eq!(st.sums.len(), 1);
         assert!(st.sums.contains_key("predicate"));
         assert!(st.is_defined("predicate"));
-        assert!(st.is_well_defined("def", STElementKind::Sum, Some("predicate")));
+        assert!(st.is_well_defined(STElementKind::Sum, "def", Some("predicate")));
     }
 
     #[test]
@@ -1444,7 +1444,7 @@ mod test {
         assert_eq!(st.prods.len(), 1);
         assert!(st.prods.contains_key("result"));
         assert!(st.is_defined("result"));
-        assert!(st.is_well_defined("defprod", STElementKind::Prod, Some("result")));
+        assert!(st.is_well_defined(STElementKind::Prod, "defprod", Some("result")));
 
         s = "(def result (prod 1 ()))";
 
@@ -1455,7 +1455,7 @@ mod test {
         assert_eq!(st.prods.len(), 1);
         assert!(st.prods.contains_key("result"));
         assert!(st.is_defined("result"));
-        assert!(st.is_well_defined("def", STElementKind::Prod, Some("result")));
+        assert!(st.is_well_defined(STElementKind::Prod, "def", Some("result")));
     }
 
     #[test]
@@ -1473,7 +1473,7 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("rShift"));
         assert!(st.is_defined("rShift"));
-        assert!(st.is_well_defined("defun", STElementKind::Fun, Some("rShift")));
+        assert!(st.is_well_defined(STElementKind::Fun, "defun", Some("rShift")));
 
         s = "(def rShift (fun x i (>> x i)))";
 
@@ -1484,7 +1484,7 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("rShift"));
         assert!(st.is_defined("rShift"));
-        assert!(st.is_well_defined("def", STElementKind::Fun, Some("rShift")));
+        assert!(st.is_well_defined(STElementKind::Fun, "def", Some("rShift")));
     }
 
     #[test]
@@ -1502,7 +1502,7 @@ mod test {
         assert_eq!(st.apps.len(), 1);
         assert!(st.apps.contains_key("res"));
         assert!(st.is_defined("res"));
-        assert!(st.is_well_defined("def", STElementKind::App, Some("res")));
+        assert!(st.is_well_defined(STElementKind::App, "def", Some("res")));
 
         s = "(f x y z)";
 
@@ -1537,7 +1537,7 @@ mod test {
 
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
-        assert!(st.is_well_defined("defattrs", STElementKind::Attr, Some("sum")));
+        assert!(st.is_well_defined(STElementKind::Attr, "defattrs", Some("sum")));
 
         s = "(def sum (attrs attr1 attr2 attr3))";
 
@@ -1548,7 +1548,7 @@ mod test {
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
         assert!(st.is_defined("sum"));
-        assert!(st.is_well_defined("def", STElementKind::Attr, Some("sum")));
+        assert!(st.is_well_defined(STElementKind::Attr, "def", Some("sum")));
 
         s = "(def Main (attrs attr1 attr2 attr3))";
 
@@ -1562,7 +1562,7 @@ mod test {
         assert!(st.attrs.contains_key("Main"));
         assert!(st.is_defined("Main"));
         assert_eq!(st.main_type_attrs, st.position(value));
-        assert!(st.is_well_defined("def", STElementKind::Attr, Some("Main")));
+        assert!(st.is_well_defined(STElementKind::Attr, "def", Some("Main")));
     }
 
     #[test]
@@ -1583,7 +1583,7 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
         assert!(st.is_defined("main"));
-        assert!(st.is_well_defined("defsig", STElementKind::Sig, Some("main")));
+        assert!(st.is_well_defined(STElementKind::Sig, "defsig", Some("main")));
 
         s = "(def main (sig (Fun IO IO)))\n(def main (fun io (id io)))";
 
@@ -1597,7 +1597,7 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
         assert!(st.is_defined("main"));
-        assert!(st.is_well_defined("def", STElementKind::Fun, Some("main")));
+        assert!(st.is_well_defined(STElementKind::Fun, "def", Some("main")));
     }
 
     #[test]
@@ -1619,14 +1619,14 @@ mod test {
         assert!(st.funs.get("f") < st.scoped_apps.get("+"));
         assert!(st.scoped_funs.get("g") < st.scoped_apps.get("g"));
         assert!(st.is_defined("f"));
-        assert!(st.is_well_defined("defun", STElementKind::Fun, Some("f")));
+        assert!(st.is_well_defined(STElementKind::Fun, "defun", Some("f")));
         assert!(st.is_defined_in_scope("defun", Some("f"), &[0], "g"));
         assert!(st.is_well_defined_in_scope(
             "defun",
             Some("f"),
             &[0],
-            Some("defun"),
             STElementKind::Fun,
+            Some("defun"),
             "g"
         ));
     }
