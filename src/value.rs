@@ -58,6 +58,14 @@ pub fn path_prefix(s: &str) -> String {
     }
 }
 
+pub fn add_prefix(s: &str, prefix: &str) -> String {
+    if prefix.is_empty() {
+        s.into()
+    } else {
+        vec![prefix, s].join(&SYMBOL_PATH_SEPARATOR.to_string())
+    }
+}
+
 pub fn path_suffix(s: &str) -> String {
     let mut v: Vec<&str> = s.split(SYMBOL_PATH_SEPARATOR).collect();
     let len = v.len();
@@ -66,6 +74,14 @@ pub fn path_suffix(s: &str) -> String {
         v.remove(len - 1).into()
     } else {
         s.into()
+    }
+}
+
+pub fn add_suffix(s: &str, suffix: &str) -> String {
+    if suffix.is_empty() {
+        s.into()
+    } else {
+        vec![s, suffix].join(&SYMBOL_PATH_SEPARATOR.to_string())
     }
 }
 
@@ -104,6 +120,10 @@ impl Value {
 
     pub fn file(&self) -> String {
         self.token.file()
+    }
+
+    pub fn name(&self) -> String {
+        self.name.clone().unwrap_or_else(|| "".into())
     }
 
     pub fn qualified_name(&self) -> String {

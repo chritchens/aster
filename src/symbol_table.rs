@@ -1,9 +1,9 @@
 use crate::error::{Error, SemanticError};
 use crate::result::Result;
-use crate::syntax::{Keyword, WILDCARD};
+use crate::syntax::{is_type_symbol, Keyword, WILDCARD};
 use crate::typing::Type;
 use crate::value::Value;
-use crate::value::{path_prefix, path_suffix};
+use crate::value::{add_prefix, path_prefix, path_suffix};
 use crate::values::Values;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -13,8 +13,12 @@ pub struct SymbolTable {
 
     pub values: Values,
 
-    pub imports: BTreeMap<String, BTreeSet<usize>>,
-    pub exports: BTreeMap<String, BTreeSet<usize>>,
+    pub imported_modules: BTreeMap<String, BTreeSet<usize>>,
+    pub imported_type_symbols: BTreeMap<String, BTreeSet<usize>>,
+    pub imported_value_symbols: BTreeMap<String, BTreeSet<usize>>,
+    pub exported_type_symbols: BTreeMap<String, BTreeSet<usize>>,
+    pub exported_value_symbols: BTreeMap<String, BTreeSet<usize>>,
+
     pub types: BTreeMap<String, BTreeSet<usize>>,
     pub prims: BTreeMap<String, BTreeSet<usize>>,
     pub sums: BTreeMap<String, BTreeSet<usize>>,
@@ -64,10 +68,10 @@ impl SymbolTable {
 
                 match keyword {
                     Keyword::Import => {
-                        let name = value.children[1].qualified_name();
+                        let module_name = value.children[1].qualified_name();
 
-                        self.imports
-                            .entry(name)
+                        self.imported_modules
+                            .entry(module_name)
                             .and_modify(|s| {
                                 s.insert(value_idx);
                             })
@@ -76,6 +80,76 @@ impl SymbolTable {
                                 s.insert(value_idx);
                                 s
                             });
+
+                        if value.children.len() > 2 {
+                            let imports_value = value.children[2].clone();
+
+                            let qualification = if value.children.len() == 4 {
+                                value.children[3].name()
+                            } else {
+                                "".into()
+                            };
+
+                            if imports_value.children.len() > 1 {
+                                let len = imports_value.children.len();
+
+                                for idx in 1..len {
+                                    let child = imports_value.children[idx].clone();
+
+                                    let name = child.name();
+                                    let qualified_name = add_prefix(&name, &qualification);
+
+                                    if is_type_symbol(&name) {
+                                        self.imported_type_symbols
+                                            .entry(qualified_name)
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
+                                    } else {
+                                        self.imported_value_symbols
+                                            .entry(qualified_name)
+                                            .and_modify(|s| {
+                                                s.insert(value_idx);
+                                            })
+                                            .or_insert_with(|| {
+                                                let mut s = BTreeSet::new();
+                                                s.insert(value_idx);
+                                                s
+                                            });
+                                    }
+                                }
+                            } else if !qualification.is_empty() {
+                                let name = WILDCARD.to_string();
+                                let qualified_name = add_prefix(&name, &qualification);
+
+                                self.imported_type_symbols
+                                    .entry(qualified_name.clone())
+                                    .and_modify(|s| {
+                                        s.insert(value_idx);
+                                    })
+                                    .or_insert_with(|| {
+                                        let mut s = BTreeSet::new();
+                                        s.insert(value_idx);
+                                        s
+                                    });
+
+                                self.imported_value_symbols
+                                    .entry(qualified_name)
+                                    .and_modify(|s| {
+                                        s.insert(value_idx);
+                                    })
+                                    .or_insert_with(|| {
+                                        let mut s = BTreeSet::new();
+                                        s.insert(value_idx);
+                                        s
+                                    });
+                            }
+                        }
                     }
                     Keyword::Export => {
                         value = value.children[1].clone();
@@ -88,7 +162,46 @@ impl SymbolTable {
 
                                 let name = child.qualified_name();
 
-                                self.exports
+                                if is_type_symbol(&name) {
+                                    self.exported_type_symbols
+                                        .entry(name)
+                                        .and_modify(|s| {
+                                            s.insert(value_idx);
+                                        })
+                                        .or_insert_with(|| {
+                                            let mut s = BTreeSet::new();
+                                            s.insert(value_idx);
+                                            s
+                                        });
+                                } else {
+                                    self.exported_value_symbols
+                                        .entry(name)
+                                        .and_modify(|s| {
+                                            s.insert(value_idx);
+                                        })
+                                        .or_insert_with(|| {
+                                            let mut s = BTreeSet::new();
+                                            s.insert(value_idx);
+                                            s
+                                        });
+                                }
+                            }
+                        } else {
+                            let name = value.qualified_name();
+
+                            if is_type_symbol(&name) {
+                                self.exported_type_symbols
+                                    .entry(name)
+                                    .and_modify(|s| {
+                                        s.insert(value_idx);
+                                    })
+                                    .or_insert_with(|| {
+                                        let mut s = BTreeSet::new();
+                                        s.insert(value_idx);
+                                        s
+                                    });
+                            } else {
+                                self.exported_value_symbols
                                     .entry(name)
                                     .and_modify(|s| {
                                         s.insert(value_idx);
@@ -99,19 +212,6 @@ impl SymbolTable {
                                         s
                                     });
                             }
-                        } else {
-                            let name = value.qualified_name();
-
-                            self.exports
-                                .entry(name)
-                                .and_modify(|s| {
-                                    s.insert(value_idx);
-                                })
-                                .or_insert_with(|| {
-                                    let mut s = BTreeSet::new();
-                                    s.insert(value_idx);
-                                    s
-                                });
                         }
                     }
                     Keyword::Deftype => {
@@ -960,7 +1060,7 @@ impl SymbolTable {
 
         if unqualified_name != qualified_name {
             let qualification = path_prefix(qualified_name);
-            self.imports.contains_key(&qualification)
+            self.imported_modules.contains_key(&qualification)
         } else if unqualified_name == "main" {
             self.main_sig.is_some()
                 || self.main_fun.is_some()
@@ -1058,14 +1158,60 @@ mod test {
         use super::SymbolTable;
         use crate::values::Values;
 
-        let s = "(import std.io)";
+        let mut s = "(import std.io)";
 
-        let values = Values::from_str(s).unwrap();
+        let mut values = Values::from_str(s).unwrap();
 
-        let st = SymbolTable::from_values(&values).unwrap();
+        let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.imports.len(), 1);
-        assert!(st.imports.contains_key("std.io"));
+        assert_eq!(st.imported_modules.len(), 1);
+        assert!(st.imported_modules.contains_key("std.io"));
+
+        s = "(import std.io (prod println IO))";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.imported_modules.len(), 1);
+        assert!(st.imported_modules.contains_key("std.io"));
+        assert!(st.imported_value_symbols.contains_key("println"));
+        assert!(st.imported_type_symbols.contains_key("IO"));
+
+        s = "(import std.io (prod println IO) io)";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.imported_modules.len(), 1);
+        assert!(st.imported_modules.contains_key("std.io"));
+        assert!(st.imported_value_symbols.contains_key("io.println"));
+        assert!(st.imported_type_symbols.contains_key("io.IO"));
+
+        s = "(import std.io ())";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.imported_modules.len(), 1);
+        assert!(st.imported_modules.contains_key("std.io"));
+        assert_eq!(st.imported_value_symbols.len(), 0);
+        assert_eq!(st.imported_type_symbols.len(), 0);
+
+        s = "(import std.io () io)";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.imported_modules.len(), 1);
+        assert!(st.imported_modules.contains_key("std.io"));
+        assert_eq!(st.imported_value_symbols.len(), 1);
+        assert!(st.imported_value_symbols.contains_key("io._"));
+        assert_eq!(st.imported_type_symbols.len(), 1);
+        assert!(st.imported_type_symbols.contains_key("io._"));
     }
 
     #[test]
@@ -1079,8 +1225,8 @@ mod test {
 
         let mut st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.exports.len(), 1);
-        assert!(st.exports.contains_key(">>"));
+        assert_eq!(st.exported_value_symbols.len(), 1);
+        assert!(st.exported_value_symbols.contains_key(">>"));
 
         s = "(export (prod a b c))";
 
@@ -1088,10 +1234,21 @@ mod test {
 
         st = SymbolTable::from_values(&values).unwrap();
 
-        assert_eq!(st.exports.len(), 3);
-        assert!(st.exports.contains_key("a"));
-        assert!(st.exports.contains_key("b"));
-        assert!(st.exports.contains_key("c"));
+        assert_eq!(st.exported_value_symbols.len(), 3);
+        assert!(st.exported_value_symbols.contains_key("a"));
+        assert!(st.exported_value_symbols.contains_key("b"));
+        assert!(st.exported_value_symbols.contains_key("c"));
+
+        s = "(export (prod A B C))";
+
+        values = Values::from_str(s).unwrap();
+
+        st = SymbolTable::from_values(&values).unwrap();
+
+        assert_eq!(st.exported_type_symbols.len(), 3);
+        assert!(st.exported_type_symbols.contains_key("A"));
+        assert!(st.exported_type_symbols.contains_key("B"));
+        assert!(st.exported_type_symbols.contains_key("C"));
     }
 
     #[test]
