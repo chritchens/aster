@@ -505,7 +505,7 @@ impl SymbolTable {
                             }
                         }
                     }
-                    Keyword::Def => {
+                    Keyword::Def | Keyword::Let => {
                         if value.children.len() != 3 {
                             return Err(Error::Semantic(SemanticError {
                                 loc: value.token.loc(),
@@ -1344,7 +1344,7 @@ mod test {
         assert!(st.prods.contains_key("result"));
         assert!(st.is_defined("result"));
 
-        s = "(def result (prod 1 ()))";
+        s = "(let result (prod 1 ()))";
 
         values = Values::from_str(s).unwrap();
 
@@ -1386,7 +1386,7 @@ mod test {
         use super::SymbolTable;
         use crate::values::Values;
 
-        let mut s = "(def res (app f x y z))";
+        let mut s = "(let res (app f x y z))";
 
         let mut values = Values::from_str(s).unwrap();
 

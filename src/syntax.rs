@@ -3,9 +3,9 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 49] = [
+pub const KEYWORDS: [&str; 50] = [
     "builtin", "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun",
-    "defattrs", "def", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "case",
+    "defattrs", "def", "let", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "case",
     "caseMap", "size", "load", "store", "cast", "dup", "drop", "panic", "Builtin", "Empty", "Prim",
     "UInt", "Int", "Float", "Size", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod",
     "Sig", "Fun", "App", "Attrs", "Type", "_",
@@ -28,6 +28,7 @@ pub enum Keyword {
     Defun,
     Defattrs,
     Def,
+    Let,
     Type,
     Prim,
     Sum,
@@ -82,6 +83,7 @@ impl fmt::Display for Keyword {
             Keyword::Defun => write!(f, "defun"),
             Keyword::Defattrs => write!(f, "defattrs"),
             Keyword::Def => write!(f, "def"),
+            Keyword::Let => write!(f, "let"),
             Keyword::Type => write!(f, "type"),
             Keyword::Prim => write!(f, "prim"),
             Keyword::Sum => write!(f, "sum"),
@@ -138,6 +140,7 @@ impl Keyword {
             "defun" => Ok(Keyword::Defun),
             "defattrs" => Ok(Keyword::Defattrs),
             "def" => Ok(Keyword::Def),
+            "let" => Ok(Keyword::Let),
             "type" => Ok(Keyword::Type),
             "prim" => Ok(Keyword::Prim),
             "sum" => Ok(Keyword::Sum),
