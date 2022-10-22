@@ -41,7 +41,7 @@ impl Values {
     pub fn find_qualified(&self, name: &str) -> Vec<Value> {
         self.clone()
             .into_iter()
-            .filter(|value| value.qualified_name() == name)
+            .filter(|value| value.name.is_some() && value.qualified_name() == name)
             .collect()
     }
 
