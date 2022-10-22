@@ -505,7 +505,7 @@ impl SymbolTable {
                             }
                         }
                     }
-                    Keyword::Def | Keyword::Let => {
+                    Keyword::Def => {
                         if value.children.len() != 3 {
                             return Err(Error::Semantic(SemanticError {
                                 loc: value.token.loc(),
@@ -1080,12 +1080,21 @@ impl SymbolTable {
         }
     }
 
-    pub fn is_defined_in_scope(&self, tpl_name: &str, name: &str) -> bool {
-        if !self.is_defined(tpl_name) {
+    pub fn is_defined_in_scope(
+        &self,
+        tpl_name: &str,
+        def_name: &str,
+        tpl_path: &[usize],
+        name: &str,
+    ) -> bool {
+        if !self.is_defined(def_name) {
             return false;
         }
 
-        !self.values.find_in_scope(tpl_name, name).is_empty()
+        !self
+            .values
+            .find_in_scope(tpl_name, tpl_path, name)
+            .is_empty()
     }
 }
 
@@ -1344,7 +1353,7 @@ mod test {
         assert!(st.prods.contains_key("result"));
         assert!(st.is_defined("result"));
 
-        s = "(let result (prod 1 ()))";
+        s = "(def result (prod 1 ()))";
 
         values = Values::from_str(s).unwrap();
 
@@ -1386,7 +1395,7 @@ mod test {
         use super::SymbolTable;
         use crate::values::Values;
 
-        let mut s = "(let res (app f x y z))";
+        let mut s = "(def res (app f x y z))";
 
         let mut values = Values::from_str(s).unwrap();
 
@@ -1483,5 +1492,24 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
         assert!(st.is_defined("main"));
+    }
+
+    #[test]
+    fn symbol_table_scoping() {
+        use super::SymbolTable;
+        use crate::values::Values;
+
+        let s = "(defun f x y (let (defun g (+ x y)) (g x y)))";
+
+        let values = Values::from_str(s).unwrap();
+
+        let st = SymbolTable::from_values(&values).unwrap();
+
+        assert!(st.funs.contains_key("f"));
+        assert!(st.scoped_funs.contains_key("g"));
+        assert!(st.scoped_apps.contains_key("+"));
+        assert!(st.scoped_apps.contains_key("g"));
+        assert!(st.is_defined("f"));
+        assert!(st.is_defined_in_scope("defun", "f", &[0], "g"));
     }
 }

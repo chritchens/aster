@@ -52,11 +52,13 @@ impl Values {
             .collect()
     }
 
-    pub fn find_in_scope(&self, tpl_name: &str, name: &str) -> Vec<Value> {
+    pub fn find_in_scope(&self, tpl_name: &str, tpl_path: &[usize], name: &str) -> Vec<Value> {
         self.clone()
             .into_iter()
             .filter(|value| {
-                value.scope.tpl_name == Some(tpl_name.into()) && value.name == Some(name.into())
+                value.scope.tpl_name == Some(tpl_name.into())
+                    && value.name == Some(name.into())
+                    && tpl_path == &value.scope.path[0..tpl_path.len()]
             })
             .collect()
     }
