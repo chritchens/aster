@@ -1083,11 +1083,13 @@ impl SymbolTable {
     pub fn is_defined_in_scope(
         &self,
         tpl_name: &str,
-        def_name: &str,
+        tpl_def: Option<&str>,
         tpl_path: &[usize],
         name: &str,
     ) -> bool {
-        if !self.is_defined(def_name) {
+        let defined_tpl = tpl_def.unwrap_or(tpl_name);
+
+        if !self.is_defined(defined_tpl) {
             return false;
         }
 
@@ -1512,6 +1514,6 @@ mod test {
         assert!(st.funs.get("f") < st.scoped_apps.get("+"));
         assert!(st.scoped_funs.get("g") < st.scoped_apps.get("g"));
         assert!(st.is_defined("f"));
-        assert!(st.is_defined_in_scope("defun", "f", &[0], "g"));
+        assert!(st.is_defined_in_scope("defun", Some("f"), &[0], "g"));
     }
 }
