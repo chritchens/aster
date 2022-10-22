@@ -1509,6 +1509,8 @@ mod test {
         assert!(st.scoped_funs.contains_key("g"));
         assert!(st.scoped_apps.contains_key("+"));
         assert!(st.scoped_apps.contains_key("g"));
+        assert!(st.funs.get("f") < st.scoped_apps.get("+"));
+        assert!(st.scoped_funs.get("g") < st.scoped_apps.get("g"));
         assert!(st.is_defined("f"));
         assert!(st.is_defined_in_scope("defun", "f", &[0], "g"));
     }
