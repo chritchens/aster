@@ -3,12 +3,12 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 50] = [
+pub const KEYWORDS: [&str; 52] = [
     "builtin", "import", "export", "deftype", "defsig", "defprim", "defsum", "defprod", "defun",
-    "defattrs", "def", "let", "type", "prim", "sum", "prod", "sig", "fun", "app", "attrs", "case",
-    "caseMap", "size", "load", "store", "cast", "dup", "drop", "panic", "Builtin", "Empty", "Prim",
-    "UInt", "Int", "Float", "Size", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod",
-    "Sig", "Fun", "App", "Attrs", "Type", "_",
+    "defattrs", "def", "let", "seq", "par", "type", "prim", "sum", "prod", "sig", "fun", "app",
+    "attrs", "case", "caseMap", "size", "load", "store", "cast", "dup", "drop", "panic", "Builtin",
+    "Empty", "Prim", "UInt", "Int", "Float", "Size", "Char", "String", "Mem", "Path", "IO", "Ctx",
+    "Sum", "Prod", "Sig", "Fun", "App", "Attrs", "Type", "_",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -29,6 +29,8 @@ pub enum Keyword {
     Defattrs,
     Def,
     Let,
+    Seq,
+    Par,
     Type,
     Prim,
     Sum,
@@ -84,6 +86,8 @@ impl fmt::Display for Keyword {
             Keyword::Defattrs => write!(f, "defattrs"),
             Keyword::Def => write!(f, "def"),
             Keyword::Let => write!(f, "let"),
+            Keyword::Seq => write!(f, "seq"),
+            Keyword::Par => write!(f, "par"),
             Keyword::Type => write!(f, "type"),
             Keyword::Prim => write!(f, "prim"),
             Keyword::Sum => write!(f, "sum"),
@@ -141,6 +145,8 @@ impl Keyword {
             "defattrs" => Ok(Keyword::Defattrs),
             "def" => Ok(Keyword::Def),
             "let" => Ok(Keyword::Let),
+            "seq" => Ok(Keyword::Seq),
+            "par" => Ok(Keyword::Par),
             "type" => Ok(Keyword::Type),
             "prim" => Ok(Keyword::Prim),
             "sum" => Ok(Keyword::Sum),
