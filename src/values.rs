@@ -45,6 +45,19 @@ impl Values {
             .collect()
     }
 
+    pub fn find_qualified_with_keyword(&self, keyword: &str, name: &str) -> Vec<Value> {
+        self.clone()
+            .into_iter()
+            .filter(|value| {
+                value.name.is_some()
+                    && value.qualified_name() == keyword
+                    && value.children.len() > 1
+                    && value.children[1].name.is_some()
+                    && value.children[1].qualified_name() == name
+            })
+            .collect()
+    }
+
     pub fn find_unqualified(&self, name: &str) -> Vec<Value> {
         self.clone()
             .into_iter()
@@ -59,6 +72,25 @@ impl Values {
                 value.scope.tpl_name == Some(tpl_name.into())
                     && value.name == Some(name.into())
                     && tpl_path == &value.scope.path[0..tpl_path.len()]
+            })
+            .collect()
+    }
+
+    pub fn find_in_scope_with_keyword(
+        &self,
+        tpl_name: &str,
+        tpl_path: &[usize],
+        keyword: Option<&str>,
+        name: &str,
+    ) -> Vec<Value> {
+        self.clone()
+            .into_iter()
+            .filter(|value| {
+                tpl_path == &value.scope.path[0..tpl_path.len()]
+                    && value.scope.tpl_name == Some(tpl_name.into())
+                    && value.name == keyword.map(|k| k.into())
+                    && value.children.len() > 1
+                    && value.children[1].name == Some(name.into())
             })
             .collect()
     }

@@ -1098,6 +1098,43 @@ impl SymbolTable {
             .find_in_scope(tpl_name, tpl_path, name)
             .is_empty()
     }
+
+    pub fn is_well_defined(&self, tpl_name: &str, qualified_name: Option<&str>) -> bool {
+        if let Some(defined) = qualified_name {
+            if !self.is_defined(defined) {
+                false
+            } else {
+                !self
+                    .values
+                    .find_qualified_with_keyword(tpl_name, defined)
+                    .is_empty()
+            }
+        } else {
+            if !self.is_defined(tpl_name) {
+                return false;
+            }
+
+            self.apps.contains_key(tpl_name)
+        }
+    }
+
+    pub fn is_well_defined_in_scope(
+        &self,
+        tpl_name: &str,
+        tpl_def: Option<&str>,
+        tpl_path: &[usize],
+        keyword: Option<&str>,
+        name: &str,
+    ) -> bool {
+        if !self.is_well_defined(tpl_name, tpl_def) {
+            return false;
+        }
+
+        !self
+            .values
+            .find_in_scope_with_keyword(tpl_name, tpl_path, keyword, name)
+            .is_empty()
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
@@ -1276,6 +1313,7 @@ mod test {
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
         assert!(st.is_defined("RGB"));
+        assert!(st.is_well_defined("deftype", Some("RGB")));
 
         s = "(def RGB (type (Prod UInt UInt UInt)))";
 
@@ -1286,6 +1324,7 @@ mod test {
         assert_eq!(st.types.len(), 1);
         assert!(st.types.contains_key("RGB"));
         assert!(st.is_defined("RGB"));
+        assert!(st.is_well_defined("def", Some("RGB")));
     }
 
     #[test]
@@ -1302,6 +1341,7 @@ mod test {
         assert_eq!(st.prims.len(), 1);
         assert!(st.prims.contains_key("i"));
         assert!(st.is_defined("i"));
+        assert!(st.is_well_defined("defprim", Some("i")));
 
         s = "(def i (prim 0))";
 
@@ -1312,6 +1352,7 @@ mod test {
         assert_eq!(st.prims.len(), 1);
         assert!(st.prims.contains_key("i"));
         assert!(st.is_defined("i"));
+        assert!(st.is_well_defined("def", Some("i")));
     }
 
     #[test]
@@ -1328,6 +1369,7 @@ mod test {
         assert_eq!(st.sums.len(), 1);
         assert!(st.sums.contains_key("predicate"));
         assert!(st.is_defined("predicate"));
+        assert!(st.is_well_defined("defsum", Some("predicate")));
 
         s = "(def predicate (sum true))";
 
@@ -1338,6 +1380,7 @@ mod test {
         assert_eq!(st.sums.len(), 1);
         assert!(st.sums.contains_key("predicate"));
         assert!(st.is_defined("predicate"));
+        assert!(st.is_well_defined("def", Some("predicate")));
     }
 
     #[test]
@@ -1354,6 +1397,7 @@ mod test {
         assert_eq!(st.prods.len(), 1);
         assert!(st.prods.contains_key("result"));
         assert!(st.is_defined("result"));
+        assert!(st.is_well_defined("defprod", Some("result")));
 
         s = "(def result (prod 1 ()))";
 
@@ -1364,6 +1408,7 @@ mod test {
         assert_eq!(st.prods.len(), 1);
         assert!(st.prods.contains_key("result"));
         assert!(st.is_defined("result"));
+        assert!(st.is_well_defined("def", Some("result")));
     }
 
     #[test]
@@ -1380,6 +1425,7 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("rShift"));
         assert!(st.is_defined("rShift"));
+        assert!(st.is_well_defined("defun", Some("rShift")));
 
         s = "(def rShift (fun x i (>> x i)))";
 
@@ -1390,6 +1436,7 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("rShift"));
         assert!(st.is_defined("rShift"));
+        assert!(st.is_well_defined("def", Some("rShift")));
     }
 
     #[test]
@@ -1406,6 +1453,7 @@ mod test {
         assert_eq!(st.apps.len(), 1);
         assert!(st.apps.contains_key("res"));
         assert!(st.is_defined("res"));
+        assert!(st.is_well_defined("def", Some("res")));
 
         s = "(f x y z)";
 
@@ -1439,6 +1487,7 @@ mod test {
 
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
+        assert!(st.is_well_defined("defattrs", Some("sum")));
 
         s = "(def sum (attrs attr1 attr2 attr3))";
 
@@ -1449,6 +1498,7 @@ mod test {
         assert_eq!(st.attrs.len(), 1);
         assert!(st.attrs.contains_key("sum"));
         assert!(st.is_defined("sum"));
+        assert!(st.is_well_defined("def", Some("sum")));
 
         s = "(def Main (attrs attr1 attr2 attr3))";
 
@@ -1462,6 +1512,7 @@ mod test {
         assert!(st.attrs.contains_key("Main"));
         assert!(st.is_defined("Main"));
         assert_eq!(st.main_type_attrs, st.position(value));
+        assert!(st.is_well_defined("def", Some("Main")));
     }
 
     #[test]
@@ -1481,6 +1532,7 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
         assert!(st.is_defined("main"));
+        assert!(st.is_well_defined("defsig", Some("main")));
 
         s = "(def main (sig (Fun IO IO)))\n(def main (fun io (id io)))";
 
@@ -1494,6 +1546,7 @@ mod test {
         assert_eq!(st.funs.len(), 1);
         assert!(st.funs.contains_key("main"));
         assert!(st.is_defined("main"));
+        assert!(st.is_well_defined("def", Some("main")));
     }
 
     #[test]
@@ -1514,6 +1567,8 @@ mod test {
         assert!(st.funs.get("f") < st.scoped_apps.get("+"));
         assert!(st.scoped_funs.get("g") < st.scoped_apps.get("g"));
         assert!(st.is_defined("f"));
+        assert!(st.is_well_defined("defun", Some("f")));
         assert!(st.is_defined_in_scope("defun", Some("f"), &[0], "g"));
+        assert!(st.is_well_defined_in_scope("defun", Some("f"), &[0], Some("defun"), "g"));
     }
 }
