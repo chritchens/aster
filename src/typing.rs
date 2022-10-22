@@ -22,6 +22,8 @@ pub enum Type {
     Ctx,
     Sum(Vec<Type>),
     Prod(Vec<Type>),
+    Seq(Vec<Type>),
+    Par(Vec<Type>),
     Sig(Vec<Type>),
     Fun(Vec<Type>),
     App(Vec<Type>),
@@ -39,6 +41,14 @@ impl Type {
             Type::Prod(mut v) => {
                 v.push(t);
                 Type::Prod(v)
+            }
+            Type::Seq(mut v) => {
+                v.push(t);
+                Type::Seq(v)
+            }
+            Type::Par(mut v) => {
+                v.push(t);
+                Type::Par(v)
             }
             Type::Sig(mut v) => {
                 v.push(t);
@@ -72,6 +82,8 @@ impl Type {
             Type::Unknown(_) => false,
             Type::Sum(inner_types) => inner_types.iter().all(|t| t.is_complete()),
             Type::Prod(inner_types) => inner_types.iter().all(|t| t.is_complete()),
+            Type::Seq(inner_types) => inner_types.iter().all(|t| t.is_complete()),
+            Type::Par(inner_types) => inner_types.iter().all(|t| t.is_complete()),
             Type::Sig(inner_types) => inner_types.iter().all(|t| t.is_complete()),
             Type::Fun(inner_types) => inner_types.iter().all(|t| t.is_complete()),
             Type::App(inner_types) => inner_types.iter().all(|t| t.is_complete()),
@@ -148,6 +160,22 @@ impl Type {
             ),
             Type::Prod(types) => format!(
                 "(Prod {})",
+                types
+                    .iter()
+                    .map(|t| t.to_string())
+                    .collect::<Vec<String>>()
+                    .join(" ")
+            ),
+            Type::Seq(types) => format!(
+                "(Seq {})",
+                types
+                    .iter()
+                    .map(|t| t.to_string())
+                    .collect::<Vec<String>>()
+                    .join(" ")
+            ),
+            Type::Par(types) => format!(
+                "(Par {})",
                 types
                     .iter()
                     .map(|t| t.to_string())
