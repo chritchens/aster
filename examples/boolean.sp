@@ -1,32 +1,32 @@
 #! An example on how booleans can be built using primitives.
 (import std.io (prod printf stdIO))
 
-(deftype True Prim)
-(deftype False Prim)
+(def type True Prim)
+(def type False Prim)
 
-(deftype Bool (Sum True False))
+(def type Bool (Sum True False))
 
-(defsig true True)
-(defprim true)
+(def sig true True)
+(def prim true)
 
-(defsig false False)
-(defprim false)
+(def sig false False)
+(def prim false)
 
-(defsig boolToUInt (Fun Bool UInt))
-(defun boolToUInt pred
+(def sig boolToUInt (Fun Bool UInt))
+(def fun boolToUInt pred
   (case pred 
     true 1 
     false 0))
 
-(defsig printBoolAsUInt (Fun IO Bool IO))
-(defun printBoolAsUInt io pred 
+(def sig printBoolAsUInt (Fun IO Bool IO))
+(def fun printBoolAsUInt io pred 
   (caseMap pred 
     true  (fun t 
       (printf io "true as uint: {}\n" (boolToUInt t)))
     false (fun f 
       (printf io "false as uint: {}" (boolToUInt f)))))
 
-(defsig main (Fun IO IO))
-(defun main io (printBoolAsUInt io false))
+(def sig main (Fun IO IO))
+(def fun main io (printBoolAsUInt io false))
 
 (main stdIO)

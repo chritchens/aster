@@ -3,7 +3,7 @@
 (import std.io)
 (import std.string string (prod removeAll))
 
-(defsig main (Fun IO IO))
-(defun main io (println io (string.removeAll '\'' "Hel'lo World!")))
+(def sig main (Fun IO IO))
+(def fun main io (println io (string.removeAll '\'' "Hel'lo World!")))
 
 (main stdIO)

@@ -1,10 +1,12 @@
-use crate::error::{Error, ParsingError};
+use crate::error::{Error, SemanticError};
 use crate::result::Result;
-use crate::token::Token;
+use crate::syntax::is_type_symbol;
 use crate::token::TokenKind;
 use crate::tokens::Tokens;
-use crate::value::{Value, ValueScope};
-use std::convert;
+use crate::typing::Type;
+use crate::value::{FormKind, SymbolKind};
+use crate::value::{FormValue, PrimValue, SymbolValue, Value};
+use std::fmt;
 use std::fs;
 use std::iter;
 use std::ops;
@@ -14,7 +16,7 @@ use std::path::Path;
 pub struct Values(Vec<Value>);
 
 impl Values {
-    pub fn new() -> Self {
+    pub fn new() -> Values {
         Values::default()
     }
 
@@ -26,201 +28,191 @@ impl Values {
         self.len() == 0
     }
 
-    pub fn files(&self) -> Vec<String> {
-        self.0.iter().map(|value| value.file()).collect()
-    }
-
     pub fn push(&mut self, value: Value) {
-        self.0.push(value)
+        self.0.push(value);
     }
 
-    pub fn position(&self, value: Value) -> Option<usize> {
-        self.clone().into_iter().position(|v| v == value)
+    #[allow(clippy::inherent_to_string_shadow_display)]
+    pub fn to_string(&self) -> String {
+        self.0
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(" ")
     }
 
-    pub fn find_qualified(&self, name: &str) -> Vec<Value> {
-        self.clone()
-            .into_iter()
-            .filter(|value| value.name.is_some() && value.qualified_name() == name)
-            .collect()
-    }
-
-    pub fn find_qualified_with_keyword(&self, keyword: &str, name: &str) -> Vec<Value> {
-        self.clone()
-            .into_iter()
-            .filter(|value| {
-                value.name.is_some()
-                    && value.qualified_name() == keyword
-                    && value.children.len() > 1
-                    && value.children[1].name.is_some()
-                    && value.children[1].qualified_name() == name
-            })
-            .collect()
-    }
-
-    pub fn find_unqualified(&self, name: &str) -> Vec<Value> {
-        self.clone()
-            .into_iter()
-            .filter(|value| value.name == Some(name.into()))
-            .collect()
-    }
-
-    pub fn find_in_scope(&self, tpl_name: &str, tpl_path: &[usize], name: &str) -> Vec<Value> {
-        self.clone()
-            .into_iter()
-            .filter(|value| {
-                value.scope.tpl_name == Some(tpl_name.into())
-                    && value.name == Some(name.into())
-                    && tpl_path == &value.scope.path[0..tpl_path.len()]
-            })
-            .collect()
-    }
-
-    pub fn find_in_scope_with_keyword(
-        &self,
-        tpl_name: &str,
-        tpl_path: &[usize],
-        keyword: Option<&str>,
-        name: &str,
-    ) -> Vec<Value> {
-        self.clone()
-            .into_iter()
-            .filter(|value| {
-                tpl_path == &value.scope.path[0..tpl_path.len()]
-                    && value.scope.tpl_name == Some(tpl_name.into())
-                    && value.name == keyword.map(|k| k.into())
-                    && value.children.len() > 1
-                    && value.children[1].name == Some(name.into())
-            })
-            .collect()
-    }
-
-    pub fn from_str(s: &str) -> Result<Self> {
-        let mut tokens = Tokens::from_str(s)?;
-
-        tokens = tokens
-            .into_iter()
-            .filter(|token| token.kind != TokenKind::Comment && token.kind != TokenKind::DocComment)
-            .collect();
-
-        let mut values = Values::new();
-        let mut form: Vec<Token> = vec![];
+    pub fn from_tokens(tokens: &Tokens) -> Result<Values> {
+        let mut form = FormValue::new();
         let mut form_count = 0;
-        let mut scope = ValueScope::new();
+        let mut values = Values::new();
 
-        for token in tokens.into_iter() {
+        let len = tokens.len();
+        let mut idx = 0;
+
+        while idx < len {
+            let token = tokens[idx].clone();
+
             match token.kind {
-                TokenKind::Comment => {
-                    return Err(Error::Parsing(ParsingError {
-                        loc: Some(token.chunks[0].loc.clone()),
-                        desc: "unexpected comment token".into(),
-                    }));
-                }
-                TokenKind::DocComment => {
-                    return Err(Error::Parsing(ParsingError {
-                        loc: Some(token.chunks[0].loc.clone()),
-                        desc: "unexpected doc comment token".into(),
-                    }));
-                }
-                TokenKind::EmptyLiteral => {
-                    if form_count != 0 {
-                        form.push(token);
-                    } else {
-                        let value = Value::new_empty(&scope, token)?;
-                        values.push(value);
-                    }
+                TokenKind::Comment | TokenKind::DocComment => {
+                    idx += 1;
                 }
                 TokenKind::Keyword => {
-                    if form_count != 0 {
-                        form.push(token);
+                    let string_value = token.chunks[0].to_string();
+                    let mut symbol = SymbolValue::new();
+
+                    if is_type_symbol(&string_value) {
+                        symbol.kind = SymbolKind::Type;
+                        symbol.typing = Type::Type;
                     } else {
-                        let value = Value::new_keyword(&scope, token)?;
-                        values.push(value);
+                        symbol.kind = SymbolKind::Value;
+                        symbol.typing = Type::Builtin;
                     }
+
+                    symbol.value = string_value;
+                    symbol.token = token;
+
+                    let value = Value::Symbol(symbol.clone());
+
+                    form.typing.push(symbol.typing.clone());
+                    form.values.push(value);
+
+                    idx += 1;
                 }
-                TokenKind::UIntLiteral => {
-                    if form_count != 0 {
-                        form.push(token);
+                TokenKind::EmptyLiteral
+                | TokenKind::UIntLiteral
+                | TokenKind::IntLiteral
+                | TokenKind::FloatLiteral
+                | TokenKind::CharLiteral
+                | TokenKind::StringLiteral => {
+                    let mut prim = PrimValue::new();
+
+                    prim.typing = match token.kind {
+                        TokenKind::EmptyLiteral => Type::Empty,
+                        TokenKind::UIntLiteral => Type::UInt,
+                        TokenKind::IntLiteral => Type::Int,
+                        TokenKind::FloatLiteral => Type::Float,
+                        TokenKind::CharLiteral => Type::Char,
+                        TokenKind::StringLiteral => Type::String,
+                        _ => unreachable!(),
+                    };
+
+                    prim.value = token.chunks[0].to_string();
+                    prim.token = token;
+
+                    let value = Value::Prim(prim.clone());
+
+                    if form_count == 1 {
+                        form.typing.push(prim.typing.clone());
+                        form.values.push(value);
                     } else {
-                        let value = Value::new_uint(&scope, token)?;
-                        values.push(value);
+                        let form_len = form.len() - 1;
+
+                        match form.values[form_len - 1].clone() {
+                            Value::Form(mut inner_form) => {
+                                inner_form.typing.push(prim.typing.clone());
+                                inner_form.values.push(value);
+                                form.values[form_len - 1] = Value::Form(inner_form);
+                            }
+                            x => {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: x.loc(),
+                                    desc: format!("expected {} to be a form", x.to_string()),
+                                }));
+                            }
+                        }
                     }
-                }
-                TokenKind::IntLiteral => {
-                    if form_count != 0 {
-                        form.push(token);
-                    } else {
-                        let value = Value::new_int(&scope, token)?;
-                        values.push(value);
-                    }
-                }
-                TokenKind::FloatLiteral => {
-                    if form_count != 0 {
-                        form.push(token);
-                    } else {
-                        let value = Value::new_float(&scope, token)?;
-                        values.push(value);
-                    }
-                }
-                TokenKind::CharLiteral => {
-                    if form_count != 0 {
-                        form.push(token);
-                    } else {
-                        let value = Value::new_char(&scope, token)?;
-                        values.push(value);
-                    }
-                }
-                TokenKind::StringLiteral => {
-                    if form_count != 0 {
-                        form.push(token);
-                    } else {
-                        let value = Value::new_string(&scope, token)?;
-                        values.push(value);
-                    }
+
+                    idx += 1;
                 }
                 TokenKind::ValueSymbol | TokenKind::TypeSymbol | TokenKind::PathSymbol => {
-                    if form_count != 0 {
-                        form.push(token);
+                    let string_value = token.chunks[0].to_string();
+                    let mut symbol = SymbolValue::new();
+
+                    if is_type_symbol(&string_value) {
+                        symbol.kind = SymbolKind::Type;
+                        symbol.typing = Type::Type;
                     } else {
-                        let value = Value::new_symbol(&scope, token)?;
-                        values.push(value);
+                        symbol.kind = SymbolKind::Value;
+                        symbol.typing = Type::Unknown(string_value.clone());
                     }
+
+                    symbol.value = string_value;
+                    symbol.token = token;
+
+                    let value = Value::Symbol(symbol.clone());
+
+                    form.typing.push(symbol.typing.clone());
+                    form.values.push(value);
+
+                    idx += 1;
                 }
                 TokenKind::FormStart => {
                     form_count += 1;
-                    form.push(token);
+
+                    if form_count > 1 {
+                        let mut new_count = 0;
+                        let mut new_tokens = Tokens::new();
+
+                        while idx < len {
+                            let new_token = tokens[idx].clone();
+
+                            if new_token.kind == TokenKind::FormStart {
+                                new_count += 1;
+                            } else if new_token.kind == TokenKind::FormEnd {
+                                new_count -= 1;
+                            }
+
+                            new_tokens.push(new_token);
+
+                            idx += 1;
+
+                            if new_count == 0 {
+                                break;
+                            }
+                        }
+
+                        let new_form = Values::from_tokens(&new_tokens)?[0].clone();
+
+                        form.values.push(new_form);
+
+                        form_count -= 1;
+                    } else {
+                        idx += 1;
+                    }
                 }
                 TokenKind::FormEnd => {
                     form_count -= 1;
-                    form.push(token);
 
                     if form_count == 0 {
-                        let value = Value::new_app(&mut scope, form)?;
+                        form.kind = FormKind::from_form(&form)?;
+                        let value = Value::Form(form.clone());
                         values.push(value);
 
-                        form = Vec::new();
+                        form = FormValue::new();
                     }
+
+                    idx += 1;
                 }
             }
-        }
-
-        for idx in 0..values.len() {
-            values[idx].set_scope_path(idx);
         }
 
         Ok(values)
     }
 
-    pub fn is_fully_typed(&self) -> bool {
-        self.clone().into_iter().all(|value| value.is_fully_typed())
+    pub fn from_str(s: &str) -> Result<Values> {
+        let tokens = Tokens::from_str(s)?;
+
+        Values::from_tokens(&tokens)
     }
 
-    pub fn from_string(s: String) -> Result<Self> {
-        Self::from_str(&s)
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Values> {
+        Values::from_str(&fs::read_to_string(path)?)
     }
+}
 
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        Self::from_string(fs::read_to_string(path)?)
+impl fmt::Display for Values {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -229,12 +221,6 @@ impl ops::Index<usize> for Values {
 
     fn index(&self, idx: usize) -> &Self::Output {
         &self.0[idx]
-    }
-}
-
-impl ops::IndexMut<usize> for Values {
-    fn index_mut(&mut self, idx: usize) -> &mut Value {
-        &mut self.0[idx]
     }
 }
 
@@ -247,332 +233,70 @@ impl iter::IntoIterator for Values {
     }
 }
 
-impl iter::FromIterator<Value> for Values {
-    fn from_iter<I: iter::IntoIterator<Item = Value>>(iter: I) -> Self {
-        let mut values = Values::new();
-
-        for value in iter {
-            values.push(value);
-        }
-
-        values
-    }
-}
-
-impl convert::From<Vec<Value>> for Values {
-    fn from(values: Vec<Value>) -> Self {
-        Values(values)
-    }
-}
-
-impl std::str::FromStr for Values {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self> {
-        Values::from_str(s)
-    }
-}
-
-impl convert::TryFrom<String> for Values {
-    type Error = Error;
-
-    fn try_from(s: String) -> Result<Self> {
-        Values::from_string(s)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     #[test]
-    fn ignore_comment_tokens() {
+    fn values_from_str() {
         use super::Values;
+        use crate::value::{FormKind, Value};
 
-        let s = "# comment\n#! doc comment";
+        let s = "(import moduleX (prod a b c D) x)";
 
-        let values = Values::from_str(s).unwrap();
+        let res = Values::from_str(s);
 
-        assert!(values.is_empty());
-    }
+        assert!(res.is_ok());
 
-    #[test]
-    fn empty_value() {
-        use super::Values;
-        use crate::typing::Type;
-        use crate::value::PrimValue;
-
-        let s = "()";
-
-        let values = Values::from_str(s).unwrap();
+        let values = res.unwrap();
 
         assert_eq!(values.len(), 1);
-        assert_eq!(values[0].typing, Some(Type::Empty));
-        assert_eq!(values[0].prim, Some(PrimValue::Empty));
-    }
 
-    #[test]
-    fn keyword_value() {
-        use super::Values;
-        use crate::typing::Type;
+        match values[0].clone() {
+            Value::Form(form) => {
+                assert_eq!(form.len(), 4);
+                assert_eq!(form.kind, FormKind::ImportDefs);
 
-        let s = "defsig";
-
-        let values = Values::from_str(s).unwrap();
-
-        assert_eq!(values.len(), 1);
-        assert_eq!(values[0].name, Some(s.into()));
-        assert_eq!(values[0].typing, Some(Type::Builtin));
-    }
-
-    #[test]
-    fn uint_value() {
-        use super::Values;
-        use crate::typing::Type;
-        use crate::value::PrimValue;
-
-        let s = "b101010";
-
-        let values = Values::from_str(s).unwrap();
-
-        assert_eq!(values.len(), 1);
-        assert_eq!(values[0].typing, Some(Type::UInt));
-        assert_eq!(values[0].prim, Some(PrimValue::new_uint(s)));
-    }
-
-    #[test]
-    fn int_value() {
-        use super::Values;
-        use crate::typing::Type;
-        use crate::value::PrimValue;
-
-        let s = "-3290";
-
-        let values = Values::from_str(s).unwrap();
-
-        assert_eq!(values.len(), 1);
-        assert_eq!(values[0].typing, Some(Type::Int));
-        assert_eq!(values[0].prim, Some(PrimValue::new_int(s)));
-    }
-
-    #[test]
-    fn float_value() {
-        use super::Values;
-        use crate::typing::Type;
-        use crate::value::PrimValue;
-
-        let s = "+0.432E-100";
-
-        let values = Values::from_str(s).unwrap();
-
-        assert_eq!(values.len(), 1);
-        assert_eq!(values[0].typing, Some(Type::Float));
-        assert_eq!(values[0].prim, Some(PrimValue::new_float(s)));
-    }
-
-    #[test]
-    fn char_value() {
-        use super::Values;
-        use crate::typing::Type;
-        use crate::value::PrimValue;
-
-        let s = "'\''";
-
-        let values = Values::from_str(s).unwrap();
-
-        assert_eq!(values.len(), 1);
-        assert_eq!(values[0].typing, Some(Type::Char));
-        assert_eq!(values[0].prim, Some(PrimValue::new_char("'")));
-    }
-
-    #[test]
-    fn string_value() {
-        use super::Values;
-        use crate::typing::Type;
-        use crate::value::PrimValue;
-
-        let s = "\"\\\"\"";
-
-        let values = Values::from_str(s).unwrap();
-
-        assert_eq!(values.len(), 1);
-        assert_eq!(values[0].typing, Some(Type::String));
-        assert_eq!(values[0].prim, Some(PrimValue::new_string("\\\"")));
-    }
-
-    #[test]
-    fn symbol_value() {
-        use super::Values;
-        use crate::typing::Type;
-
-        let mut s = "Int";
-
-        let mut values = Values::from_str(s).unwrap();
-
-        assert_eq!(values.len(), 1);
-        assert_eq!(values[0].typing, Some(Type::Type));
-        assert_eq!(values[0].qualification, None);
-        assert_eq!(values[0].name, Some("Int".into()));
-
-        s = "builtin.Int";
-
-        values = Values::from_str(s).unwrap();
-
-        assert_eq!(values.len(), 1);
-        assert_eq!(values[0].typing, Some(Type::Path));
-        assert_eq!(values[0].qualification, Some("builtin".into()));
-        assert_eq!(values[0].name, Some("Int".into()));
-
-        s = "square";
-
-        values = Values::from_str(s).unwrap();
-
-        assert_eq!(values.len(), 1);
-        assert_eq!(values[0].typing, Some(Type::Unknown(None)));
-        assert_eq!(values[0].qualification, None);
-        assert_eq!(values[0].name, Some("square".into()));
-
-        s = "math.square";
-
-        values = Values::from_str(s).unwrap();
-
-        assert_eq!(values.len(), 1);
-        assert_eq!(values[0].typing, Some(Type::Path));
-        assert_eq!(values[0].qualification, Some("math".into()));
-        assert_eq!(values[0].name, Some("square".into()));
-    }
-
-    #[test]
-    fn fun_value() {
-        use super::Values;
-        use crate::typing::Type;
-
-        let s = "(+ 1 (math.sum (square 3) 4))";
-
-        let values = Values::from_str(s).unwrap();
-
-        assert_eq!(values.len(), 1);
-        assert_eq!(values[0].name, Some("+".into()));
-        assert_eq!(
-            values[0].typing,
-            Some(Type::App(vec![
-                Type::Unknown(None),
-                Type::UInt,
-                Type::App(vec![
-                    Type::Path,
-                    Type::App(vec![Type::Unknown(None), Type::UInt]),
-                    Type::UInt
-                ])
-            ]))
-        );
-        assert_eq!(values[0].prim, None);
-        assert_eq!(values[0].children.len(), 3);
+                match form.values[2].clone() {
+                    Value::Form(form) => {
+                        assert_eq!(form.len(), 5);
+                        assert_eq!(form.kind, FormKind::ProdDef);
+                    }
+                    _ => panic!("expected a form"),
+                }
+            }
+            _ => panic!("expected a form"),
+        }
     }
 
     #[test]
     fn values_from_file() {
         use super::Values;
-        use crate::typing::Type;
+        use crate::value::{FormKind, Value};
         use std::path::Path;
 
         let path = Path::new("./examples/sum.sp");
 
-        let values = Values::from_file(path).unwrap();
+        let res = Values::from_file(path);
+
+        assert!(res.is_ok());
+
+        let values = res.unwrap();
 
         assert_eq!(values.len(), 5);
-        assert_eq!(
-            values[2].typing,
-            Some(Type::App(vec![
-                Type::Builtin,
-                Type::Unknown(None),
-                Type::App(vec![Type::Builtin, Type::Type, Type::Type])
-            ]))
-        );
-        assert_eq!(
-            values[4].typing,
-            Some(Type::App(vec![Type::Unknown(None), Type::Path]))
-        );
-    }
 
-    #[test]
-    fn fully_typed_values() {
-        use super::Values;
-        use std::path::Path;
+        match values[2].clone() {
+            Value::Form(form) => {
+                assert_eq!(form.len(), 4);
+                assert_eq!(form.kind, FormKind::SigDef);
 
-        let s = "\"string\"";
-
-        let mut values = Values::from_str(s).unwrap();
-
-        assert!(values.is_fully_typed());
-
-        let path = Path::new("./examples/sum.sp");
-
-        values = Values::from_file(path).unwrap();
-
-        assert!(!values.is_fully_typed());
-        assert!(!values[0].is_fully_typed());
-        assert!(values[0].children[0].is_fully_typed());
-        assert!(values[1].is_fully_typed());
-        assert!(values[1].children[1].is_fully_typed());
-        assert!(!values[2].is_fully_typed());
-        assert!(values[2].children[0].is_fully_typed());
-    }
-
-    #[test]
-    fn values_scoping() {
-        use super::Values;
-
-        let s = "(a (b c (d (x y z)))) (e (f g) (h i)) (j (l m) n) ";
-
-        let values = Values::from_str(s).unwrap();
-
-        assert_eq!(values.len(), 3);
-
-        let value_0 = values[0].clone();
-        let value_1 = values[1].clone();
-        let value_2 = values[2].clone();
-
-        assert_eq!(value_0.children.len(), 2);
-        assert_eq!(value_0.scope.tpl_name, Some("a".into()));
-        assert!(value_0.is_tpl());
-
-        for (idx, value_child) in value_0.children.iter().enumerate() {
-            assert_eq!(value_child.scope.file, value_0.scope.file);
-            assert_eq!(value_child.scope.tpl_name, value_0.scope.tpl_name);
-            assert!(!value_child.is_tpl());
-
-            let mut path = value_0.scope.path.clone();
-            path.push(idx);
-
-            assert_eq!(value_child.scope.path, path);
-        }
-
-        assert_eq!(value_1.children.len(), 3);
-        assert_eq!(value_1.scope.tpl_name, Some("e".into()));
-        assert!(value_1.is_tpl());
-
-        for (idx, value_child) in value_1.children.iter().enumerate() {
-            assert_eq!(value_child.scope.file, value_1.scope.file);
-            assert_eq!(value_child.scope.tpl_name, value_1.scope.tpl_name);
-            assert!(!value_child.is_tpl());
-
-            let mut path = value_1.scope.path.clone();
-            path.push(idx);
-
-            assert_eq!(value_child.scope.path, path);
-        }
-
-        assert_eq!(value_2.children.len(), 3);
-        assert_eq!(value_2.scope.tpl_name, Some("j".into()));
-        assert!(value_2.is_tpl());
-
-        for (idx, value_child) in value_2.children.iter().enumerate() {
-            assert_eq!(value_child.scope.file, value_2.scope.file);
-            assert_eq!(value_child.scope.tpl_name, value_2.scope.tpl_name);
-            assert!(!value_child.is_tpl());
-
-            let mut path = value_2.scope.path.clone();
-            path.push(idx);
-
-            assert_eq!(value_child.scope.path, path);
+                match form.values[3].clone() {
+                    Value::Form(form) => {
+                        assert_eq!(form.len(), 3);
+                        assert_eq!(form.kind, FormKind::TypeApp);
+                    }
+                    _ => panic!("expected a form"),
+                }
+            }
+            _ => panic!("expected a form"),
         }
     }
 }

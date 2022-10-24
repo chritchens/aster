@@ -413,7 +413,7 @@ mod tests {
         use super::Tokens;
         use crate::token::TokenKind;
 
-        let s = "defsum";
+        let s = "sum";
 
         let tokens = Tokens::from_str(s).unwrap();
 
@@ -579,7 +579,7 @@ mod tests {
             _ => panic!("invalid branch"),
         }
 
-        s = "(defun f b c \n\t\t(g a -b1\n\t\t\t\t(h 3 b +5.8E+36) # this is a comment\n\t\t\t\t(k 6 7 c)))\n(f 1 4 8)\n";
+        s = "(def fun f b c \n\t\t(g a -b1\n\t\t\t\t(h 3 b +5.8E+36) # this is a comment\n\t\t\t\t(k 6 7 c)))\n(f 1 4 8)\n";
 
         res = Tokens::from_str(s);
 
@@ -587,15 +587,16 @@ mod tests {
 
         let tokens = res.unwrap();
 
-        assert_eq!(tokens.len(), 30);
+        assert_eq!(tokens.len(), 31);
         assert_eq!(tokens[0].kind, TokenKind::FormStart);
         assert_eq!(tokens[1].kind, TokenKind::Keyword);
-        assert_eq!(tokens[2].kind, TokenKind::ValueSymbol);
-        assert_eq!(tokens[8].kind, TokenKind::IntLiteral);
-        assert_eq!(tokens[11].kind, TokenKind::UIntLiteral);
-        assert_eq!(tokens[13].kind, TokenKind::FloatLiteral);
-        assert_eq!(tokens[14].kind, TokenKind::FormEnd);
-        assert_eq!(tokens[15].kind, TokenKind::Comment);
+        assert_eq!(tokens[2].kind, TokenKind::Keyword);
+        assert_eq!(tokens[3].kind, TokenKind::ValueSymbol);
+        assert_eq!(tokens[9].kind, TokenKind::IntLiteral);
+        assert_eq!(tokens[12].kind, TokenKind::UIntLiteral);
+        assert_eq!(tokens[14].kind, TokenKind::FloatLiteral);
+        assert_eq!(tokens[15].kind, TokenKind::FormEnd);
+        assert_eq!(tokens[16].kind, TokenKind::Comment);
     }
 
     #[test]
@@ -612,16 +613,17 @@ mod tests {
 
         let tokens = res.unwrap();
 
-        assert_eq!(tokens.len(), 41);
+        assert_eq!(tokens.len(), 43);
         assert_eq!(tokens[0].kind, TokenKind::DocComment);
         assert_eq!(tokens[1].kind, TokenKind::FormStart);
         assert_eq!(tokens[2].kind, TokenKind::Keyword);
         assert_eq!(tokens[3].kind, TokenKind::PathSymbol);
         assert_eq!(tokens[15].kind, TokenKind::Keyword);
-        assert_eq!(tokens[16].kind, TokenKind::ValueSymbol);
+        assert_eq!(tokens[17].kind, TokenKind::ValueSymbol);
         assert_eq!(tokens[20].kind, TokenKind::Keyword);
-        assert_eq!(tokens[32].kind, TokenKind::CharLiteral);
-        assert_eq!(tokens[32].chunks[0].content, "'''".to_string());
-        assert_eq!(tokens[33].kind, TokenKind::StringLiteral);
+        assert_eq!(tokens[33].kind, TokenKind::PathSymbol);
+        assert_eq!(tokens[34].kind, TokenKind::CharLiteral);
+        assert_eq!(tokens[34].chunks[0].content, "'''".to_string());
+        assert_eq!(tokens[35].kind, TokenKind::StringLiteral);
     }
 }
