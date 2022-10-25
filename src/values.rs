@@ -240,7 +240,7 @@ mod tests {
         use super::Values;
         use crate::value::{FormKind, Value};
 
-        let s = "(import moduleX (prod a b c D) x)";
+        let s = "(import moduleX x (prod a b c D))";
 
         let res = Values::from_str(s);
 
@@ -255,7 +255,7 @@ mod tests {
                 assert_eq!(form.len(), 4);
                 assert_eq!(form.kind, FormKind::ImportDefs);
 
-                match form.values[2].clone() {
+                match form.values[3].clone() {
                     Value::Form(form) => {
                         assert_eq!(form.len(), 5);
                         assert_eq!(form.kind, FormKind::ProdDef);
