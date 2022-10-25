@@ -87,7 +87,7 @@ impl Type {
                     .iter()
                     .map(|t| t.to_string())
                     .collect::<Vec<String>>()
-                    .join(", ")
+                    .join(" ")
             ),
             Type::Prod(types) => format!(
                 "(Prod {})",
@@ -95,7 +95,7 @@ impl Type {
                     .iter()
                     .map(|t| t.to_string())
                     .collect::<Vec<String>>()
-                    .join(", ")
+                    .join(" ")
             ),
             Type::Sig(types) => format!(
                 "(Sig {})",
@@ -103,7 +103,7 @@ impl Type {
                     .iter()
                     .map(|t| t.to_string())
                     .collect::<Vec<String>>()
-                    .join(", ")
+                    .join(" ")
             ),
             Type::Fun(types) => format!(
                 "(Fun {})",
@@ -111,7 +111,7 @@ impl Type {
                     .iter()
                     .map(|t| t.to_string())
                     .collect::<Vec<String>>()
-                    .join(", ")
+                    .join(" ")
             ),
             Type::App(types) => format!(
                 "(App {})",
@@ -119,7 +119,7 @@ impl Type {
                     .iter()
                     .map(|t| t.to_string())
                     .collect::<Vec<String>>()
-                    .join(", ")
+                    .join(" ")
             ),
             Type::Attrs(types) => format!(
                 "(Attrs {})",
@@ -127,7 +127,7 @@ impl Type {
                     .iter()
                     .map(|t| t.to_string())
                     .collect::<Vec<String>>()
-                    .join(", ")
+                    .join(" ")
             ),
             Type::Type => "Type".into(),
             Type::Unknown(typing) => format!("Unknown({})", typing),
