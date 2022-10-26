@@ -260,17 +260,10 @@ impl SymbolTable {
                     }
                 },
                 FormKind::Def => {}
-                FormKind::TypeDef => {}
-                FormKind::SigDef => {}
-                FormKind::AttrsDef => {}
-                FormKind::PrimDef => {}
-                FormKind::SumDef => {}
-                FormKind::ProdDef => {}
-                FormKind::FunDef => {}
-                FormKind::AppDef => {}
                 FormKind::FunApp => {}
                 FormKind::TypeApp => {}
                 FormKind::LetScope => {}
+                _ => unreachable!(),
             },
             _ => {
                 return Err(Error::Semantic(SemanticError {
