@@ -26,7 +26,8 @@ pub struct SymbolTable {
     pub exported_types: BTreeMap<String, usize>,
 
     // name -> vec(value_idx) // path
-    pub attrs_defs: BTreeMap<String, Vec<usize>>,
+    pub type_attrs_defs: BTreeMap<String, Vec<usize>>,
+    pub value_attrs_defs: BTreeMap<String, Vec<usize>>,
     // name -> set(attr)
     pub attrs: BTreeMap<String, BTreeSet<String>>,
 
@@ -43,6 +44,13 @@ pub struct SymbolTable {
     pub type_apps: BTreeMap<String, Vec<usize>>,
 
     pub let_scopes: BTreeMap<String, Vec<usize>>,
+
+    pub main_type_attrs: Option<usize>,
+    pub main_fun_attrs: Option<usize>,
+    pub main_type: Option<usize>,
+    pub main_sig: Option<usize>,
+    pub main_fun: Option<usize>,
+    pub main_app: Option<usize>,
 }
 
 impl SymbolTable {
