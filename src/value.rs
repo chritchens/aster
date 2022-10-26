@@ -25,6 +25,17 @@ impl PrimValue {
     pub fn loc(&self) -> Option<Loc> {
         self.token.loc()
     }
+
+    #[allow(clippy::inherent_to_string_shadow_display)]
+    pub fn to_string(&self) -> String {
+        self.value.clone()
+    }
+}
+
+impl fmt::Display for PrimValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
@@ -58,6 +69,17 @@ impl SymbolValue {
 
     pub fn loc(&self) -> Option<Loc> {
         self.token.loc()
+    }
+
+    #[allow(clippy::inherent_to_string_shadow_display)]
+    pub fn to_string(&self) -> String {
+        self.value.clone()
+    }
+}
+
+impl fmt::Display for SymbolValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -249,8 +271,8 @@ impl Value {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            Value::Prim(value) => value.value.clone(),
-            Value::Symbol(value) => value.value.clone(),
+            Value::Prim(value) => value.to_string(),
+            Value::Symbol(value) => value.to_string(),
             Value::Form(values) => values.to_string(),
         }
     }

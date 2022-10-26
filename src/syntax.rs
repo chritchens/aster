@@ -408,6 +408,24 @@ pub fn is_path_symbol(s: &str) -> bool {
         && !s.ends_with(SYMBOL_PATH_SEPARATOR)
 }
 
+pub fn symbol_qualifier(s: &str) -> String {
+    let mut parts: Vec<String> = s.split('.').map(|s| s.into()).collect();
+
+    parts.remove(parts.len() - 1);
+
+    parts.join(".")
+}
+
+pub fn symbol_name(s: &str) -> String {
+    let parts: Vec<String> = s.split('.').map(|s| s.into()).collect();
+
+    parts[parts.len() - 1].clone()
+}
+
+pub fn symbol_with_qualifier(s: &str, qualifier: &str) -> String {
+    vec![qualifier, s].join(".")
+}
+
 pub const FORM_START: char = '(';
 
 pub fn is_form_start(s: &str) -> bool {
