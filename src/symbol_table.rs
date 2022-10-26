@@ -138,7 +138,7 @@ impl SymbolTable {
                         });
 
                     if !qualifier.is_empty() {
-                        if self.imported_qualifiers.get(&qualifier).is_some() {
+                        if self.imported_qualifiers.contains_key(&qualifier) {
                             return Err(Error::Semantic(SemanticError {
                                 loc: form.loc(),
                                 desc: "expected a value from the same file".into(),
@@ -152,7 +152,7 @@ impl SymbolTable {
                         let name = symbol_name(&qualified_name);
 
                         if is_type_symbol(&name) {
-                            if self.imported_types.get(qualified_name).is_some() {
+                            if self.imported_types.contains_key(qualified_name) {
                                 return Err(Error::Semantic(SemanticError {
                                     loc: form.loc(),
                                     desc: "reimported type".into(),
@@ -162,7 +162,7 @@ impl SymbolTable {
                             self.imported_types
                                 .insert(qualified_name.into(), module.clone());
                         } else {
-                            if self.imported_values.get(qualified_name).is_some() {
+                            if self.imported_values.contains_key(qualified_name) {
                                 return Err(Error::Semantic(SemanticError {
                                     loc: form.loc(),
                                     desc: "reimported type".into(),
@@ -174,7 +174,83 @@ impl SymbolTable {
                         }
                     }
                 }
-                FormKind::ExportDefs => {}
+                FormKind::ExportDefs => match form.values[1].clone() {
+                    Value::Symbol(symbol) => {
+                        let name = symbol.to_string();
+
+                        if !symbol_qualifier(&name).is_empty() {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "expected an unqualified symbol".into(),
+                            }));
+                        }
+
+                        if is_type_symbol(&name) {
+                            if self.exported_types.contains_key(&name) {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: form.loc(),
+                                    desc: "reexported definition".into(),
+                                }));
+                            }
+
+                            self.exported_types.insert(name, tpl_idx);
+                        } else {
+                            if self.exported_values.contains_key(&name) {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: form.loc(),
+                                    desc: "reexported definition".into(),
+                                }));
+                            }
+
+                            self.exported_values.insert(name, tpl_idx);
+                        }
+                    }
+                    Value::Form(form) => {
+                        if form.kind != FormKind::ProdDef {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "expected a product of exported definitions".into(),
+                            }));
+                        }
+
+                        for exported_value in form.values[1..].iter() {
+                            let name = exported_value.to_string();
+
+                            if !symbol_qualifier(&name).is_empty() {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: form.loc(),
+                                    desc: "expected an unqualified symbol".into(),
+                                }));
+                            }
+
+                            if is_type_symbol(&name) {
+                                if self.exported_types.contains_key(&name) {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: form.loc(),
+                                        desc: "reexported definition".into(),
+                                    }));
+                                }
+
+                                self.exported_types.insert(name, tpl_idx);
+                            } else {
+                                if self.exported_values.contains_key(&name) {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: form.loc(),
+                                        desc: "reexported definition".into(),
+                                    }));
+                                }
+
+                                self.exported_values.insert(name, tpl_idx);
+                            }
+                        }
+                    }
+                    _ => {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "expected a form or a symbol".into(),
+                        }));
+                    }
+                },
                 FormKind::Def => {}
                 FormKind::TypeDef => {}
                 FormKind::SigDef => {}
@@ -274,5 +350,45 @@ mod tests {
             symbol_table.imported_values.get("x.a"),
             Some(&"moduleX".into())
         );
+    }
+
+    #[test]
+    fn symbol_table_exports() {
+        use super::SymbolTable;
+        use crate::syntax::EMPTY;
+        use crate::values::Values;
+
+        let mut s = "(export (prod a b c D))";
+
+        let mut values = Values::from_str(s).unwrap();
+
+        let mut res = SymbolTable::from_values(values);
+
+        assert!(res.is_ok());
+
+        let mut symbol_table = res.unwrap();
+
+        assert_eq!(symbol_table.file, EMPTY.to_string());
+
+        assert_eq!(symbol_table.exported_types.len(), 1);
+        assert_eq!(symbol_table.exported_types.get("D"), Some(&0));
+        assert_eq!(symbol_table.exported_values.len(), 3);
+        assert_eq!(symbol_table.exported_values.get("a"), Some(&0));
+
+        s = "(export X)";
+
+        values = Values::from_str(s).unwrap();
+
+        res = SymbolTable::from_values(values);
+
+        assert!(res.is_ok());
+
+        symbol_table = res.unwrap();
+
+        assert_eq!(symbol_table.file, EMPTY.to_string());
+
+        assert_eq!(symbol_table.exported_types.len(), 1);
+        assert_eq!(symbol_table.exported_types.get("X"), Some(&0));
+        assert_eq!(symbol_table.exported_values.len(), 0);
     }
 }
