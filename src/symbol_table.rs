@@ -775,11 +775,60 @@ impl SymbolTable {
     }
 }
 
+#[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct GlobalSymbolTable {
     pub files: BTreeSet<String>,
 
     // file -> symbol_table
     pub tables: BTreeMap<String, SymbolTable>,
+}
+
+impl GlobalSymbolTable {
+    pub fn new() -> GlobalSymbolTable {
+        GlobalSymbolTable::default()
+    }
+
+    pub fn add_table(&mut self, table: SymbolTable) -> Result<()> {
+        let file = table.file.clone();
+
+        if self.files.contains(&file) {
+            if file.is_empty() {
+                let mut old_table = self.tables.get(&file).unwrap().clone();
+                let values = table.values.clone();
+
+                for value in values.into_iter() {
+                    old_table.add_value(value)?;
+                }
+
+                self.tables.insert(file.clone(), old_table);
+            } else {
+                return Err(Error::Semantic(SemanticError {
+                    loc: None,
+                    desc: format!("file {} already included", file),
+                }));
+            }
+        }
+
+        self.files.insert(file.clone());
+
+        self.tables.insert(file, table);
+
+        Ok(())
+    }
+
+    pub fn read_file<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
+        let table = SymbolTable::from_file(path)?;
+
+        self.add_table(table)
+    }
+
+    pub fn read_files<P: AsRef<Path>>(&mut self, paths: &[P]) -> Result<()> {
+        for path in paths {
+            self.read_file(path)?;
+        }
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -983,5 +1032,33 @@ mod tests {
         assert_eq!(symbol_table.main_fun_attrs, Some(4));
         assert_eq!(symbol_table.main_fun, Some(5));
         assert_eq!(symbol_table.main_app, Some(6));
+    }
+
+    #[test]
+    fn global_symbol_table() {
+        use super::GlobalSymbolTable;
+        use super::SymbolTable;
+        use crate::syntax::EMPTY;
+        use crate::values::Values;
+
+        let s = "
+            (def type T Prim)
+            (def type E Prim)
+
+            (def type Result (Sum T E))";
+
+        let values = Values::from_str(s).unwrap();
+
+        let symbol_table = SymbolTable::from_values(values).unwrap();
+
+        let mut global_symbol_table = GlobalSymbolTable::new();
+
+        let res = global_symbol_table.add_table(symbol_table.clone());
+
+        assert!(res.is_ok());
+
+        assert_eq!(global_symbol_table.files.len(), 1);
+        assert!(global_symbol_table.files.contains(EMPTY));
+        assert_eq!(global_symbol_table.tables.get(EMPTY), Some(&symbol_table));
     }
 }
