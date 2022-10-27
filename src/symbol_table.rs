@@ -265,7 +265,7 @@ impl SymbolTable {
                 _ => {
                     return Err(Error::Semantic(SemanticError {
                         loc: form.loc(),
-                        desc: "expected an import or an export or a definition or a 'main' function application at top level".into(),
+                        desc: "expected an import or an export or a definition or a 'main' function application at top-level".into(),
                     }));
                 }
             },
