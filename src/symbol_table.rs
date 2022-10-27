@@ -25,20 +25,20 @@ pub struct SymbolTable {
     pub exported_values: BTreeMap<String, usize>,
     pub exported_types: BTreeMap<String, usize>,
 
-    // name -> vec(value_idx) // path
-    pub type_attrs_defs: BTreeMap<String, Vec<usize>>,
-    pub value_attrs_defs: BTreeMap<String, Vec<usize>>,
+    // name -> value_idx
+    pub type_attrs_defs: BTreeMap<String, usize>,
+    pub value_attrs_defs: BTreeMap<String, usize>,
     // name -> set(attr)
     pub attrs: BTreeMap<String, BTreeSet<String>>,
 
-    // name -> vec(value_idx) // path
-    pub type_defs: BTreeMap<String, Vec<usize>>,
-    pub sig_defs: BTreeMap<String, Vec<usize>>,
-    pub prim_defs: BTreeMap<String, Vec<usize>>,
-    pub sum_defs: BTreeMap<String, Vec<usize>>,
-    pub prod_defs: BTreeMap<String, Vec<usize>>,
-    pub fun_defs: BTreeMap<String, Vec<usize>>,
-    pub app_defs: BTreeMap<String, Vec<usize>>,
+    // name -> value_idx
+    pub type_defs: BTreeMap<String, usize>,
+    pub sig_defs: BTreeMap<String, usize>,
+    pub prim_defs: BTreeMap<String, usize>,
+    pub sum_defs: BTreeMap<String, usize>,
+    pub prod_defs: BTreeMap<String, usize>,
+    pub fun_defs: BTreeMap<String, usize>,
+    pub app_defs: BTreeMap<String, usize>,
 
     pub main_type_attrs: Option<usize>,
     pub main_fun_attrs: Option<usize>,
