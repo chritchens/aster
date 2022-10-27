@@ -290,7 +290,18 @@ impl SymbolTable {
                         }));
                     }
 
-                    self.type_defs.insert(name, tpl_idx);
+                    self.type_defs.insert(name.clone(), tpl_idx);
+
+                    if name == "Main" {
+                        if self.main_type.is_some() {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "redefined 'Main' type".into(),
+                            }));
+                        }
+
+                        self.main_type = Some(tpl_idx);
+                    }
                 }
                 FormKind::DefSig => {
                     let name = match form.values[1].clone() {
@@ -326,7 +337,18 @@ impl SymbolTable {
                         }));
                     }
 
-                    self.sig_defs.insert(name, tpl_idx);
+                    self.sig_defs.insert(name.clone(), tpl_idx);
+
+                    if name == "main" {
+                        if self.main_sig.is_some() {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "redefined 'main' signature".into(),
+                            }));
+                        }
+
+                        self.main_sig = Some(tpl_idx);
+                    }
                 }
                 FormKind::DefPrim => {
                     let name = match form.values[1].clone() {
@@ -470,7 +492,18 @@ impl SymbolTable {
                         }));
                     }
 
-                    self.fun_defs.insert(name, tpl_idx);
+                    self.fun_defs.insert(name.clone(), tpl_idx);
+
+                    if name == "main" {
+                        if self.main_fun.is_some() {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "redefined 'main' function".into(),
+                            }));
+                        }
+
+                        self.main_fun = Some(tpl_idx);
+                    }
                 }
                 FormKind::DefApp => {
                     let name = match form.values[1].clone() {
@@ -506,11 +539,23 @@ impl SymbolTable {
                         }));
                     }
 
-                    self.app_defs.insert(name, tpl_idx);
+                    self.app_defs.insert(name.clone(), tpl_idx);
+
+                    if name == "main" {
+                        if self.main_app.is_some() {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "redefined 'main' application".into(),
+                            }));
+                        }
+
+                        self.main_app = Some(tpl_idx);
+                    }
                 }
                 FormKind::DefAttrs => {
-                    #[allow(unused_assignments)] 
+                    #[allow(unused_assignments)]
                     let mut name = String::new();
+
                     let mut attributes: Vec<String> = Vec::new();
 
                     match form.values[1].clone() {
@@ -610,7 +655,7 @@ impl SymbolTable {
 
                         for attribute in attributes.iter() {
                             self.type_attrs
-                                .entry(name.to_owned())
+                                .entry(name.clone())
                                 .and_modify(|set| {
                                     set.insert(attribute.clone());
                                 })
@@ -619,6 +664,17 @@ impl SymbolTable {
                                     set.insert(attribute.to_owned());
                                     set
                                 });
+                        }
+
+                        if name == "Main" {
+                            if self.main_type_attrs.is_some() {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: form.loc(),
+                                    desc: "redefined 'Main' type attributes".into(),
+                                }));
+                            }
+
+                            self.main_type_attrs = Some(tpl_idx);
                         }
                     } else {
                         if self.fun_attrs_defs.contains_key(&name) {
@@ -642,7 +698,37 @@ impl SymbolTable {
                                     set
                                 });
                         }
+
+                        if name == "main" {
+                            if self.main_fun_attrs.is_some() {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: form.loc(),
+                                    desc: "redefined 'main' function attributes".into(),
+                                }));
+                            }
+
+                            self.main_fun_attrs = Some(tpl_idx);
+                        }
                     }
+                }
+                FormKind::FunApp => {
+                    let name = form.head().to_string();
+
+                    if name != "main" {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "expected a 'main' function application".into(),
+                        }));
+                    }
+
+                    if self.main_app.is_some() {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "duplicate 'main' function application".into(),
+                        }));
+                    }
+
+                    self.main_app = Some(tpl_idx);
                 }
                 _ => {
                     return Err(Error::Semantic(SemanticError {
@@ -869,5 +955,33 @@ mod tests {
         assert!(symbol_table.type_attrs.get("F").unwrap().contains("attr1"));
         assert!(symbol_table.type_attrs.get("F").unwrap().contains("attr2"));
         assert!(symbol_table.type_attrs.get("F").unwrap().contains("attr3"));
+
+        s = "(import std.io (prod stdIO))
+
+             (def attrs Main attr1 attr2 attr3)
+             (def type Main (Fun IO IO))
+
+             (def sig main Main)
+             (def attrs main attrX attrY attrZ)
+             (def fun main io io)
+
+             (main stdIO)";
+
+        values = Values::from_str(s).unwrap();
+
+        res = SymbolTable::from_values(values);
+
+        assert!(res.is_ok());
+
+        symbol_table = res.unwrap();
+
+        assert_eq!(symbol_table.file, EMPTY.to_string());
+
+        assert_eq!(symbol_table.main_type_attrs, Some(1));
+        assert_eq!(symbol_table.main_type, Some(2));
+        assert_eq!(symbol_table.main_sig, Some(3));
+        assert_eq!(symbol_table.main_fun_attrs, Some(4));
+        assert_eq!(symbol_table.main_fun, Some(5));
+        assert_eq!(symbol_table.main_app, Some(6));
     }
 }
