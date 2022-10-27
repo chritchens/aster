@@ -103,7 +103,6 @@ pub enum FormKind {
     AnonSum,
     AnonProd,
     AnonFun,
-    AnonFunApp,
     TypeApp,
     FunApp,
 }
@@ -130,7 +129,6 @@ impl FormKind {
             "prod" => FormKind::AnonProd,
             "fun" => FormKind::AnonFun,
             "attrs" => FormKind::AnonAttrs,
-            "app" => FormKind::AnonFunApp,
             "def" => {
                 let tail_head = form.values[1].clone();
                 let value = tail_head.to_string();
