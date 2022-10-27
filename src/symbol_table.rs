@@ -1,6 +1,7 @@
 use crate::error::{Error, SemanticError};
 use crate::result::Result;
 use crate::syntax::is_type_symbol;
+use crate::syntax::Keyword;
 use crate::syntax::{symbol_name, symbol_qualifier, symbol_with_qualifier};
 use crate::value::{FormKind, Value};
 use crate::values::Values;
@@ -254,13 +255,258 @@ impl SymbolTable {
                         }));
                     }
                 },
-                FormKind::DefType => {}
-                FormKind::DefSig => {}
-                FormKind::DefPrim => {}
-                FormKind::DefSum => {}
-                FormKind::DefProd => {}
-                FormKind::DefFun => {}
-                FormKind::DefApp => {}
+                FormKind::DefType => {
+                    let name = match form.values[1].clone() {
+                        Value::Symbol(symbol) => {
+                            let mut name = symbol.to_string();
+
+                            if Keyword::from_str(&name).is_ok() {
+                                name = match form.values[2].clone() {
+                                    Value::Symbol(symbol) => symbol.to_string(),
+                                    _ => {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: form.loc(),
+                                            desc: "expected a symbol".into(),
+                                        }));
+                                    }
+                                };
+                            }
+
+                            name
+                        }
+                        _ => {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "expected a symbol".into(),
+                            }));
+                        }
+                    };
+
+                    if self.type_defs.contains_key(&name) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "redefined type".into(),
+                        }));
+                    }
+
+                    self.type_defs.insert(name, tpl_idx);
+                }
+                FormKind::DefSig => {
+                    let name = match form.values[1].clone() {
+                        Value::Symbol(symbol) => {
+                            let mut name = symbol.to_string();
+
+                            if Keyword::from_str(&name).is_ok() {
+                                name = match form.values[2].clone() {
+                                    Value::Symbol(symbol) => symbol.to_string(),
+                                    _ => {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: form.loc(),
+                                            desc: "expected a symbol".into(),
+                                        }));
+                                    }
+                                };
+                            }
+
+                            name
+                        }
+                        _ => {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "expected a symbol".into(),
+                            }));
+                        }
+                    };
+
+                    if self.sig_defs.contains_key(&name) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "redefined signature".into(),
+                        }));
+                    }
+
+                    self.sig_defs.insert(name, tpl_idx);
+                }
+                FormKind::DefPrim => {
+                    let name = match form.values[1].clone() {
+                        Value::Symbol(symbol) => {
+                            let mut name = symbol.to_string();
+
+                            if Keyword::from_str(&name).is_ok() {
+                                name = match form.values[2].clone() {
+                                    Value::Symbol(symbol) => symbol.to_string(),
+                                    _ => {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: form.loc(),
+                                            desc: "expected a symbol".into(),
+                                        }));
+                                    }
+                                };
+                            }
+
+                            name
+                        }
+                        _ => {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "expected a symbol".into(),
+                            }));
+                        }
+                    };
+
+                    if self.prim_defs.contains_key(&name) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "redefined primitive".into(),
+                        }));
+                    }
+
+                    self.prim_defs.insert(name, tpl_idx);
+                }
+                FormKind::DefSum => {
+                    let name = match form.values[1].clone() {
+                        Value::Symbol(symbol) => {
+                            let mut name = symbol.to_string();
+
+                            if Keyword::from_str(&name).is_ok() {
+                                name = match form.values[2].clone() {
+                                    Value::Symbol(symbol) => symbol.to_string(),
+                                    _ => {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: form.loc(),
+                                            desc: "expected a symbol".into(),
+                                        }));
+                                    }
+                                };
+                            }
+
+                            name
+                        }
+                        _ => {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "expected a symbol".into(),
+                            }));
+                        }
+                    };
+
+                    if self.sum_defs.contains_key(&name) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "redefined sum".into(),
+                        }));
+                    }
+
+                    self.sum_defs.insert(name, tpl_idx);
+                }
+                FormKind::DefProd => {
+                    let name = match form.values[1].clone() {
+                        Value::Symbol(symbol) => {
+                            let mut name = symbol.to_string();
+
+                            if Keyword::from_str(&name).is_ok() {
+                                name = match form.values[2].clone() {
+                                    Value::Symbol(symbol) => symbol.to_string(),
+                                    _ => {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: form.loc(),
+                                            desc: "expected a symbol".into(),
+                                        }));
+                                    }
+                                };
+                            }
+
+                            name
+                        }
+                        _ => {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "expected a symbol".into(),
+                            }));
+                        }
+                    };
+
+                    if self.prod_defs.contains_key(&name) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "redefined prod".into(),
+                        }));
+                    }
+
+                    self.prod_defs.insert(name, tpl_idx);
+                }
+                FormKind::DefFun => {
+                    let name = match form.values[1].clone() {
+                        Value::Symbol(symbol) => {
+                            let mut name = symbol.to_string();
+
+                            if Keyword::from_str(&name).is_ok() {
+                                name = match form.values[2].clone() {
+                                    Value::Symbol(symbol) => symbol.to_string(),
+                                    _ => {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: form.loc(),
+                                            desc: "expected a symbol".into(),
+                                        }));
+                                    }
+                                };
+                            }
+
+                            name
+                        }
+                        _ => {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "expected a symbol".into(),
+                            }));
+                        }
+                    };
+
+                    if self.fun_defs.contains_key(&name) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "redefined function".into(),
+                        }));
+                    }
+
+                    self.fun_defs.insert(name, tpl_idx);
+                }
+                FormKind::DefApp => {
+                    let name = match form.values[1].clone() {
+                        Value::Symbol(symbol) => {
+                            let mut name = symbol.to_string();
+
+                            if Keyword::from_str(&name).is_ok() {
+                                name = match form.values[2].clone() {
+                                    Value::Symbol(symbol) => symbol.to_string(),
+                                    _ => {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: form.loc(),
+                                            desc: "expected a symbol".into(),
+                                        }));
+                                    }
+                                };
+                            }
+
+                            name
+                        }
+                        _ => {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "expected a symbol".into(),
+                            }));
+                        }
+                    };
+
+                    if self.app_defs.contains_key(&name) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "redefined function application".into(),
+                        }));
+                    }
+
+                    self.app_defs.insert(name, tpl_idx);
+                }
                 FormKind::DefAttrs => {}
                 _ => {
                     return Err(Error::Semantic(SemanticError {
@@ -395,5 +641,57 @@ mod tests {
         assert_eq!(symbol_table.exported_types.len(), 1);
         assert_eq!(symbol_table.exported_types.get("X"), Some(&0));
         assert_eq!(symbol_table.exported_values.len(), 0);
+    }
+
+    #[test]
+    fn symbol_table_definitions() {
+        use super::SymbolTable;
+        use crate::syntax::EMPTY;
+        use crate::values::Values;
+
+        let mut s = "(def X (type (Prod String UInt Float)))";
+
+        let mut values = Values::from_str(s).unwrap();
+
+        let mut res = SymbolTable::from_values(values);
+
+        assert!(res.is_ok());
+
+        let mut symbol_table = res.unwrap();
+
+        assert_eq!(symbol_table.file, EMPTY.to_string());
+
+        assert_eq!(symbol_table.type_defs.len(), 1);
+        assert_eq!(symbol_table.type_defs.get("X"), Some(&0));
+
+        s = "(def f (fun x y (+ x y)))";
+
+        values = Values::from_str(s).unwrap();
+
+        res = SymbolTable::from_values(values);
+
+        assert!(res.is_ok());
+
+        symbol_table = res.unwrap();
+
+        assert_eq!(symbol_table.file, EMPTY.to_string());
+
+        assert_eq!(symbol_table.fun_defs.len(), 1);
+        assert_eq!(symbol_table.fun_defs.get("f"), Some(&0));
+
+        s = "(def fun f x y (+ x y))";
+
+        values = Values::from_str(s).unwrap();
+
+        res = SymbolTable::from_values(values);
+
+        assert!(res.is_ok());
+
+        symbol_table = res.unwrap();
+
+        assert_eq!(symbol_table.file, EMPTY.to_string());
+
+        assert_eq!(symbol_table.fun_defs.len(), 1);
+        assert_eq!(symbol_table.fun_defs.get("f"), Some(&0));
     }
 }
