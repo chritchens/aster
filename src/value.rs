@@ -88,18 +88,24 @@ pub enum FormKind {
     Empty,
     ImportDefs,
     ExportDefs,
-    Def,
-    TypeDef,
-    SigDef,
-    AttrsDef,
-    PrimDef,
-    SumDef,
-    ProdDef,
-    FunDef,
-    AppDef,
-    FunApp,
+    DefType,
+    DefSig,
+    DefAttrs,
+    DefPrim,
+    DefSum,
+    DefProd,
+    DefFun,
+    DefApp,
+    AnonType,
+    AnonSig,
+    AnonAttrs,
+    AnonPrim,
+    AnonSum,
+    AnonProd,
+    AnonFun,
+    AnonFunApp,
     TypeApp,
-    LetScope,
+    FunApp,
 }
 
 impl Default for FormKind {
@@ -117,30 +123,57 @@ impl FormKind {
             "()" => FormKind::Empty,
             "import" => FormKind::ImportDefs,
             "export" => FormKind::ExportDefs,
-            "type" => FormKind::TypeDef,
-            "sig" => FormKind::SigDef,
-            "prim" => FormKind::PrimDef,
-            "sum" => FormKind::SumDef,
-            "prod" => FormKind::ProdDef,
-            "fun" => FormKind::FunDef,
-            "attrs" => FormKind::AttrsDef,
-            "app" => FormKind::AppDef,
+            "type" => FormKind::AnonType,
+            "sig" => FormKind::AnonSig,
+            "prim" => FormKind::AnonPrim,
+            "sum" => FormKind::AnonSum,
+            "prod" => FormKind::AnonProd,
+            "fun" => FormKind::AnonFun,
+            "attrs" => FormKind::AnonAttrs,
+            "app" => FormKind::AnonFunApp,
             "def" => {
-                let tail_head = form.tail()[0].clone();
+                let tail_head = form.values[1].clone();
                 let value = tail_head.to_string();
 
                 match value.as_str() {
-                    "type" => FormKind::TypeDef,
-                    "sig" => FormKind::SigDef,
-                    "prim" => FormKind::PrimDef,
-                    "sum" => FormKind::SumDef,
-                    "prod" => FormKind::ProdDef,
-                    "fun" => FormKind::FunDef,
-                    "attrs" => FormKind::AttrsDef,
-                    "app" => FormKind::AppDef,
-                    "let" => FormKind::LetScope,
+                    "type" => FormKind::DefType,
+                    "sig" => FormKind::DefSig,
+                    "prim" => FormKind::DefPrim,
+                    "sum" => FormKind::DefSum,
+                    "prod" => FormKind::DefProd,
+                    "fun" => FormKind::DefFun,
+                    "attrs" => FormKind::DefAttrs,
+                    "app" => FormKind::DefApp,
                     _ => match tail_head {
-                        Value::Symbol(_) => FormKind::Def,
+                        Value::Symbol(_) => match form.values[2].clone() {
+                            Value::Form(form) => {
+                                let head = form.head();
+                                let head_value = head.to_string();
+
+                                match head_value.as_str() {
+                                    "type" => FormKind::DefType,
+                                    "sig" => FormKind::DefSig,
+                                    "prim" => FormKind::DefPrim,
+                                    "sum" => FormKind::DefSum,
+                                    "prod" => FormKind::DefProd,
+                                    "fun" => FormKind::DefFun,
+                                    "attrs" => FormKind::DefAttrs,
+                                    "app" | "let" => FormKind::DefApp,
+                                    _ => {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: head.loc(),
+                                            desc: "expected a different head value".into(),
+                                        }));
+                                    }
+                                }
+                            }
+                            _ => {
+                                return Err(Error::Semantic(SemanticError {
+                                    loc: form.values[2].loc(),
+                                    desc: "expected a form".into(),
+                                }));
+                            }
+                        },
                         _ => {
                             return Err(Error::Semantic(SemanticError {
                                 loc: tail_head.loc(),

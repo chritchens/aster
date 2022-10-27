@@ -103,7 +103,7 @@ impl SymbolTable {
                     if form.values.len() > 2 {
                         match form.values[2].clone() {
                             Value::Form(form) => {
-                                if form.kind != FormKind::ProdDef {
+                                if form.kind != FormKind::AnonProd {
                                     return Err(Error::Semantic(SemanticError {
                                         loc: form.loc(),
                                         desc: "expected a product of imported definitions".into(),
@@ -214,7 +214,7 @@ impl SymbolTable {
                         }
                     }
                     Value::Form(form) => {
-                        if form.kind != FormKind::ProdDef {
+                        if form.kind != FormKind::AnonProd {
                             return Err(Error::Semantic(SemanticError {
                                 loc: form.loc(),
                                 desc: "expected a product of exported definitions".into(),
@@ -259,11 +259,21 @@ impl SymbolTable {
                         }));
                     }
                 },
-                FormKind::Def => {}
+                FormKind::DefType => {}
+                FormKind::DefSig => {}
+                FormKind::DefPrim => {}
+                FormKind::DefSum => {}
+                FormKind::DefProd => {}
+                FormKind::DefFun => {}
+                FormKind::DefApp => {}
+                FormKind::DefAttrs => {}
                 FormKind::FunApp => {}
-                FormKind::TypeApp => {}
-                FormKind::LetScope => {}
-                _ => unreachable!(),
+                _ => {
+                    return Err(Error::Semantic(SemanticError {
+                        loc: form.loc(),
+                        desc: "expected an import or an export or a definition or a function application at top level".into(),
+                    }));
+                }
             },
             _ => {
                 return Err(Error::Semantic(SemanticError {

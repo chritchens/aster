@@ -258,7 +258,7 @@ mod tests {
                 match form.values[3].clone() {
                     Value::Form(form) => {
                         assert_eq!(form.len(), 5);
-                        assert_eq!(form.kind, FormKind::ProdDef);
+                        assert_eq!(form.kind, FormKind::AnonProd);
                     }
                     _ => panic!("expected a form"),
                 }
@@ -286,7 +286,7 @@ mod tests {
         match values[2].clone() {
             Value::Form(form) => {
                 assert_eq!(form.len(), 4);
-                assert_eq!(form.kind, FormKind::SigDef);
+                assert_eq!(form.kind, FormKind::DefSig);
 
                 match form.values[3].clone() {
                     Value::Form(form) => {
