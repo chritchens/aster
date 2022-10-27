@@ -40,11 +40,6 @@ pub struct SymbolTable {
     pub fun_defs: BTreeMap<String, Vec<usize>>,
     pub app_defs: BTreeMap<String, Vec<usize>>,
 
-    pub fun_apps: BTreeMap<String, Vec<usize>>,
-    pub type_apps: BTreeMap<String, Vec<usize>>,
-
-    pub let_scopes: BTreeMap<String, Vec<usize>>,
-
     pub main_type_attrs: Option<usize>,
     pub main_fun_attrs: Option<usize>,
     pub main_type: Option<usize>,
@@ -267,11 +262,10 @@ impl SymbolTable {
                 FormKind::DefFun => {}
                 FormKind::DefApp => {}
                 FormKind::DefAttrs => {}
-                FormKind::FunApp => {}
                 _ => {
                     return Err(Error::Semantic(SemanticError {
                         loc: form.loc(),
-                        desc: "expected an import or an export or a definition or a function application at top level".into(),
+                        desc: "expected an import or an export or a definition or a 'main' function application at top level".into(),
                     }));
                 }
             },
