@@ -28,9 +28,10 @@ pub struct SymbolTable {
 
     // name -> value_idx
     pub type_attrs_defs: BTreeMap<String, usize>,
-    pub value_attrs_defs: BTreeMap<String, usize>,
+    pub fun_attrs_defs: BTreeMap<String, usize>,
     // name -> set(attr)
-    pub attrs: BTreeMap<String, BTreeSet<String>>,
+    pub type_attrs: BTreeMap<String, BTreeSet<String>>,
+    pub fun_attrs: BTreeMap<String, BTreeSet<String>>,
 
     // name -> value_idx
     pub type_defs: BTreeMap<String, usize>,
@@ -507,7 +508,142 @@ impl SymbolTable {
 
                     self.app_defs.insert(name, tpl_idx);
                 }
-                FormKind::DefAttrs => {}
+                FormKind::DefAttrs => {
+                    #[allow(unused_assignments)] 
+                    let mut name = String::new();
+                    let mut attributes: Vec<String> = Vec::new();
+
+                    match form.values[1].clone() {
+                        Value::Symbol(symbol) => {
+                            let tmp_name = symbol.to_string();
+
+                            if Keyword::from_str(&tmp_name).is_ok() {
+                                name = match form.values[2].clone() {
+                                    Value::Symbol(symbol) => symbol.to_string(),
+                                    _ => {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: form.loc(),
+                                            desc: "expected a symbol".into(),
+                                        }));
+                                    }
+                                };
+
+                                if form.values.len() < 4 {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: form.loc(),
+                                        desc: "expected at least an attribute".into(),
+                                    }));
+                                }
+
+                                for value in form.values[3..].iter() {
+                                    match value {
+                                        Value::Symbol(symbol) => {
+                                            attributes.push(symbol.to_string());
+                                        }
+                                        _ => {
+                                            return Err(Error::Semantic(SemanticError {
+                                                loc: value.loc(),
+                                                desc: "expected a symbol".into(),
+                                            }));
+                                        }
+                                    }
+                                }
+                            } else {
+                                name = tmp_name;
+
+                                match form.values[2].clone() {
+                                    Value::Form(form) => {
+                                        if form.kind != FormKind::AnonAttrs {
+                                            return Err(Error::Semantic(SemanticError {
+                                                loc: form.loc(),
+                                                desc: "expected an attributes form".into(),
+                                            }));
+                                        }
+
+                                        if form.len() < 2 {
+                                            return Err(Error::Semantic(SemanticError {
+                                                loc: form.loc(),
+                                                desc: "expected at least an attribute".into(),
+                                            }));
+                                        }
+
+                                        for value in form.values[1..].iter() {
+                                            match value {
+                                                Value::Symbol(symbol) => {
+                                                    attributes.push(symbol.to_string());
+                                                }
+                                                _ => {
+                                                    return Err(Error::Semantic(SemanticError {
+                                                        loc: value.loc(),
+                                                        desc: "expected a symbol".into(),
+                                                    }));
+                                                }
+                                            }
+                                        }
+                                    }
+                                    _ => {
+                                        return Err(Error::Semantic(SemanticError {
+                                            loc: form.loc(),
+                                            desc: "expected an attributes form".into(),
+                                        }));
+                                    }
+                                }
+                            }
+                        }
+                        _ => {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "expected a symbol".into(),
+                            }));
+                        }
+                    };
+
+                    if is_type_symbol(&name) {
+                        if self.type_attrs_defs.contains_key(&name) {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "redefined type attributes".into(),
+                            }));
+                        }
+
+                        self.type_attrs_defs.insert(name.clone(), tpl_idx);
+
+                        for attribute in attributes.iter() {
+                            self.type_attrs
+                                .entry(name.to_owned())
+                                .and_modify(|set| {
+                                    set.insert(attribute.clone());
+                                })
+                                .or_insert_with(|| {
+                                    let mut set = BTreeSet::new();
+                                    set.insert(attribute.to_owned());
+                                    set
+                                });
+                        }
+                    } else {
+                        if self.fun_attrs_defs.contains_key(&name) {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "redefined function attributes".into(),
+                            }));
+                        }
+
+                        self.fun_attrs_defs.insert(name.clone(), tpl_idx);
+
+                        for attribute in attributes.iter() {
+                            self.fun_attrs
+                                .entry(name.to_owned())
+                                .and_modify(|set| {
+                                    set.insert(attribute.clone());
+                                })
+                                .or_insert_with(|| {
+                                    let mut set = BTreeSet::new();
+                                    set.insert(attribute.to_owned());
+                                    set
+                                });
+                        }
+                    }
+                }
                 _ => {
                     return Err(Error::Semantic(SemanticError {
                         loc: form.loc(),
@@ -693,5 +829,45 @@ mod tests {
 
         assert_eq!(symbol_table.fun_defs.len(), 1);
         assert_eq!(symbol_table.fun_defs.get("f"), Some(&0));
+
+        s = "(def attrs f attr1 attr2 attr3)";
+
+        values = Values::from_str(s).unwrap();
+
+        res = SymbolTable::from_values(values);
+
+        assert!(res.is_ok());
+
+        symbol_table = res.unwrap();
+
+        assert_eq!(symbol_table.file, EMPTY.to_string());
+
+        assert_eq!(symbol_table.fun_attrs_defs.len(), 1);
+        assert_eq!(symbol_table.fun_attrs_defs.get("f"), Some(&0));
+        assert_eq!(symbol_table.fun_attrs.len(), 1);
+        assert_eq!(symbol_table.fun_attrs.get("f").unwrap().len(), 3);
+        assert!(symbol_table.fun_attrs.get("f").unwrap().contains("attr1"));
+        assert!(symbol_table.fun_attrs.get("f").unwrap().contains("attr2"));
+        assert!(symbol_table.fun_attrs.get("f").unwrap().contains("attr3"));
+
+        s = "(def F (attrs attr1 attr2 attr3))";
+
+        values = Values::from_str(s).unwrap();
+
+        res = SymbolTable::from_values(values);
+
+        assert!(res.is_ok());
+
+        symbol_table = res.unwrap();
+
+        assert_eq!(symbol_table.file, EMPTY.to_string());
+
+        assert_eq!(symbol_table.type_attrs_defs.len(), 1);
+        assert_eq!(symbol_table.type_attrs_defs.get("F"), Some(&0));
+        assert_eq!(symbol_table.type_attrs.len(), 1);
+        assert_eq!(symbol_table.type_attrs.get("F").unwrap().len(), 3);
+        assert!(symbol_table.type_attrs.get("F").unwrap().contains("attr1"));
+        assert!(symbol_table.type_attrs.get("F").unwrap().contains("attr2"));
+        assert!(symbol_table.type_attrs.get("F").unwrap().contains("attr3"));
     }
 }
