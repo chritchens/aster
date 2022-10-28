@@ -848,6 +848,18 @@ impl SymbolTable {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
+pub struct GlobalDefPos {
+    pub file: String,
+    pub idx: usize,
+}
+
+impl GlobalDefPos {
+    pub fn new() -> GlobalDefPos {
+        GlobalDefPos::default()
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct GlobalSymbolTable {
     pub files: BTreeSet<String>,
 
@@ -858,6 +870,44 @@ pub struct GlobalSymbolTable {
 impl GlobalSymbolTable {
     pub fn new() -> GlobalSymbolTable {
         GlobalSymbolTable::default()
+    }
+
+    pub fn is_defined(&self, name: &str) -> bool {
+        for table in self.tables.values() {
+            if table.is_defined(name) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn is_undefined(&self, name: &str) -> bool {
+        !self.is_defined(name)
+    }
+
+    pub fn find_positions(&self, name: &str) -> Vec<GlobalDefPos> {
+        let mut positions = Vec::new();
+
+        for table in self.tables.values() {
+            if let Some(idx) = table.find_index(name) {
+                let pos = GlobalDefPos {
+                    file: table.file.clone(),
+                    idx,
+                };
+
+                positions.push(pos);
+            }
+        }
+
+        positions
+    }
+
+    pub fn find_values(&self, name: &str) -> Vec<Value> {
+        self.find_positions(name)
+            .iter()
+            .map(|pos| self.tables.get(&pos.file).unwrap().values[pos.idx].clone())
+            .collect()
     }
 
     pub fn add_table(&mut self, table: SymbolTable) -> Result<()> {
@@ -1132,6 +1182,7 @@ mod tests {
 
     #[test]
     fn global_symbol_table() {
+        use super::GlobalDefPos;
         use super::GlobalSymbolTable;
         use super::SymbolTable;
         use crate::syntax::EMPTY;
@@ -1145,7 +1196,7 @@ mod tests {
 
         let values = Values::from_str(s).unwrap();
 
-        let symbol_table = SymbolTable::from_values(values).unwrap();
+        let symbol_table = SymbolTable::from_values(values.clone()).unwrap();
 
         let mut global_symbol_table = GlobalSymbolTable::new();
 
@@ -1156,5 +1207,32 @@ mod tests {
         assert_eq!(global_symbol_table.files.len(), 1);
         assert!(global_symbol_table.files.contains(EMPTY));
         assert_eq!(global_symbol_table.tables.get(EMPTY), Some(&symbol_table));
+
+        assert!(global_symbol_table.is_defined("T"));
+        assert!(global_symbol_table.is_defined("E"));
+        assert!(global_symbol_table.is_defined("Result"));
+
+        let mut pos = GlobalDefPos::new();
+
+        pos.idx = 0;
+        assert_eq!(global_symbol_table.find_positions("T"), vec![pos.clone()]);
+        assert_eq!(
+            global_symbol_table.find_values("T"),
+            vec![values[0].clone()]
+        );
+
+        pos.idx = 1;
+        assert_eq!(global_symbol_table.find_positions("E"), vec![pos.clone()]);
+        assert_eq!(
+            global_symbol_table.find_values("E"),
+            vec![values[1].clone()]
+        );
+
+        pos.idx = 2;
+        assert_eq!(global_symbol_table.find_positions("Result"), vec![pos]);
+        assert_eq!(
+            global_symbol_table.find_values("Result"),
+            vec![values[2].clone()]
+        );
     }
 }
