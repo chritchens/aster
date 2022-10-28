@@ -57,6 +57,22 @@ impl SymbolTable {
         SymbolTable::default()
     }
 
+    pub fn is_defined(&self, name: &str) -> bool {
+        self.defs.contains_key(name)
+    }
+
+    pub fn is_undefined(&self, name: &str) -> bool {
+        !self.is_defined(name)
+    }
+
+    pub fn find_index(&self, name: &str) -> Option<usize> {
+        self.defs.get(name).map(|idx| idx.to_owned())
+    }
+
+    pub fn find_value(&self, name: &str) -> Option<Value> {
+        self.find_index(name).map(|idx| self.values[idx].clone())
+    }
+
     pub fn add_value(&mut self, value: Value) -> Result<()> {
         let value_file = value.file();
         let value_loc = value.loc();
@@ -899,7 +915,7 @@ mod tests {
 
         let values = Values::from_str(s).unwrap();
 
-        let res = SymbolTable::from_values(values);
+        let res = SymbolTable::from_values(values.clone());
 
         assert!(res.is_ok());
 
@@ -929,10 +945,17 @@ mod tests {
             Some(&"moduleX".into())
         );
 
+        assert!(symbol_table.is_defined("x.D"));
+        assert!(symbol_table.is_defined("x.a"));
         assert!(symbol_table.defs.contains_key("x.D"));
         assert!(symbol_table.defs.contains_key("x.a"));
+
         assert_eq!(symbol_table.defs.get("x.D"), Some(&0));
         assert_eq!(symbol_table.defs.get("x.a"), Some(&0));
+        assert_eq!(symbol_table.find_index("x.D"), Some(0));
+        assert_eq!(symbol_table.find_index("x.a"), Some(0));
+        assert_eq!(symbol_table.find_value("x.D"), Some(values[0].clone()));
+        assert_eq!(symbol_table.find_value("x.a"), Some(values[0].clone()));
     }
 
     #[test]
@@ -1050,7 +1073,7 @@ mod tests {
 
         values = Values::from_str(s).unwrap();
 
-        res = SymbolTable::from_values(values);
+        res = SymbolTable::from_values(values.clone());
 
         assert!(res.is_ok());
 
@@ -1079,7 +1102,7 @@ mod tests {
 
         values = Values::from_str(s).unwrap();
 
-        res = SymbolTable::from_values(values);
+        res = SymbolTable::from_values(values.clone());
 
         assert!(res.is_ok());
 
@@ -1087,10 +1110,17 @@ mod tests {
 
         assert_eq!(symbol_table.file, EMPTY.to_string());
 
+        assert!(symbol_table.is_defined("Main"));
+        assert!(symbol_table.is_defined("main"));
         assert!(symbol_table.defs.contains_key("main"));
         assert!(symbol_table.defs.contains_key("Main"));
+
         assert_eq!(symbol_table.defs.get("Main"), Some(&2));
         assert_eq!(symbol_table.defs.get("main"), Some(&5));
+        assert_eq!(symbol_table.find_index("Main"), Some(2));
+        assert_eq!(symbol_table.find_index("main"), Some(5));
+        assert_eq!(symbol_table.find_value("Main"), Some(values[2].clone()));
+        assert_eq!(symbol_table.find_value("main"), Some(values[5].clone()));
 
         assert_eq!(symbol_table.main_type_attrs, Some(1));
         assert_eq!(symbol_table.main_type, Some(2));
