@@ -14,6 +14,8 @@ pub struct SymbolTable {
     pub file: String,
     pub values: Values,
 
+    pub defs: BTreeMap<String, usize>,
+
     // module -> set(value_idx)
     pub imported_modules: BTreeMap<String, BTreeSet<usize>>,
     // qualifier -> module
@@ -154,6 +156,15 @@ impl SymbolTable {
                     }
 
                     for qualified_name in qualified_names.iter() {
+                        if self.defs.contains_key(qualified_name) {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: form.loc(),
+                                desc: "redefined value".into(),
+                            }));
+                        } else {
+                            self.defs.insert(qualified_name.clone(), tpl_idx);
+                        }
+
                         let name = symbol_name(&qualified_name);
 
                         if is_type_symbol(&name) {
@@ -283,6 +294,15 @@ impl SymbolTable {
                         }
                     };
 
+                    if self.defs.contains_key(&name) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "redefined value".into(),
+                        }));
+                    } else {
+                        self.defs.insert(name.clone(), tpl_idx);
+                    }
+
                     if self.type_defs.contains_key(&name) {
                         return Err(Error::Semantic(SemanticError {
                             loc: form.loc(),
@@ -377,6 +397,15 @@ impl SymbolTable {
                         }
                     };
 
+                    if self.defs.contains_key(&name) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "redefined value".into(),
+                        }));
+                    } else {
+                        self.defs.insert(name.clone(), tpl_idx);
+                    }
+
                     if self.prim_defs.contains_key(&name) {
                         return Err(Error::Semantic(SemanticError {
                             loc: form.loc(),
@@ -412,6 +441,15 @@ impl SymbolTable {
                             }));
                         }
                     };
+
+                    if self.defs.contains_key(&name) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "redefined value".into(),
+                        }));
+                    } else {
+                        self.defs.insert(name.clone(), tpl_idx);
+                    }
 
                     if self.sum_defs.contains_key(&name) {
                         return Err(Error::Semantic(SemanticError {
@@ -449,6 +487,15 @@ impl SymbolTable {
                         }
                     };
 
+                    if self.defs.contains_key(&name) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "redefined value".into(),
+                        }));
+                    } else {
+                        self.defs.insert(name.clone(), tpl_idx);
+                    }
+
                     if self.prod_defs.contains_key(&name) {
                         return Err(Error::Semantic(SemanticError {
                             loc: form.loc(),
@@ -484,6 +531,15 @@ impl SymbolTable {
                             }));
                         }
                     };
+
+                    if self.defs.contains_key(&name) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "redefined value".into(),
+                        }));
+                    } else {
+                        self.defs.insert(name.clone(), tpl_idx);
+                    }
 
                     if self.fun_defs.contains_key(&name) {
                         return Err(Error::Semantic(SemanticError {
@@ -872,6 +928,11 @@ mod tests {
             symbol_table.imported_values.get("x.a"),
             Some(&"moduleX".into())
         );
+
+        assert!(symbol_table.defs.contains_key("x.D"));
+        assert!(symbol_table.defs.contains_key("x.a"));
+        assert_eq!(symbol_table.defs.get("x.D"), Some(&0));
+        assert_eq!(symbol_table.defs.get("x.a"), Some(&0));
     }
 
     #[test]
@@ -1025,6 +1086,11 @@ mod tests {
         symbol_table = res.unwrap();
 
         assert_eq!(symbol_table.file, EMPTY.to_string());
+
+        assert!(symbol_table.defs.contains_key("main"));
+        assert!(symbol_table.defs.contains_key("Main"));
+        assert_eq!(symbol_table.defs.get("Main"), Some(&2));
+        assert_eq!(symbol_table.defs.get("main"), Some(&5));
 
         assert_eq!(symbol_table.main_type_attrs, Some(1));
         assert_eq!(symbol_table.main_type, Some(2));
