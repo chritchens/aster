@@ -112,6 +112,10 @@ impl fmt::Display for Keyword {
 }
 
 impl Keyword {
+    pub fn is(s: &str) -> bool {
+        KEYWORDS.iter().any(|k| k == &s)
+    }
+
     pub fn from_str(s: &str) -> Result<Self> {
         match s {
             "builtin" => Ok(Keyword::Builtin),

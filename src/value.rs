@@ -2,6 +2,7 @@ use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_type_symbol;
+use crate::syntax::Keyword;
 use crate::token::Token;
 use crate::typing::Type;
 use std::fmt;
@@ -69,6 +70,10 @@ impl SymbolValue {
 
     pub fn loc(&self) -> Option<Loc> {
         self.token.loc()
+    }
+
+    pub fn is_keyword(&self) -> bool {
+        Keyword::is(&self.value)
     }
 
     #[allow(clippy::inherent_to_string_shadow_display)]
@@ -189,6 +194,28 @@ impl FormKind {
     }
 }
 
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub enum FormParam {
+    Prim(PrimValue),
+    Symbol(SymbolValue),
+}
+
+impl FormParam {
+    #[allow(clippy::inherent_to_string_shadow_display)]
+    pub fn to_string(&self) -> String {
+        match self {
+            FormParam::Prim(prim) => prim.to_string(),
+            FormParam::Symbol(symbol) => symbol.to_string(),
+        }
+    }
+}
+
+impl fmt::Display for FormParam {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct FormValue {
     pub kind: FormKind,
@@ -223,6 +250,26 @@ impl FormValue {
 
     pub fn tail(&self) -> Vec<Value> {
         self.values[1..].into()
+    }
+
+    pub fn params(&self) -> Vec<FormParam> {
+        let mut params = Vec::new();
+
+        for value in self.values.iter() {
+            match value {
+                Value::Prim(prim) => {
+                    params.push(FormParam::Prim(prim.clone()));
+                }
+                Value::Symbol(symbol) => {
+                    if !symbol.is_keyword() {
+                        params.push(FormParam::Symbol(symbol.clone()));
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        params
     }
 
     pub fn push_value(&mut self, value: &Value) {
