@@ -288,7 +288,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::from_str(&name).is_ok() {
+                            if Keyword::is(&name) {
                                 name = match form.values[2].clone() {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -344,7 +344,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::from_str(&name).is_ok() {
+                            if Keyword::is(&name) {
                                 name = match form.values[2].clone() {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -391,7 +391,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::from_str(&name).is_ok() {
+                            if Keyword::is(&name) {
                                 name = match form.values[2].clone() {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -436,7 +436,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::from_str(&name).is_ok() {
+                            if Keyword::is(&name) {
                                 name = match form.values[2].clone() {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -481,7 +481,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::from_str(&name).is_ok() {
+                            if Keyword::is(&name) {
                                 name = match form.values[2].clone() {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -526,7 +526,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::from_str(&name).is_ok() {
+                            if Keyword::is(&name) {
                                 name = match form.values[2].clone() {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -582,7 +582,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::from_str(&name).is_ok() {
+                            if Keyword::is(&name) {
                                 name = match form.values[2].clone() {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -634,7 +634,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let tmp_name = symbol.to_string();
 
-                            if Keyword::from_str(&tmp_name).is_ok() {
+                            if Keyword::is(&tmp_name) {
                                 name = match form.values[2].clone() {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
