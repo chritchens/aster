@@ -51,7 +51,7 @@ impl Tokens {
             let chunk = chunks[idx].clone();
             let s = chunk.content.clone();
 
-            match s.clone() {
+            match s {
                 mut x if (is_comment_mark(&x) || is_doc_comment_mark(&x)) => {
                     let mut token = if is_comment_mark(&x) {
                         Token::new_comment()

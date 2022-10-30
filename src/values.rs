@@ -211,12 +211,12 @@ mod tests {
 
         assert_eq!(values.len(), 1);
 
-        match values[0].clone() {
+        match &values[0] {
             Value::Form(form) => {
                 assert_eq!(form.len(), 4);
                 assert_eq!(form.kind, FormKind::ImportDefs);
 
-                match form.values[3].clone() {
+                match &form.values[3] {
                     Value::Form(form) => {
                         assert_eq!(form.len(), 5);
                         assert_eq!(form.kind, FormKind::AnonProd);
@@ -244,12 +244,12 @@ mod tests {
 
         assert_eq!(values.len(), 5);
 
-        match values[2].clone() {
+        match &values[2] {
             Value::Form(form) => {
                 assert_eq!(form.len(), 4);
                 assert_eq!(form.kind, FormKind::DefSig);
 
-                match form.values[3].clone() {
+                match &form.values[3] {
                     Value::Form(form) => {
                         assert_eq!(form.len(), 3);
                         assert_eq!(form.kind, FormKind::TypeApp);

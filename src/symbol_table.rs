@@ -102,7 +102,7 @@ impl SymbolTable {
                     let mut qualifier = String::new();
 
                     if form.values.len() > 3 {
-                        match form.values[3].clone() {
+                        match &form.values[3] {
                             Value::Symbol(symbol) => {
                                 qualifier = symbol.to_string();
                             }
@@ -116,7 +116,7 @@ impl SymbolTable {
                     }
 
                     if form.values.len() > 2 {
-                        match form.values[2].clone() {
+                        match &form.values[2] {
                             Value::Form(form) => {
                                 if form.kind != FormKind::AnonProd {
                                     return Err(Error::Semantic(SemanticError {
@@ -206,7 +206,7 @@ impl SymbolTable {
                         }
                     }
                 }
-                FormKind::ExportDefs => match form.values[1].clone() {
+                FormKind::ExportDefs => match &form.values[1] {
                     Value::Symbol(symbol) => {
                         let name = symbol.to_string();
 
@@ -284,7 +284,7 @@ impl SymbolTable {
                     }
                 },
                 FormKind::DefType => {
-                    let name = match form.values[1].clone() {
+                    let name = match &form.values[1] {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
@@ -340,12 +340,12 @@ impl SymbolTable {
                     }
                 }
                 FormKind::DefSig => {
-                    let name = match form.values[1].clone() {
+                    let name = match &form.values[1] {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
                             if Keyword::is(&name) {
-                                name = match form.values[2].clone() {
+                                name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
                                         return Err(Error::Semantic(SemanticError {
@@ -387,12 +387,12 @@ impl SymbolTable {
                     }
                 }
                 FormKind::DefPrim => {
-                    let name = match form.values[1].clone() {
+                    let name = match &form.values[1] {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
                             if Keyword::is(&name) {
-                                name = match form.values[2].clone() {
+                                name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
                                         return Err(Error::Semantic(SemanticError {
@@ -432,12 +432,12 @@ impl SymbolTable {
                     self.prim_defs.insert(name, tpl_idx);
                 }
                 FormKind::DefSum => {
-                    let name = match form.values[1].clone() {
+                    let name = match &form.values[1] {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
                             if Keyword::is(&name) {
-                                name = match form.values[2].clone() {
+                                name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
                                         return Err(Error::Semantic(SemanticError {
@@ -477,12 +477,12 @@ impl SymbolTable {
                     self.sum_defs.insert(name, tpl_idx);
                 }
                 FormKind::DefProd => {
-                    let name = match form.values[1].clone() {
+                    let name = match &form.values[1] {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
                             if Keyword::is(&name) {
-                                name = match form.values[2].clone() {
+                                name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
                                         return Err(Error::Semantic(SemanticError {
@@ -522,12 +522,12 @@ impl SymbolTable {
                     self.prod_defs.insert(name, tpl_idx);
                 }
                 FormKind::DefFun => {
-                    let name = match form.values[1].clone() {
+                    let name = match &form.values[1] {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
                             if Keyword::is(&name) {
-                                name = match form.values[2].clone() {
+                                name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
                                         return Err(Error::Semantic(SemanticError {
@@ -578,12 +578,12 @@ impl SymbolTable {
                     }
                 }
                 FormKind::DefApp => {
-                    let name = match form.values[1].clone() {
+                    let name = match &form.values[1] {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
                             if Keyword::is(&name) {
-                                name = match form.values[2].clone() {
+                                name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
                                         return Err(Error::Semantic(SemanticError {
@@ -630,12 +630,12 @@ impl SymbolTable {
 
                     let mut attributes: Vec<String> = Vec::new();
 
-                    match form.values[1].clone() {
+                    match &form.values[1] {
                         Value::Symbol(symbol) => {
                             let tmp_name = symbol.to_string();
 
                             if Keyword::is(&tmp_name) {
-                                name = match form.values[2].clone() {
+                                name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
                                         return Err(Error::Semantic(SemanticError {
@@ -668,7 +668,7 @@ impl SymbolTable {
                             } else {
                                 name = tmp_name;
 
-                                match form.values[2].clone() {
+                                match &form.values[2] {
                                     Value::Form(form) => {
                                         if form.kind != FormKind::AnonAttrs {
                                             return Err(Error::Semantic(SemanticError {
