@@ -91,7 +91,7 @@ impl ImportForm {
                         _ => {
                             return Err(Error::Semantic(SemanticError {
                                 loc: token.loc(),
-                                desc: format!("unected token: {}", token.to_string()),
+                                desc: format!("unexpected token: {}", token.to_string()),
                             }));
                         }
                     }
@@ -100,7 +100,7 @@ impl ImportForm {
             _ => {
                 return Err(Error::Semantic(SemanticError {
                     loc: tokens[idx].loc(),
-                    desc: format!("unected token: {}", tokens[idx].to_string()),
+                    desc: format!("unexpected token: {}", tokens[idx].to_string()),
                 }));
             }
         }
@@ -108,7 +108,7 @@ impl ImportForm {
         if qualifier.is_some() && idx + 1 < len {
             return Err(Error::Semantic(SemanticError {
                 loc: tokens[idx].loc(),
-                desc: format!("unected token: {}", tokens[idx].to_string()),
+                desc: format!("unexpected token: {}", tokens[idx].to_string()),
             }));
         } else if tokens[idx].kind == TokenKind::ValueSymbol {
             qualifier = Some(tokens[idx].to_string());
