@@ -11,6 +11,7 @@ use crate::syntax::{is_form_end, is_form_start};
 use crate::syntax::{is_path_symbol, is_symbol, is_type_symbol, is_value_symbol};
 use crate::token::Token;
 use std::convert;
+use std::fmt;
 use std::fs;
 use std::iter;
 use std::ops;
@@ -325,6 +326,21 @@ impl Tokens {
 
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         Self::from_string(fs::read_to_string(path)?)
+    }
+
+    #[allow(clippy::inherent_to_string_shadow_display)]
+    pub fn to_string(&self) -> String {
+        self.0
+            .iter()
+            .map(|t| t.to_string())
+            .collect::<Vec<String>>()
+            .join(" ")
+    }
+}
+
+impl fmt::Display for Tokens {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
