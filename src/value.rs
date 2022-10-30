@@ -230,7 +230,7 @@ impl FormKind {
                                     "prod" => FormKind::DefProd,
                                     "fun" => FormKind::DefFun,
                                     "attrs" => FormKind::DefAttrs,
-                                    "app" | "let" => FormKind::DefApp,
+                                    "app" => FormKind::DefApp,
                                     _ => {
                                         return Err(Error::Semantic(SemanticError {
                                             loc: head.loc(),
