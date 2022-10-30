@@ -69,6 +69,14 @@ impl Value {
         }
     }
 
+    pub fn validate(&self) -> Result<()> {
+        match self {
+            Value::Prim(value) => value.validate(),
+            Value::Symbol(value) => value.validate(),
+            Value::Form(values) => values.validate(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {

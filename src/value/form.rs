@@ -170,6 +170,11 @@ impl FormValue {
         self.values[1..].into()
     }
 
+    pub fn validate(&self) -> Result<()> {
+        // TODO
+        Ok(())
+    }
+
     pub fn params(&self) -> Vec<FormParam> {
         let mut params = Vec::new();
 
