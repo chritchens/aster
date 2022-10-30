@@ -52,6 +52,19 @@ impl SymbolValue {
         self.kind == SymbolKind::Value
     }
 
+    pub fn validate(&self) -> Result<()> {
+        let expected = SymbolValue::from_token(self.token.clone())?;
+
+        if self != &expected {
+            Err(Error::Semantic(SemanticError {
+                loc: self.token.loc(),
+                desc: "expected symbol to represent its token".into(),
+            }))
+        } else {
+            Ok(())
+        }
+    }
+
     pub fn from_token(token: Token) -> Result<SymbolValue> {
         match token.kind {
             TokenKind::Keyword
@@ -94,5 +107,31 @@ impl SymbolValue {
 impl fmt::Display for SymbolValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn symbol_value_validate() {
+        use super::SymbolValue;
+        use crate::token::Tokens;
+
+        let s = "a";
+        let s1 = "A";
+
+        let tokens = Tokens::from_str(s).unwrap();
+        let token = tokens[0].clone();
+
+        let tokens1 = Tokens::from_str(s1).unwrap();
+        let token1 = tokens1[0].clone();
+
+        let mut symbol = SymbolValue::from_token(token).unwrap();
+
+        assert!(symbol.validate().is_ok());
+
+        symbol.token = token1;
+
+        assert!(symbol.validate().is_err());
     }
 }
