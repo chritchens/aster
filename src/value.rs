@@ -108,6 +108,14 @@ impl SymbolValue {
         Keyword::is(&self.value)
     }
 
+    pub fn is_type(&self) -> bool {
+        self.kind == SymbolKind::Type
+    }
+
+    pub fn is_value(&self) -> bool {
+        self.kind == SymbolKind::Value
+    }
+
     pub fn from_token(token: Token) -> Result<SymbolValue> {
         match token.kind {
             TokenKind::Keyword
@@ -320,21 +328,143 @@ impl FormValue {
     pub fn params(&self) -> Vec<FormParam> {
         let mut params = Vec::new();
 
-        for value in self.values.iter() {
-            match value {
-                Value::Prim(prim) => {
-                    params.push(FormParam::Prim(prim.clone()));
+        match self.kind {
+            FormKind::AnonFun => {
+                for value in self.values[2..].iter() {
+                    match value {
+                        Value::Prim(prim) => params.push(FormParam::Prim(prim.clone())),
+                        Value::Symbol(symbol) => {
+                            if !symbol.is_keyword() {
+                                params.push(FormParam::Symbol(symbol.clone()))
+                            }
+                        }
+                        _ => {}
+                    }
                 }
-                Value::Symbol(symbol) => {
-                    if !symbol.is_keyword() {
+            }
+            FormKind::AnonType => {
+                for value in self.values[1..].iter() {
+                    if let Value::Symbol(symbol) = value {
+                        if !symbol.is_keyword() {
+                            params.push(FormParam::Symbol(symbol.clone()))
+                        }
+                    }
+                }
+            }
+            FormKind::DefFun => match &self.values[2] {
+                Value::Form(form) => {
+                    params = form.params();
+                }
+                _ => {
+                    for value in self.values[3..].iter() {
+                        match value {
+                            Value::Prim(prim) => params.push(FormParam::Prim(prim.clone())),
+                            Value::Symbol(symbol) => {
+                                if !symbol.is_keyword() {
+                                    params.push(FormParam::Symbol(symbol.clone()))
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            },
+            FormKind::DefType => match &self.values[2] {
+                Value::Form(form) => {
+                    params = form.params();
+                }
+                _ => {
+                    for value in self.values[3..].iter() {
+                        match value {
+                            Value::Prim(prim) => params.push(FormParam::Prim(prim.clone())),
+                            Value::Symbol(symbol) => {
+                                if !symbol.is_keyword() {
+                                    params.push(FormParam::Symbol(symbol.clone()))
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            },
+            FormKind::FunApp => {
+                let mut found_first = false;
+
+                for value in self.values.iter() {
+                    match value {
+                        Value::Prim(prim) => {
+                            params.push(FormParam::Prim(prim.clone()));
+                        }
+                        Value::Symbol(symbol) => {
+                            if !symbol.is_keyword() {
+                                if found_first {
+                                    params.push(FormParam::Symbol(symbol.clone()));
+                                } else {
+                                    found_first = true;
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            FormKind::TypeApp => {
+                for value in self.values[1..].iter() {
+                    if let Value::Symbol(symbol) = value {
                         params.push(FormParam::Symbol(symbol.clone()));
                     }
                 }
-                _ => {}
             }
+            _ => {}
         }
 
         params
+    }
+
+    pub fn body(&self) -> Result<Option<Value>> {
+        match self.kind {
+            FormKind::DefType => match &self.values[self.values.len() - 1] {
+                Value::Form(form) => match form.kind {
+                    FormKind::AnonType => form.body(),
+                    _ => Ok(Some(Value::Form(form.clone()))),
+                },
+                _ => Ok(None),
+            },
+            FormKind::DefFun => match &self.values[self.values.len() - 1] {
+                Value::Form(form) => match form.kind {
+                    FormKind::AnonFun => form.body(),
+                    _ => Ok(Some(Value::Form(form.clone()))),
+                },
+                _ => Ok(None),
+            },
+            FormKind::AnonType => match &self.values[self.values.len() - 1] {
+                Value::Form(form) => {
+                    if form.kind != FormKind::TypeApp {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "expected a type application".into(),
+                        }));
+                    }
+
+                    Ok(Some(Value::Form(form.clone())))
+                }
+                _ => Ok(None),
+            },
+            FormKind::AnonFun => match &self.values[self.values.len() - 1] {
+                Value::Form(form) => {
+                    if form.kind != FormKind::FunApp {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: form.loc(),
+                            desc: "expected a function application".into(),
+                        }));
+                    }
+
+                    Ok(Some(Value::Form(form.clone())))
+                }
+                _ => Ok(None),
+            },
+            _ => Ok(None),
+        }
     }
 
     pub fn push_value(&mut self, value: &Value) {
@@ -411,6 +541,20 @@ impl Value {
         }
     }
 
+    pub fn params(&self) -> Vec<FormParam> {
+        match self {
+            Value::Form(value) => value.params(),
+            _ => vec![],
+        }
+    }
+
+    pub fn body(&self) -> Result<Option<Value>> {
+        match self {
+            Value::Form(value) => value.body(),
+            _ => Ok(None),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
@@ -424,5 +568,117 @@ impl Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn value_params_and_body() {
+        use crate::values::Values;
+
+        let mut s = "(def fun f a b (+ a b))";
+
+        let mut values = Values::from_str(s).unwrap();
+
+        let mut value = values[0].clone();
+
+        let mut params = value.params();
+
+        assert_eq!(params.len(), 2);
+        assert_eq!(params[0].to_string(), "a");
+        assert_eq!(params[1].to_string(), "b");
+
+        if let Some(body) = value.body().unwrap() {
+            assert_eq!(body.to_string(), "(+ a b)");
+        } else {
+            panic!("expected a function body");
+        }
+
+        s = "(def f (fun f a b (+ a b)))";
+
+        values = Values::from_str(s).unwrap();
+
+        value = values[0].clone();
+
+        params = value.params();
+
+        assert_eq!(params.len(), 2);
+        assert_eq!(params[0].to_string(), "a");
+        assert_eq!(params[1].to_string(), "b");
+
+        if let Some(body) = value.body().unwrap() {
+            assert_eq!(body.to_string(), "(+ a b)");
+        } else {
+            panic!("expected a function body");
+        }
+
+        s = "(def type F A B (Fun A B))";
+
+        values = Values::from_str(s).unwrap();
+
+        value = values[0].clone();
+
+        params = value.params();
+
+        assert_eq!(params.len(), 2);
+        assert_eq!(params[0].to_string(), "A");
+        assert_eq!(params[1].to_string(), "B");
+
+        if let Some(body) = value.body().unwrap() {
+            assert_eq!(body.to_string(), "(Fun A B)");
+        } else {
+            panic!("expected a type body");
+        }
+
+        s = "(def F (type A B (Fun A B)))";
+
+        values = Values::from_str(s).unwrap();
+
+        value = values[0].clone();
+
+        params = value.params();
+
+        assert_eq!(params.len(), 2);
+        assert_eq!(params[0].to_string(), "A");
+        assert_eq!(params[1].to_string(), "B");
+
+        if let Some(body) = value.body().unwrap() {
+            assert_eq!(body.to_string(), "(Fun A B)");
+        } else {
+            panic!("expected a type body");
+        }
+
+        s = "(f a b c 10)";
+
+        values = Values::from_str(s).unwrap();
+
+        value = values[0].clone();
+
+        params = value.params();
+
+        assert_eq!(params.len(), 4);
+        assert_eq!(params[0].to_string(), "a");
+        assert_eq!(params[1].to_string(), "b");
+        assert_eq!(params[2].to_string(), "c");
+        assert_eq!(params[3].to_string(), "10");
+
+        assert!(value.body().unwrap().is_none());
+
+        s = "(app f a b c 10)";
+
+        values = Values::from_str(s).unwrap();
+
+        value = values[0].clone();
+
+        params = value.params();
+
+        assert_eq!(params.len(), 4);
+        assert_eq!(params[0].to_string(), "a");
+        assert_eq!(params[1].to_string(), "b");
+        assert_eq!(params[2].to_string(), "c");
+        assert_eq!(params[3].to_string(), "10");
+
+        assert!(value.body().unwrap().is_none());
     }
 }
