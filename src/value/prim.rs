@@ -25,6 +25,19 @@ impl PrimValue {
         self.token.loc()
     }
 
+    pub fn validate(&self) -> Result<()> {
+        let expected = PrimValue::from_token(self.token.clone())?;
+
+        if self != &expected {
+            Err(Error::Semantic(SemanticError {
+                loc: self.token.loc(),
+                desc: "expected primitive to represent its token".into(),
+            }))
+        } else {
+            Ok(())
+        }
+    }
+
     pub fn from_token(token: Token) -> Result<PrimValue> {
         match token.kind {
             TokenKind::EmptyLiteral
@@ -66,5 +79,31 @@ impl PrimValue {
 impl fmt::Display for PrimValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn prim_value_validate() {
+        use super::PrimValue;
+        use crate::token::Tokens;
+
+        let s = "10";
+        let s1 = "11";
+
+        let tokens = Tokens::from_str(s).unwrap();
+        let token = tokens[0].clone();
+
+        let tokens1 = Tokens::from_str(s1).unwrap();
+        let token1 = tokens1[0].clone();
+
+        let mut prim = PrimValue::from_token(token).unwrap();
+
+        assert!(prim.validate().is_ok());
+
+        prim.token = token1;
+
+        assert!(prim.validate().is_err());
     }
 }
