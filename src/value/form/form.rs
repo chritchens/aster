@@ -1,9 +1,9 @@
-use super::{PrimValue, SymbolValue, Value};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_type_symbol;
 use crate::typing::Type;
+use crate::value::{PrimValue, SymbolValue, Value};
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
