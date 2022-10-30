@@ -1,6 +1,5 @@
-use super::PrimValue;
-use super::SymbolValue;
 use super::{FormParam, FormValue};
+use super::{PrimValue, SymbolValue};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::typing::Type;
@@ -90,7 +89,7 @@ impl fmt::Display for Value {
 mod tests {
     #[test]
     fn value_params_and_body() {
-        use crate::values::Values;
+        use crate::value::Values;
 
         let mut s = "(def fun f a b (+ a b))";
 

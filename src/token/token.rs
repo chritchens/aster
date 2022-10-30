@@ -1,5 +1,4 @@
-use crate::chunk::StringChunk;
-use crate::chunks::StringChunks;
+use crate::chunk::{StringChunk, StringChunks};
 use crate::loc::Loc;
 use crate::syntax::EMPTY;
 

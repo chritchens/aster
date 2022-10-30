@@ -3,8 +3,7 @@ use crate::result::Result;
 use crate::syntax::is_type_symbol;
 use crate::syntax::Keyword;
 use crate::syntax::{symbol_name, symbol_qualifier, symbol_with_qualifier};
-use crate::value::{FormKind, Value};
-use crate::values::Values;
+use crate::value::{FormKind, Value, Values};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::Path;
@@ -959,7 +958,7 @@ mod tests {
     fn symbol_table_imports() {
         use super::SymbolTable;
         use crate::syntax::EMPTY;
-        use crate::values::Values;
+        use crate::value::Values;
 
         let s = "(import moduleX (prod a b c D) x)";
 
@@ -1012,7 +1011,7 @@ mod tests {
     fn symbol_table_exports() {
         use super::SymbolTable;
         use crate::syntax::EMPTY;
-        use crate::values::Values;
+        use crate::value::Values;
 
         let mut s = "(export (prod a b c D))";
 
@@ -1052,7 +1051,7 @@ mod tests {
     fn symbol_table_definitions() {
         use super::SymbolTable;
         use crate::syntax::EMPTY;
-        use crate::values::Values;
+        use crate::value::Values;
 
         let mut s = "(def X (type (Prod String UInt Float)))";
 
@@ -1186,7 +1185,7 @@ mod tests {
         use super::GlobalSymbolTable;
         use super::SymbolTable;
         use crate::syntax::EMPTY;
-        use crate::values::Values;
+        use crate::value::Values;
 
         let s = "
             (def type A Prim)

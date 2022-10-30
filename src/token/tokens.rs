@@ -1,4 +1,4 @@
-use crate::chunks::StringChunks;
+use crate::chunk::StringChunks;
 use crate::error::{Error, SyntaxError};
 use crate::result::Result;
 use crate::syntax::is_keyword;

@@ -1,6 +1,4 @@
-use super::PrimValue;
-use super::SymbolValue;
-use super::Value;
+use super::{PrimValue, SymbolValue, Value};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;

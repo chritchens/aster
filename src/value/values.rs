@@ -1,9 +1,8 @@
 use crate::error::{Error, SemanticError};
 use crate::result::Result;
-use crate::token::TokenKind;
-use crate::tokens::Tokens;
-use crate::value::FormKind;
-use crate::value::{FormValue, PrimValue, SymbolValue, Value};
+use crate::token::{TokenKind, Tokens};
+use crate::value::{FormKind, FormValue};
+use crate::value::{PrimValue, SymbolValue, Value};
 use std::fmt;
 use std::fs;
 use std::iter;
