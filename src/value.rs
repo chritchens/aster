@@ -680,5 +680,35 @@ mod tests {
         assert_eq!(params[3].to_string(), "10");
 
         assert!(value.body().unwrap().is_none());
+
+        s = "(Fun A B)";
+
+        values = Values::from_str(s).unwrap();
+
+        value = values[0].clone();
+
+        params = value.params();
+
+        assert_eq!(params.len(), 2);
+        assert_eq!(params[0].to_string(), "A");
+        assert_eq!(params[1].to_string(), "B");
+
+        assert!(value.body().unwrap().is_none());
+
+        s = "(type (Fun A B))";
+
+        values = Values::from_str(s).unwrap();
+
+        value = values[0].clone();
+
+        params = value.params();
+
+        assert_eq!(params.len(), 0);
+
+        if let Some(body) = value.body().unwrap() {
+            assert_eq!(body.to_string(), "(Fun A B)");
+        } else {
+            panic!("expected a type body");
+        }
     }
 }
