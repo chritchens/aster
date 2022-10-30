@@ -52,12 +52,10 @@ impl PrimValue {
 
                 Ok(prim)
             }
-            _ => {
-                return Err(Error::Semantic(SemanticError {
-                    loc: token.loc(),
-                    desc: "expected a primitive value".into(),
-                }));
-            }
+            _ => Err(Error::Semantic(SemanticError {
+                loc: token.loc(),
+                desc: "expected a primitive value".into(),
+            })),
         }
     }
 
@@ -136,12 +134,10 @@ impl SymbolValue {
 
                 Ok(symbol)
             }
-            _ => {
-                return Err(Error::Semantic(SemanticError {
-                    loc: token.loc(),
-                    desc: "expected a symbol".into(),
-                }));
-            }
+            _ => Err(Error::Semantic(SemanticError {
+                loc: token.loc(),
+                desc: "expected a symbol".into(),
+            })),
         }
     }
 
