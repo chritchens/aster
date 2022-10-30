@@ -3,6 +3,7 @@ use crate::loc::Loc;
 use crate::syntax::is_separator_char;
 use crate::syntax::{COMMENT_MARK, COMMENT_MARK_POSTFIX};
 use std::convert;
+use std::fmt;
 use std::iter;
 use std::ops;
 
@@ -94,6 +95,21 @@ impl CharChunks {
 
     pub fn from_string(s: String) -> Self {
         Self::from_str(&s)
+    }
+
+    #[allow(clippy::inherent_to_string_shadow_display)]
+    pub fn to_string(&self) -> String {
+        self.content
+            .iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<String>>()
+            .join(" ")
+    }
+}
+
+impl fmt::Display for CharChunks {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -246,6 +262,21 @@ impl StringChunks {
 
     pub fn from_string(s: String) -> Self {
         Self::from_str(&s)
+    }
+
+    #[allow(clippy::inherent_to_string_shadow_display)]
+    pub fn to_string(&self) -> String {
+        self.content
+            .iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<String>>()
+            .join(" ")
+    }
+}
+
+impl fmt::Display for StringChunks {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 

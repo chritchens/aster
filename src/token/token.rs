@@ -1,6 +1,7 @@
 use crate::chunk::{StringChunk, StringChunks};
 use crate::loc::Loc;
 use crate::syntax::EMPTY;
+use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum TokenKind {
@@ -118,5 +119,16 @@ impl Token {
 
     pub fn push(&mut self, chunk: StringChunk) {
         self.chunks.push(chunk)
+    }
+
+    #[allow(clippy::inherent_to_string_shadow_display)]
+    pub fn to_string(&self) -> String {
+        self.chunks.to_string()
+    }
+}
+
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
