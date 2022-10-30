@@ -1,10 +1,8 @@
 use crate::error::{Error, SemanticError};
 use crate::result::Result;
-use crate::syntax::is_type_symbol;
 use crate::token::TokenKind;
 use crate::tokens::Tokens;
-use crate::typing::Type;
-use crate::value::{FormKind, SymbolKind};
+use crate::value::FormKind;
 use crate::value::{FormValue, PrimValue, SymbolValue, Value};
 use std::fmt;
 use std::fs;
@@ -57,19 +55,7 @@ impl Values {
                     idx += 1;
                 }
                 TokenKind::Keyword => {
-                    let string_value = token.chunks[0].to_string();
-                    let mut symbol = SymbolValue::new();
-
-                    if is_type_symbol(&string_value) {
-                        symbol.kind = SymbolKind::Type;
-                        symbol.typing = Type::Type;
-                    } else {
-                        symbol.kind = SymbolKind::Value;
-                        symbol.typing = Type::Builtin;
-                    }
-
-                    symbol.value = string_value;
-                    symbol.token = token;
+                    let symbol = SymbolValue::from_token(token)?;
 
                     let value = Value::Symbol(symbol.clone());
 
@@ -84,20 +70,7 @@ impl Values {
                 | TokenKind::FloatLiteral
                 | TokenKind::CharLiteral
                 | TokenKind::StringLiteral => {
-                    let mut prim = PrimValue::new();
-
-                    prim.typing = match token.kind {
-                        TokenKind::EmptyLiteral => Type::Empty,
-                        TokenKind::UIntLiteral => Type::UInt,
-                        TokenKind::IntLiteral => Type::Int,
-                        TokenKind::FloatLiteral => Type::Float,
-                        TokenKind::CharLiteral => Type::Char,
-                        TokenKind::StringLiteral => Type::String,
-                        _ => unreachable!(),
-                    };
-
-                    prim.value = token.chunks[0].to_string();
-                    prim.token = token;
+                    let prim = PrimValue::from_token(token)?;
 
                     let value = Value::Prim(prim.clone());
 
@@ -125,19 +98,7 @@ impl Values {
                     idx += 1;
                 }
                 TokenKind::ValueSymbol | TokenKind::TypeSymbol | TokenKind::PathSymbol => {
-                    let string_value = token.chunks[0].to_string();
-                    let mut symbol = SymbolValue::new();
-
-                    if is_type_symbol(&string_value) {
-                        symbol.kind = SymbolKind::Type;
-                        symbol.typing = Type::Type;
-                    } else {
-                        symbol.kind = SymbolKind::Value;
-                        symbol.typing = Type::Unknown(string_value.clone());
-                    }
-
-                    symbol.value = string_value;
-                    symbol.token = token;
+                    let symbol = SymbolValue::from_token(token)?;
 
                     let value = Value::Symbol(symbol.clone());
 
