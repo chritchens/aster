@@ -74,19 +74,17 @@ impl ImportForm {
 
                 for tidx in start_idx..len {
                     let token = tokens[tidx].clone();
+                    idx += 1;
 
                     match token.kind {
                         TokenKind::FormEnd => {
-                            idx += 1;
                             break;
                         }
                         TokenKind::TypeSymbol => {
                             type_defs.push(token.to_string());
-                            idx += 1;
                         }
                         TokenKind::ValueSymbol => {
                             value_defs.push(token.to_string());
-                            idx += 1;
                         }
                         _ => {
                             return Err(Error::Semantic(SemanticError {
