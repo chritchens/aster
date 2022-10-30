@@ -1189,10 +1189,12 @@ mod tests {
         use crate::values::Values;
 
         let s = "
-            (def type T Prim)
-            (def type E Prim)
+            (def type A Prim)
+            (def type B Prim)
 
-            (def type Result (Sum T E))";
+            (def type Result T E (Sum T E))
+            (def type AResult E (Result A E))
+            (def type BResult E (Result B E))";
 
         let values = Values::from_str(s).unwrap();
 
@@ -1208,31 +1210,53 @@ mod tests {
         assert!(global_symbol_table.files.contains(EMPTY));
         assert_eq!(global_symbol_table.tables.get(EMPTY), Some(&symbol_table));
 
-        assert!(global_symbol_table.is_defined("T"));
-        assert!(global_symbol_table.is_defined("E"));
+        assert!(global_symbol_table.is_defined("A"));
+        assert!(global_symbol_table.is_defined("B"));
         assert!(global_symbol_table.is_defined("Result"));
+        assert!(global_symbol_table.is_defined("AResult"));
+        assert!(global_symbol_table.is_defined("BResult"));
 
         let mut pos = GlobalDefPos::new();
 
         pos.idx = 0;
-        assert_eq!(global_symbol_table.find_positions("T"), vec![pos.clone()]);
+        assert_eq!(global_symbol_table.find_positions("A"), vec![pos.clone()]);
         assert_eq!(
-            global_symbol_table.find_values("T"),
+            global_symbol_table.find_values("A"),
             vec![values[0].clone()]
         );
 
         pos.idx = 1;
-        assert_eq!(global_symbol_table.find_positions("E"), vec![pos.clone()]);
+        assert_eq!(global_symbol_table.find_positions("B"), vec![pos.clone()]);
         assert_eq!(
-            global_symbol_table.find_values("E"),
+            global_symbol_table.find_values("B"),
             vec![values[1].clone()]
         );
 
         pos.idx = 2;
-        assert_eq!(global_symbol_table.find_positions("Result"), vec![pos]);
+        assert_eq!(
+            global_symbol_table.find_positions("Result"),
+            vec![pos.clone()]
+        );
         assert_eq!(
             global_symbol_table.find_values("Result"),
             vec![values[2].clone()]
+        );
+
+        pos.idx = 3;
+        assert_eq!(
+            global_symbol_table.find_positions("AResult"),
+            vec![pos.clone()]
+        );
+        assert_eq!(
+            global_symbol_table.find_values("AResult"),
+            vec![values[3].clone()]
+        );
+
+        pos.idx = 4;
+        assert_eq!(global_symbol_table.find_positions("BResult"), vec![pos]);
+        assert_eq!(
+            global_symbol_table.find_values("BResult"),
+            vec![values[4].clone()]
         );
     }
 }
