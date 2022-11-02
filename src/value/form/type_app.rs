@@ -78,6 +78,17 @@ impl TypeAppForm {
 
         while idx < len {
             match tokens[idx].kind {
+                TokenKind::Keyword => {
+                    if !is_type_symbol(&tokens[idx].to_string()) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: tokens[idx].loc(),
+                            desc: format!("unexpected token: {}", tokens[idx].to_string()),
+                        }));
+                    }
+
+                    params.push(TypeAppFormParam::TypeSymbol(tokens[idx].to_string()));
+                    idx += 1;
+                }
                 TokenKind::TypeSymbol => {
                     params.push(TypeAppFormParam::TypeSymbol(tokens[idx].to_string()));
                     idx += 1;
