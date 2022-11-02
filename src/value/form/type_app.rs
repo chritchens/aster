@@ -1,4 +1,5 @@
 use crate::error::{Error, SemanticError};
+use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_type_symbol;
 use crate::token::{TokenKind, Tokens};
@@ -36,6 +37,14 @@ pub struct TypeAppForm {
 impl TypeAppForm {
     pub fn new() -> TypeAppForm {
         TypeAppForm::default()
+    }
+
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
     }
 
     pub fn from_tokens(tokens: &Tokens) -> Result<TypeAppForm> {

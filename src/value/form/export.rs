@@ -1,4 +1,5 @@
 use crate::error::{Error, SemanticError};
+use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::{TokenKind, Tokens};
 
@@ -12,6 +13,14 @@ pub struct ExportForm {
 impl ExportForm {
     pub fn new() -> ExportForm {
         ExportForm::default()
+    }
+
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
     }
 
     pub fn from_tokens(tokens: &Tokens) -> Result<ExportForm> {

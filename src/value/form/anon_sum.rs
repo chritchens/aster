@@ -1,5 +1,6 @@
 use super::{FunAppForm, FunAppFormParam};
 use crate::error::{Error, SemanticError};
+use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
 use std::fmt;
@@ -43,6 +44,14 @@ pub struct AnonSumForm {
 impl AnonSumForm {
     pub fn new() -> AnonSumForm {
         AnonSumForm::default()
+    }
+
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
     }
 
     pub fn from_fun_app(fun_app: &FunAppForm) -> Result<AnonSumForm> {
