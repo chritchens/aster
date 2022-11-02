@@ -1,4 +1,5 @@
 use crate::error::{Error, SemanticError};
+use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_value_symbol;
 use crate::token::{TokenKind, Tokens};
@@ -38,6 +39,14 @@ pub struct FunAppForm {
 impl FunAppForm {
     pub fn new() -> FunAppForm {
         FunAppForm::default()
+    }
+
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
     }
 
     pub fn from_tokens(tokens: &Tokens) -> Result<FunAppForm> {
