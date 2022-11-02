@@ -184,7 +184,7 @@ mod tests {
 
         let mut res = FunAppForm::from_str(s);
 
-        //assert!(res.is_ok());
+        assert!(res.is_ok());
 
         let mut form = res.unwrap();
 
