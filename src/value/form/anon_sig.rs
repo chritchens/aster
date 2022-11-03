@@ -81,7 +81,7 @@ mod tests {
 
         let mut res = AnonSigForm::from_str(s);
 
-        //assert!(res.is_ok());
+        assert!(res.is_ok());
 
         let mut form = res.unwrap();
 
