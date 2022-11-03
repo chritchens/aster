@@ -7,6 +7,7 @@ pub mod form;
 pub mod fun_app;
 pub mod import;
 pub mod mixed_app;
+pub mod prim;
 pub mod sig;
 pub mod type_app;
 
@@ -18,5 +19,6 @@ pub use form::*;
 pub use fun_app::*;
 pub use import::*;
 pub use mixed_app::*;
+pub use prim::*;
 pub use sig::*;
 pub use type_app::*;
