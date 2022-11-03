@@ -1,4 +1,5 @@
 pub mod anon_attrs;
+pub mod anon_fun;
 pub mod anon_prim;
 pub mod anon_sig;
 pub mod anon_sum;
@@ -6,6 +7,7 @@ pub mod attrs;
 pub mod export;
 #[allow(clippy::module_inception)]
 pub mod form;
+pub mod fun;
 pub mod fun_app;
 pub mod import;
 pub mod mixed_app;
@@ -15,12 +17,14 @@ pub mod sum;
 pub mod type_app;
 
 pub use anon_attrs::*;
+pub use anon_fun::*;
 pub use anon_prim::*;
 pub use anon_sig::*;
 pub use anon_sum::*;
 pub use attrs::*;
 pub use export::*;
 pub use form::*;
+pub use fun::*;
 pub use fun_app::*;
 pub use import::*;
 pub use mixed_app::*;
