@@ -9,20 +9,28 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum MixedAppFormParam {
+    Empty,
+    Wildcard,
     Prim(String),
-    Symbol(String),
+    ValueSymbol(String),
+    TypeSymbol(String),
     FunApp(FunAppForm),
     TypeApp(TypeAppForm),
+    MixedApp(MixedAppForm),
 }
 
 impl MixedAppFormParam {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
+            MixedAppFormParam::Empty => "()".into(),
+            MixedAppFormParam::Wildcard => "_".into(),
             MixedAppFormParam::Prim(prim) => prim.clone(),
-            MixedAppFormParam::Symbol(symbol) => symbol.clone(),
+            MixedAppFormParam::ValueSymbol(symbol) => symbol.clone(),
+            MixedAppFormParam::TypeSymbol(symbol) => symbol.clone(),
             MixedAppFormParam::FunApp(fun_app) => fun_app.to_string(),
             MixedAppFormParam::TypeApp(type_app) => type_app.to_string(),
+            MixedAppFormParam::MixedApp(mixed_app) => mixed_app.to_string(),
         }
     }
 }
@@ -92,8 +100,11 @@ impl MixedAppForm {
 
         while idx < len {
             match tokens[idx].kind {
-                TokenKind::EmptyLiteral
-                | TokenKind::UIntLiteral
+                TokenKind::EmptyLiteral => {
+                    params.push(MixedAppFormParam::Empty);
+                    idx += 1;
+                }
+                TokenKind::UIntLiteral
                 | TokenKind::IntLiteral
                 | TokenKind::FloatLiteral
                 | TokenKind::CharLiteral
@@ -101,8 +112,23 @@ impl MixedAppForm {
                     params.push(MixedAppFormParam::Prim(tokens[idx].to_string()));
                     idx += 1;
                 }
-                TokenKind::ValueSymbol | TokenKind::TypeSymbol | TokenKind::PathSymbol => {
-                    params.push(MixedAppFormParam::Symbol(tokens[idx].to_string()));
+                TokenKind::ValueSymbol => {
+                    params.push(MixedAppFormParam::ValueSymbol(tokens[idx].to_string()));
+                    idx += 1;
+                }
+                TokenKind::TypeSymbol => {
+                    params.push(MixedAppFormParam::TypeSymbol(tokens[idx].to_string()));
+                    idx += 1;
+                }
+                TokenKind::PathSymbol => {
+                    let name = tokens[idx].to_string();
+
+                    if is_type_symbol(&name) {
+                        params.push(MixedAppFormParam::TypeSymbol(tokens[idx].to_string()));
+                    } else {
+                        params.push(MixedAppFormParam::ValueSymbol(tokens[idx].to_string()));
+                    }
+
                     idx += 1;
                 }
                 TokenKind::Keyword => {
@@ -115,13 +141,14 @@ impl MixedAppForm {
                         }));
                     }
 
-                    params.push(MixedAppFormParam::Symbol(value));
+                    params.push(MixedAppFormParam::Wildcard);
                     idx += 1;
                 }
                 TokenKind::FormStart => {
                     let mut count = 1;
                     let mut is_type_app = false;
                     let mut is_fun_app = false;
+                    let mut is_mixed_app = false;
 
                     let mut new_tokens = Tokens::new();
                     new_tokens.push(tokens[idx].clone());
@@ -142,26 +169,14 @@ impl MixedAppForm {
                                 break;
                             }
                         } else if token.kind == TokenKind::TypeSymbol {
-                            if is_fun_app {
-                                return Err(Error::Semantic(SemanticError {
-                                    loc: tokens[idx].loc(),
-                                    desc: format!(
-                                        "unexpected type symbol {}",
-                                        tokens[idx].to_string()
-                                    ),
-                                }));
+                            if is_fun_app && !is_mixed_app {
+                                is_mixed_app = true;
                             } else if !is_type_app {
                                 is_type_app = true;
                             }
                         } else if token.kind == TokenKind::ValueSymbol {
-                            if is_type_app {
-                                return Err(Error::Semantic(SemanticError {
-                                    loc: tokens[idx].loc(),
-                                    desc: format!(
-                                        "unexpected value symbol {}",
-                                        tokens[idx].to_string()
-                                    ),
-                                }));
+                            if is_type_app && !is_mixed_app {
+                                is_mixed_app = true;
                             } else if !is_fun_app {
                                 is_fun_app = true;
                             }
@@ -169,32 +184,23 @@ impl MixedAppForm {
                             let name = symbol_name(&token.to_string());
 
                             if is_type_symbol(&name) {
-                                if is_fun_app {
-                                    return Err(Error::Semantic(SemanticError {
-                                        loc: tokens[idx].loc(),
-                                        desc: format!(
-                                            "unexpected type symbol {}",
-                                            tokens[idx].to_string()
-                                        ),
-                                    }));
+                                if is_fun_app && !is_mixed_app {
+                                    is_mixed_app = true;
                                 } else if !is_type_app {
                                     is_type_app = true;
                                 }
-                            } else if is_type_app {
-                                return Err(Error::Semantic(SemanticError {
-                                    loc: tokens[idx].loc(),
-                                    desc: format!(
-                                        "unexpected value symbol {}",
-                                        tokens[idx].to_string()
-                                    ),
-                                }));
+                            } else if is_type_app && !is_mixed_app {
+                                is_mixed_app = true;
                             } else if !is_fun_app {
                                 is_fun_app = true;
                             }
                         }
                     }
 
-                    if is_fun_app {
+                    if is_mixed_app {
+                        let mixed_app = MixedAppForm::from_tokens(&new_tokens)?;
+                        params.push(MixedAppFormParam::MixedApp(mixed_app));
+                    } else if is_fun_app {
                         let fun_app = FunAppForm::from_tokens(&new_tokens)?;
                         params.push(MixedAppFormParam::FunApp(fun_app));
                     } else {

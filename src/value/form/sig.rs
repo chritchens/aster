@@ -2,7 +2,7 @@ use super::{MixedAppForm, MixedAppFormParam, TypeAppForm};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::is_type_symbol;
+use crate::syntax::{is_type_symbol, WILDCARD};
 use crate::token::Tokens;
 use std::fmt;
 
@@ -37,7 +37,7 @@ impl fmt::Display for SigFormValue {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct SigForm {
     pub tokens: Tokens,
-    pub name: String,
+    pub name: Option<String>,
     pub value: SigFormValue,
 }
 
@@ -52,6 +52,10 @@ impl SigForm {
 
     pub fn loc(&self) -> Option<Loc> {
         self.tokens[0].loc()
+    }
+
+    pub fn is_anonymous(&self) -> bool {
+        self.name.is_none()
     }
 
     pub fn from_mixed_app(mixed_app: &MixedAppForm) -> Result<SigForm> {
@@ -73,19 +77,22 @@ impl SigForm {
         sig.tokens = mixed_app.tokens.clone();
 
         match mixed_app.params[0].clone() {
-            MixedAppFormParam::Symbol(symbol) => {
-                sig.name = symbol;
+            MixedAppFormParam::Wildcard => {
+                sig.name = None;
+            }
+            MixedAppFormParam::ValueSymbol(symbol) => {
+                sig.name = Some(symbol);
             }
             _ => {
                 return Err(Error::Semantic(SemanticError {
                     loc: mixed_app.loc(),
-                    desc: "expected a symbol".into(),
+                    desc: "expected a value symbol".into(),
                 }));
             }
         }
 
         match mixed_app.params[1].clone() {
-            MixedAppFormParam::Symbol(symbol) => {
+            MixedAppFormParam::TypeSymbol(symbol) => {
                 if !is_type_symbol(&symbol) {
                     return Err(Error::Semantic(SemanticError {
                         loc: mixed_app.loc(),
@@ -123,7 +130,11 @@ impl SigForm {
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        format!("(sig {} {})", self.name.to_string(), self.value.to_string())
+        format!(
+            "(sig {} {})",
+            self.name.clone().unwrap_or_else(|| WILDCARD.to_string()),
+            self.value.to_string()
+        )
     }
 }
 
@@ -147,7 +158,7 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name, "t".to_string());
+        assert_eq!(form.name, Some("t".into()));
         assert_eq!(form.value.to_string(), "T".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -159,7 +170,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "main".to_string());
+        assert_eq!(form.name, Some("main".into()));
         assert_eq!(form.value.to_string(), "(Fun IO IO)".to_string());
         assert_eq!(form.to_string(), s.to_string());
     }

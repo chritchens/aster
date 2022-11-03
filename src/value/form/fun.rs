@@ -2,6 +2,7 @@ use super::{FunAppForm, FunAppFormParam};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
+use crate::syntax::WILDCARD;
 use crate::token::Tokens;
 use std::fmt;
 
@@ -38,7 +39,7 @@ impl fmt::Display for FunFormBody {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct FunForm {
     pub tokens: Tokens,
-    pub name: String,
+    pub name: Option<String>,
     pub params: Vec<String>,
     pub body: FunFormBody,
 }
@@ -54,6 +55,10 @@ impl FunForm {
 
     pub fn loc(&self) -> Option<Loc> {
         self.tokens[0].loc()
+    }
+
+    pub fn is_anonymous(&self) -> bool {
+        self.name.is_none()
     }
 
     pub fn from_fun_app(fun_app: &FunAppForm) -> Result<FunForm> {
@@ -76,8 +81,11 @@ impl FunForm {
         fun.tokens = fun_app.tokens.clone();
 
         match fun_app.params[0].clone() {
+            FunAppFormParam::Empty => {
+                fun.name = None;
+            }
             FunAppFormParam::Symbol(symbol) => {
-                fun.name = symbol;
+                fun.name = Some(symbol);
             }
             _ => {
                 return Err(Error::Semantic(SemanticError {
@@ -88,14 +96,7 @@ impl FunForm {
         }
 
         match fun_app.params[1].clone() {
-            FunAppFormParam::Prim(prim) => {
-                if prim != "()" {
-                    return Err(Error::Semantic(SemanticError {
-                        loc: fun_app.loc(),
-                        desc: "expected an empty literal".into(),
-                    }));
-                }
-            }
+            FunAppFormParam::Empty => {}
             FunAppFormParam::FunApp(form) => {
                 if form.name != "prod" {
                     return Err(Error::Semantic(SemanticError {
@@ -111,7 +112,7 @@ impl FunForm {
                     }));
                 }
 
-                if form.params[0].to_string() != "_" {
+                if form.params[0].to_string() != WILDCARD.to_string() {
                     return Err(Error::Semantic(SemanticError {
                         loc: fun_app.loc(),
                         desc: "expected an anonymous product".into(),
@@ -150,6 +151,12 @@ impl FunForm {
             FunAppFormParam::FunApp(form) => {
                 fun.body = FunFormBody::FunApp(form);
             }
+            _ => {
+                return Err(Error::Semantic(SemanticError {
+                    loc: fun_app.loc(),
+                    desc: "expected a function application form, or a symbol or a primitive".into(),
+                }));
+            }
         }
 
         Ok(fun)
@@ -184,7 +191,7 @@ impl FunForm {
 
         format!(
             "(fun {} {} {})",
-            self.name.to_string(),
+            self.name.clone().unwrap_or_else(|| WILDCARD.to_string()),
             params,
             self.body.to_string()
         )
@@ -211,7 +218,7 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name, "f1".to_string());
+        assert_eq!(form.name, Some("f1".into()));
         assert!(form.params.is_empty());
         assert_eq!(form.body.to_string(), "10".to_string());
         assert_eq!(form.to_string(), s.to_string());
@@ -224,7 +231,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "f2".to_string());
+        assert_eq!(form.name, Some("f2".into()));
         assert_eq!(
             form.params,
             vec![

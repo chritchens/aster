@@ -7,6 +7,8 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FunAppFormParam {
+    Empty,
+    Wildcard,
     Prim(String),
     Symbol(String),
     FunApp(FunAppForm),
@@ -16,6 +18,8 @@ impl FunAppFormParam {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
+            FunAppFormParam::Empty => "()".into(),
+            FunAppFormParam::Wildcard => "_".into(),
             FunAppFormParam::Prim(prim) => prim.clone(),
             FunAppFormParam::Symbol(symbol) => symbol.clone(),
             FunAppFormParam::FunApp(fun_app) => fun_app.to_string(),
@@ -88,8 +92,11 @@ impl FunAppForm {
 
         while idx < len {
             match tokens[idx].kind {
-                TokenKind::EmptyLiteral
-                | TokenKind::UIntLiteral
+                TokenKind::EmptyLiteral => {
+                    params.push(FunAppFormParam::Empty);
+                    idx += 1;
+                }
+                TokenKind::UIntLiteral
                 | TokenKind::IntLiteral
                 | TokenKind::FloatLiteral
                 | TokenKind::CharLiteral
@@ -111,7 +118,7 @@ impl FunAppForm {
                         }));
                     }
 
-                    params.push(FunAppFormParam::Symbol(value));
+                    params.push(FunAppFormParam::Wildcard);
                     idx += 1;
                 }
                 TokenKind::FormStart => {

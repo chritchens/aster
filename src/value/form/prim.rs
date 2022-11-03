@@ -2,6 +2,7 @@ use super::{FunAppForm, FunAppFormParam};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
+use crate::syntax::WILDCARD;
 use crate::token::Tokens;
 use std::fmt;
 
@@ -38,7 +39,7 @@ impl fmt::Display for PrimFormValue {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct PrimForm {
     pub tokens: Tokens,
-    pub name: String,
+    pub name: Option<String>,
     pub value: PrimFormValue,
 }
 
@@ -53,6 +54,10 @@ impl PrimForm {
 
     pub fn loc(&self) -> Option<Loc> {
         self.tokens[0].loc()
+    }
+
+    pub fn is_anonymous(&self) -> bool {
+        self.name.is_none()
     }
 
     pub fn from_fun_app(fun_app: &FunAppForm) -> Result<PrimForm> {
@@ -74,8 +79,11 @@ impl PrimForm {
         prim.tokens = fun_app.tokens.clone();
 
         match fun_app.params[0].clone() {
+            FunAppFormParam::Wildcard => {
+                prim.name = None;
+            }
             FunAppFormParam::Symbol(symbol) => {
-                prim.name = symbol;
+                prim.name = Some(symbol);
             }
             _ => {
                 return Err(Error::Semantic(SemanticError {
@@ -98,6 +106,10 @@ impl PrimForm {
                 prim.value = PrimFormValue::FunApp(form);
                 Ok(prim)
             }
+            _ => Err(Error::Semantic(SemanticError {
+                loc: fun_app.loc(),
+                desc: "expected a function application form, or a symbol or a primitive".into(),
+            })),
         }
     }
 
@@ -117,7 +129,7 @@ impl PrimForm {
     pub fn to_string(&self) -> String {
         format!(
             "(prim {} {})",
-            self.name.to_string(),
+            self.name.clone().unwrap_or_else(|| WILDCARD.to_string()),
             self.value.to_string()
         )
     }
@@ -143,7 +155,7 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name, "a".to_string());
+        assert_eq!(form.name, Some("a".into()));
         assert_eq!(form.value.to_string(), "'a'".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -155,7 +167,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "x".to_string());
+        assert_eq!(form.name, Some("x".into()));
         assert_eq!(form.value.to_string(), "(/ 32.4E-2 10)".to_string());
     }
 }

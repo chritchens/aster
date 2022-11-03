@@ -2,13 +2,14 @@ use super::{FunAppForm, FunAppFormParam};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
+use crate::syntax::WILDCARD;
 use crate::token::Tokens;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct AttrsForm {
     pub tokens: Tokens,
-    pub name: String,
+    pub name: Option<String>,
     pub values: Vec<String>,
 }
 
@@ -23,6 +24,10 @@ impl AttrsForm {
 
     pub fn loc(&self) -> Option<Loc> {
         self.tokens[0].loc()
+    }
+
+    pub fn is_anonymous(&self) -> bool {
+        self.name.is_none()
     }
 
     pub fn from_fun_app(fun_app: &FunAppForm) -> Result<AttrsForm> {
@@ -44,8 +49,11 @@ impl AttrsForm {
         attrs.tokens = fun_app.tokens.clone();
 
         match fun_app.params[0].clone() {
+            FunAppFormParam::Wildcard => {
+                attrs.name = None;
+            }
             FunAppFormParam::Symbol(symbol) => {
-                attrs.name = symbol;
+                attrs.name = Some(symbol);
             }
             _ => {
                 return Err(Error::Semantic(SemanticError {
@@ -103,7 +111,7 @@ impl AttrsForm {
     pub fn to_string(&self) -> String {
         format!(
             "(attrs {} (prod {}))",
-            self.name.to_string(),
+            self.name.clone().unwrap_or_else(|| WILDCARD.to_string()),
             self.values
                 .iter()
                 .map(|v| v.to_string())
@@ -133,7 +141,7 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name, "x".to_string());
+        assert_eq!(form.name, Some("x".into()));
         assert_eq!(form.values, vec!["attr".to_string()]);
         assert_eq!(form.to_string(), s.to_string());
 
@@ -145,7 +153,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "y".to_string());
+        assert_eq!(form.name, Some("y".into()));
         assert_eq!(
             form.values,
             vec![
