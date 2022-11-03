@@ -8,6 +8,7 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FunFormBody {
+    Empty,
     Prim(String),
     Symbol(String),
     FunApp(FunAppForm),
@@ -23,6 +24,7 @@ impl FunFormBody {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
+            FunFormBody::Empty => "()".into(),
             FunFormBody::Prim(prim) => prim.clone(),
             FunFormBody::Symbol(symbol) => symbol.clone(),
             FunFormBody::FunApp(fun_app) => fun_app.to_string(),
@@ -142,6 +144,9 @@ impl FunForm {
         }
 
         match fun_app.params[2].clone() {
+            FunAppFormParam::Empty => {
+                fun.body = FunFormBody::Empty;
+            }
             FunAppFormParam::Prim(prim) => {
                 fun.body = FunFormBody::Prim(prim);
             }
@@ -210,7 +215,7 @@ mod tests {
     fn fun_form_from_str() {
         use super::FunForm;
 
-        let mut s = "(fun f1 () 10)";
+        let mut s = "(fun f1 () ())";
 
         let mut res = FunForm::from_str(s);
 
@@ -220,7 +225,7 @@ mod tests {
 
         assert_eq!(form.name, Some("f1".into()));
         assert!(form.params.is_empty());
-        assert_eq!(form.body.to_string(), "10".to_string());
+        assert_eq!(form.body.to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(fun f2 (prod _ a b c d) (+ a b c d 10))";
