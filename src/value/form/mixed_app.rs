@@ -2,6 +2,7 @@ use super::{FunAppForm, TypeAppForm};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
+use crate::syntax::WILDCARD;
 use crate::syntax::{is_symbol, is_type_symbol, symbol_name};
 use crate::token::{TokenKind, Tokens};
 use std::fmt;
@@ -94,6 +95,19 @@ impl MixedAppForm {
                 }
                 TokenKind::ValueSymbol | TokenKind::TypeSymbol | TokenKind::PathSymbol => {
                     params.push(MixedAppFormParam::Symbol(tokens[idx].to_string()));
+                    idx += 1;
+                }
+                TokenKind::Keyword => {
+                    let value = tokens[idx].to_string();
+
+                    if value != WILDCARD.to_string() {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: tokens[idx].loc(),
+                            desc: "expected the wildcard keyword".into(),
+                        }));
+                    }
+
+                    params.push(MixedAppFormParam::Symbol(value));
                     idx += 1;
                 }
                 TokenKind::FormStart => {

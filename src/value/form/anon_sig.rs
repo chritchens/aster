@@ -1,44 +1,15 @@
-use super::{MixedAppForm, MixedAppFormParam, TypeAppForm};
+use super::{MixedAppForm, SigForm, SigFormValue};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::is_type_symbol;
+use crate::syntax::WILDCARD;
 use crate::token::Tokens;
 use std::fmt;
-
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub enum AnonSigFormValue {
-    TypeSymbol(String),
-    TypeApp(TypeAppForm),
-}
-
-impl Default for AnonSigFormValue {
-    fn default() -> AnonSigFormValue {
-        AnonSigFormValue::TypeSymbol("Empty".into())
-    }
-}
-
-impl AnonSigFormValue {
-    #[allow(clippy::inherent_to_string_shadow_display)]
-    pub fn to_string(&self) -> String {
-        match self {
-            AnonSigFormValue::TypeSymbol(symbol) => symbol.clone(),
-            AnonSigFormValue::TypeApp(type_app) => type_app.to_string(),
-        }
-    }
-}
-
-impl fmt::Display for AnonSigFormValue {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
-}
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct AnonSigForm {
     pub tokens: Tokens,
-    pub name: String,
-    pub value: AnonSigFormValue,
+    pub value: SigFormValue,
 }
 
 impl AnonSigForm {
@@ -54,59 +25,26 @@ impl AnonSigForm {
         self.tokens[0].loc()
     }
 
+    pub fn from_sig(sig_form: &SigForm) -> Result<AnonSigForm> {
+        if sig_form.name != WILDCARD.to_string() {
+            Err(Error::Semantic(SemanticError {
+                loc: sig_form.loc(),
+                desc: "expected a wildcard name".into(),
+            }))
+        } else {
+            let anon_sig = AnonSigForm {
+                tokens: sig_form.tokens.clone(),
+                value: sig_form.value.clone(),
+            };
+
+            Ok(anon_sig)
+        }
+    }
+
     pub fn from_mixed_app(mixed_app: &MixedAppForm) -> Result<AnonSigForm> {
-        if mixed_app.name != "sig" {
-            return Err(Error::Semantic(SemanticError {
-                loc: mixed_app.loc(),
-                desc: "expected a sig keyword".into(),
-            }));
-        }
+        let sig = SigForm::from_mixed_app(mixed_app)?;
 
-        if mixed_app.params.len() != 2 {
-            return Err(Error::Semantic(SemanticError {
-                loc: mixed_app.loc(),
-                desc: "expected a name and a type".into(),
-            }));
-        }
-
-        let mut anon_sig = AnonSigForm::new();
-        anon_sig.tokens = mixed_app.tokens.clone();
-
-        match mixed_app.params[0].clone() {
-            MixedAppFormParam::Symbol(symbol) => {
-                anon_sig.name = symbol;
-            }
-            _ => {
-                return Err(Error::Semantic(SemanticError {
-                    loc: mixed_app.loc(),
-                    desc: "expected a symbol".into(),
-                }));
-            }
-        }
-
-        match mixed_app.params[1].clone() {
-            MixedAppFormParam::Symbol(symbol) => {
-                if !is_type_symbol(&symbol) {
-                    return Err(Error::Semantic(SemanticError {
-                        loc: mixed_app.loc(),
-                        desc: "expected a type symbol".into(),
-                    }));
-                }
-
-                anon_sig.value = AnonSigFormValue::TypeSymbol(symbol);
-            }
-            MixedAppFormParam::TypeApp(form) => {
-                anon_sig.value = AnonSigFormValue::TypeApp(form);
-            }
-            _ => {
-                return Err(Error::Semantic(SemanticError {
-                    loc: mixed_app.loc(),
-                    desc: "expected a type symbol or a type form".into(),
-                }));
-            }
-        }
-
-        Ok(anon_sig)
+        AnonSigForm::from_sig(&sig)
     }
 
     pub fn from_tokens(tokens: &Tokens) -> Result<AnonSigForm> {
@@ -123,7 +61,7 @@ impl AnonSigForm {
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        format!("(sig {} {})", self.name.to_string(), self.value.to_string())
+        format!("(sig _ {})", self.value.to_string())
     }
 }
 
@@ -139,19 +77,18 @@ mod tests {
     fn anon_sig_form_from_str() {
         use super::AnonSigForm;
 
-        let mut s = "(sig t T)";
+        let mut s = "(sig _ T)";
 
         let mut res = AnonSigForm::from_str(s);
 
-        assert!(res.is_ok());
+        //assert!(res.is_ok());
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name, "t".to_string());
         assert_eq!(form.value.to_string(), "T".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(sig main (Fun IO IO))";
+        s = "(sig _ (Fun IO IO))";
 
         res = AnonSigForm::from_str(s);
 
@@ -159,7 +96,6 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "main".to_string());
         assert_eq!(form.value.to_string(), "(Fun IO IO)".to_string());
         assert_eq!(form.to_string(), s.to_string());
     }
