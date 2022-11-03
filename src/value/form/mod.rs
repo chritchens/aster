@@ -10,6 +10,7 @@ pub mod prim;
 pub mod sig;
 pub mod sum;
 pub mod type_app;
+pub mod type_form;
 
 pub use attrs::*;
 pub use export::*;
@@ -22,3 +23,4 @@ pub use prim::*;
 pub use sig::*;
 pub use sum::*;
 pub use type_app::*;
+pub use type_form::*;

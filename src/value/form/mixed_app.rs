@@ -134,21 +134,25 @@ impl MixedAppForm {
                 TokenKind::Keyword => {
                     let value = tokens[idx].to_string();
 
-                    if value != WILDCARD.to_string() || idx != 2 {
-                        return Err(Error::Semantic(SemanticError {
-                            loc: tokens[idx].loc(),
-                            desc: "expected the wildcard keyword".into(),
-                        }));
+                    if value == WILDCARD.to_string() {
+                        if idx != 2 {
+                            return Err(Error::Semantic(SemanticError {
+                                loc: tokens[idx].loc(),
+                                desc: "expected the wildcard keyword".into(),
+                            }));
+                        } else {
+                            params.push(MixedAppFormParam::Wildcard);
+                        }
+                    } else if is_type_symbol(&value) {
+                        params.push(MixedAppFormParam::TypeSymbol(value));
                     }
 
-                    params.push(MixedAppFormParam::Wildcard);
                     idx += 1;
                 }
                 TokenKind::FormStart => {
                     let mut count = 1;
                     let mut is_type_app = false;
                     let mut is_fun_app = false;
-                    let mut is_mixed_app = false;
 
                     let mut new_tokens = Tokens::new();
                     new_tokens.push(tokens[idx].clone());
@@ -169,43 +173,47 @@ impl MixedAppForm {
                                 break;
                             }
                         } else if token.kind == TokenKind::TypeSymbol {
-                            if is_fun_app && !is_mixed_app {
-                                is_mixed_app = true;
-                            } else if !is_type_app {
+                            if !is_type_app {
                                 is_type_app = true;
                             }
                         } else if token.kind == TokenKind::ValueSymbol {
-                            if is_type_app && !is_mixed_app {
-                                is_mixed_app = true;
-                            } else if !is_fun_app {
+                            if !is_fun_app {
                                 is_fun_app = true;
                             }
                         } else if token.kind == TokenKind::PathSymbol {
                             let name = symbol_name(&token.to_string());
 
                             if is_type_symbol(&name) {
-                                if is_fun_app && !is_mixed_app {
-                                    is_mixed_app = true;
-                                } else if !is_type_app {
+                                if !is_type_app {
                                     is_type_app = true;
                                 }
-                            } else if is_type_app && !is_mixed_app {
-                                is_mixed_app = true;
-                            } else if !is_fun_app {
+                            } else if !is_type_app {
+                                is_fun_app = true;
+                            }
+                        } else if token.kind == TokenKind::Keyword {
+                            let name = token.to_string();
+
+                            if is_type_symbol(&name) {
+                                if !is_type_app {
+                                    is_type_app = true;
+                                }
+                            } else if !is_type_app {
                                 is_fun_app = true;
                             }
                         }
                     }
 
-                    if is_mixed_app {
+                    if is_fun_app && is_type_app {
                         let mixed_app = MixedAppForm::from_tokens(&new_tokens)?;
                         params.push(MixedAppFormParam::MixedApp(mixed_app));
-                    } else if is_fun_app {
+                    } else if is_fun_app && !is_type_app {
                         let fun_app = FunAppForm::from_tokens(&new_tokens)?;
                         params.push(MixedAppFormParam::FunApp(fun_app));
+                    } else if is_type_app && !is_fun_app {
+                        let type_app = TypeAppForm::from_tokens(&new_tokens)?;
+                        params.push(MixedAppFormParam::TypeApp(type_app));
                     } else {
-                        let fun_app = TypeAppForm::from_tokens(&new_tokens)?;
-                        params.push(MixedAppFormParam::TypeApp(fun_app));
+                        println!("new_tokens: {:?}", new_tokens);
                     }
                 }
                 TokenKind::FormEnd => {
