@@ -169,5 +169,16 @@ mod tests {
 
         assert_eq!(form.name, Some("x".into()));
         assert_eq!(form.value.to_string(), "(/ 32.4E-2 10)".to_string());
+
+        s = "(prim _ -123243.34243)";
+
+        res = PrimForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert!(form.name.is_none());
+        assert!(form.is_anonymous());
     }
 }

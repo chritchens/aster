@@ -242,5 +242,16 @@ mod tests {
             form.body.to_string(),
             "(Fun (Prod A B C D) String)".to_string()
         );
+
+        s = "(type _ () Empty)";
+
+        res = TypeForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert!(form.name.is_none());
+        assert!(form.is_anonymous());
     }
 }

@@ -169,5 +169,16 @@ mod tests {
 
         assert_eq!(form.name, Some("y".into()));
         assert_eq!(form.value.to_string(), "(app f 10 20 \"a\")".to_string());
+
+        s = "(sum _ \"sum\")";
+
+        res = SumForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert!(form.name.is_none());
+        assert!(form.is_anonymous());
     }
 }

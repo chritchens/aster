@@ -81,7 +81,7 @@ impl FunForm {
         fun.tokens = fun_app.tokens.clone();
 
         match fun_app.params[0].clone() {
-            FunAppFormParam::Empty => {
+            FunAppFormParam::Wildcard => {
                 fun.name = None;
             }
             FunAppFormParam::Symbol(symbol) => {
@@ -242,5 +242,16 @@ mod tests {
             ]
         );
         assert_eq!(form.body.to_string(), "(+ a b c d 10)".to_string());
+
+        s = "(fun _ () 10)";
+
+        res = FunForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert!(form.name.is_none());
+        assert!(form.is_anonymous());
     }
 }

@@ -162,5 +162,16 @@ mod tests {
                 "attr3".to_string(),
             ]
         );
+
+        s = "(attrs _ (prod attr))";
+
+        res = AttrsForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert!(form.name.is_none());
+        assert!(form.is_anonymous());
     }
 }

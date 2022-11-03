@@ -173,5 +173,16 @@ mod tests {
         assert_eq!(form.name, Some("main".into()));
         assert_eq!(form.value.to_string(), "(Fun IO IO)".to_string());
         assert_eq!(form.to_string(), s.to_string());
+
+        s = "(sig _ Empty)";
+
+        res = SigForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert!(form.name.is_none());
+        assert!(form.is_anonymous());
     }
 }
