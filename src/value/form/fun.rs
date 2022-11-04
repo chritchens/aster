@@ -10,7 +10,7 @@ pub enum FunFormBody {
     Empty,
     Prim(String),
     Symbol(String),
-    FunApp(FunAppForm),
+    App(FunAppForm),
 }
 
 impl Default for FunFormBody {
@@ -26,7 +26,7 @@ impl FunFormBody {
             FunFormBody::Empty => "()".into(),
             FunFormBody::Prim(prim) => prim.clone(),
             FunFormBody::Symbol(symbol) => symbol.clone(),
-            FunFormBody::FunApp(fun_app) => fun_app.to_string(),
+            FunFormBody::App(app) => app.to_string(),
         }
     }
 }
@@ -77,22 +77,22 @@ impl FunForm {
 
         match fun_app.params[0].clone() {
             FunAppFormParam::Empty => {}
-            FunAppFormParam::FunApp(form) => {
-                if form.name != "prod" {
+            FunAppFormParam::App(app) => {
+                if app.name != "prod" {
                     return Err(Error::Semantic(SemanticError {
                         loc: fun_app.loc(),
                         desc: "expected a product of symbols".into(),
                     }));
                 }
 
-                if form.params.is_empty() {
+                if app.params.is_empty() {
                     return Err(Error::Semantic(SemanticError {
                         loc: fun_app.loc(),
                         desc: "expected at least one parameter".into(),
                     }));
                 }
 
-                for param in form.params.iter() {
+                for param in app.params.iter() {
                     match param {
                         FunAppFormParam::Symbol(symbol) => {
                             fun.params.push(symbol.clone());
@@ -124,8 +124,8 @@ impl FunForm {
             FunAppFormParam::Symbol(symbol) => {
                 fun.body = FunFormBody::Symbol(symbol);
             }
-            FunAppFormParam::FunApp(form) => {
-                fun.body = FunFormBody::FunApp(form);
+            FunAppFormParam::App(app) => {
+                fun.body = FunFormBody::App(app);
             }
             _ => {
                 return Err(Error::Semantic(SemanticError {

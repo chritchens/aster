@@ -11,7 +11,7 @@ pub enum FunAppFormParam {
     Wildcard,
     Prim(String),
     Symbol(String),
-    FunApp(FunAppForm),
+    App(FunAppForm),
 }
 
 impl FunAppFormParam {
@@ -22,7 +22,7 @@ impl FunAppFormParam {
             FunAppFormParam::Wildcard => "_".into(),
             FunAppFormParam::Prim(prim) => prim.clone(),
             FunAppFormParam::Symbol(symbol) => symbol.clone(),
-            FunAppFormParam::FunApp(fun_app) => fun_app.to_string(),
+            FunAppFormParam::App(app) => app.to_string(),
         }
     }
 }
@@ -159,9 +159,9 @@ impl FunAppForm {
                         }
                     }
 
-                    let fun_app = FunAppForm::from_tokens(&new_tokens)?;
+                    let app = FunAppForm::from_tokens(&new_tokens)?;
 
-                    params.push(FunAppFormParam::FunApp(fun_app));
+                    params.push(FunAppFormParam::App(app));
                 }
                 TokenKind::FormEnd => {
                     idx += 1;

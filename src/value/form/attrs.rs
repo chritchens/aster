@@ -43,15 +43,15 @@ impl AttrsForm {
         attrs.tokens = fun_app.tokens.clone();
 
         match fun_app.params[0].clone() {
-            FunAppFormParam::FunApp(form) => {
-                if form.name != "prod" {
+            FunAppFormParam::App(app) => {
+                if app.name != "prod" {
                     return Err(Error::Semantic(SemanticError {
                         loc: fun_app.loc(),
                         desc: "expected a product of symbols".into(),
                     }));
                 }
 
-                for param in form.params.iter() {
+                for param in app.params.iter() {
                     match param {
                         FunAppFormParam::Symbol(symbol) => {
                             attrs.values.push(symbol.clone());

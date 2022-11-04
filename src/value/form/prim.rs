@@ -9,7 +9,7 @@ use std::fmt;
 pub enum PrimFormValue {
     Prim(String),
     Symbol(String),
-    FunApp(FunAppForm),
+    App(FunAppForm),
 }
 
 impl Default for PrimFormValue {
@@ -24,7 +24,7 @@ impl PrimFormValue {
         match self {
             PrimFormValue::Prim(prim) => prim.clone(),
             PrimFormValue::Symbol(symbol) => symbol.clone(),
-            PrimFormValue::FunApp(fun_app) => fun_app.to_string(),
+            PrimFormValue::App(app) => app.to_string(),
         }
     }
 }
@@ -81,8 +81,8 @@ impl PrimForm {
                 prim.value = PrimFormValue::Symbol(symbol);
                 Ok(prim)
             }
-            FunAppFormParam::FunApp(form) => {
-                prim.value = PrimFormValue::FunApp(form);
+            FunAppFormParam::App(app) => {
+                prim.value = PrimFormValue::App(app);
                 Ok(prim)
             }
             _ => Err(Error::Semantic(SemanticError {

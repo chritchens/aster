@@ -9,7 +9,7 @@ use std::fmt;
 pub enum SumFormValue {
     Prim(String),
     Symbol(String),
-    FunApp(FunAppForm),
+    App(FunAppForm),
 }
 
 impl Default for SumFormValue {
@@ -24,7 +24,7 @@ impl SumFormValue {
         match self {
             SumFormValue::Prim(prim) => prim.clone(),
             SumFormValue::Symbol(symbol) => symbol.clone(),
-            SumFormValue::FunApp(fun_app) => fun_app.to_string(),
+            SumFormValue::App(app) => app.to_string(),
         }
     }
 }
@@ -81,8 +81,8 @@ impl SumForm {
                 sum.value = SumFormValue::Symbol(symbol);
                 Ok(sum)
             }
-            FunAppFormParam::FunApp(form) => {
-                sum.value = SumFormValue::FunApp(form);
+            FunAppFormParam::App(app) => {
+                sum.value = SumFormValue::App(app);
                 Ok(sum)
             }
             _ => Err(Error::Semantic(SemanticError {
