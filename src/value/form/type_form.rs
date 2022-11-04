@@ -2,7 +2,6 @@ use super::{MixedAppForm, MixedAppFormParam, TypeAppForm};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::WILDCARD;
 use crate::token::Tokens;
 use std::fmt;
 
@@ -39,7 +38,6 @@ impl fmt::Display for TypeFormBody {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct TypeForm {
     pub tokens: Tokens,
-    pub name: Option<String>,
     pub params: Vec<String>,
     pub body: TypeFormBody,
 }
@@ -57,10 +55,6 @@ impl TypeForm {
         self.tokens[0].loc()
     }
 
-    pub fn is_anonymous(&self) -> bool {
-        self.name.is_none()
-    }
-
     pub fn from_mixed_app(mixed_app: &MixedAppForm) -> Result<TypeForm> {
         if mixed_app.name != "type" {
             return Err(Error::Semantic(SemanticError {
@@ -69,10 +63,10 @@ impl TypeForm {
             }));
         }
 
-        if mixed_app.params.len() != 3 {
+        if mixed_app.params.len() != 2 {
             return Err(Error::Semantic(SemanticError {
                 loc: mixed_app.loc(),
-                desc: "expected a name, a product of symbols and a type application form or a type symbol"
+                desc: "expected a product of symbols and a type application form or a type symbol"
                     .into(),
             }));
         }
@@ -81,21 +75,6 @@ impl TypeForm {
         type_form.tokens = mixed_app.tokens.clone();
 
         match mixed_app.params[0].clone() {
-            MixedAppFormParam::Wildcard => {
-                type_form.name = None;
-            }
-            MixedAppFormParam::TypeSymbol(symbol) => {
-                type_form.name = Some(symbol);
-            }
-            _ => {
-                return Err(Error::Semantic(SemanticError {
-                    loc: mixed_app.loc(),
-                    desc: "expected a symbol".into(),
-                }));
-            }
-        }
-
-        match mixed_app.params[1].clone() {
             MixedAppFormParam::Empty => {}
             MixedAppFormParam::MixedApp(form) => {
                 if form.name != "prod" {
@@ -105,21 +84,14 @@ impl TypeForm {
                     }));
                 }
 
-                if form.params.len() < 2 {
+                if form.params.is_empty() {
                     return Err(Error::Semantic(SemanticError {
                         loc: mixed_app.loc(),
                         desc: "expected at least one parameter".into(),
                     }));
                 }
 
-                if form.params[0].to_string() != WILDCARD.to_string() {
-                    return Err(Error::Semantic(SemanticError {
-                        loc: mixed_app.loc(),
-                        desc: "expected an anonymous product".into(),
-                    }));
-                }
-
-                for param in form.params[1..].iter() {
+                for param in form.params.iter() {
                     match param {
                         MixedAppFormParam::TypeSymbol(symbol) => {
                             type_form.params.push(symbol.clone());
@@ -141,7 +113,7 @@ impl TypeForm {
             }
         }
 
-        match mixed_app.params[2].clone() {
+        match mixed_app.params[1].clone() {
             MixedAppFormParam::TypeSymbol(symbol) => {
                 type_form.body = TypeFormBody::Symbol(symbol);
             }
@@ -186,12 +158,7 @@ impl TypeForm {
             )
         };
 
-        format!(
-            "(type {} {} {})",
-            self.name.clone().unwrap_or_else(|| WILDCARD.to_string()),
-            params,
-            self.body.to_string()
-        )
+        format!("(type {} {})", params, self.body.to_string())
     }
 }
 
@@ -207,7 +174,7 @@ mod tests {
     fn type_form_from_str() {
         use super::TypeForm;
 
-        let mut s = "(type T () Q)";
+        let mut s = "(type () Q)";
 
         let mut res = TypeForm::from_str(s);
 
@@ -215,12 +182,11 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name, Some("T".into()));
         assert!(form.params.is_empty());
         assert_eq!(form.body.to_string(), "Q".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(type T2 (prod _ A B C D) (Fun (Prod A B C D) String))";
+        s = "(type (prod A B C D) (Fun (Prod A B C D) String))";
 
         res = TypeForm::from_str(s);
 
@@ -228,7 +194,6 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, Some("T2".into()));
         assert_eq!(
             form.params,
             vec![
@@ -242,16 +207,5 @@ mod tests {
             form.body.to_string(),
             "(Fun (Prod A B C D) String)".to_string()
         );
-
-        s = "(type _ () Empty)";
-
-        res = TypeForm::from_str(s);
-
-        assert!(res.is_ok());
-
-        form = res.unwrap();
-
-        assert!(form.name.is_none());
-        assert!(form.is_anonymous());
     }
 }

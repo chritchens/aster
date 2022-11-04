@@ -2,14 +2,12 @@ use super::{FunAppForm, FunAppFormParam};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::WILDCARD;
 use crate::token::Tokens;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct AttrsForm {
     pub tokens: Tokens,
-    pub name: Option<String>,
     pub values: Vec<String>,
 }
 
@@ -26,10 +24,6 @@ impl AttrsForm {
         self.tokens[0].loc()
     }
 
-    pub fn is_anonymous(&self) -> bool {
-        self.name.is_none()
-    }
-
     pub fn from_fun_app(fun_app: &FunAppForm) -> Result<AttrsForm> {
         if fun_app.name != "attrs" {
             return Err(Error::Semantic(SemanticError {
@@ -38,10 +32,10 @@ impl AttrsForm {
             }));
         }
 
-        if fun_app.params.len() != 2 {
+        if fun_app.params.len() != 1 {
             return Err(Error::Semantic(SemanticError {
                 loc: fun_app.loc(),
-                desc: "expected a name and a product of symbols".into(),
+                desc: "expected a product of symbols".into(),
             }));
         }
 
@@ -49,21 +43,6 @@ impl AttrsForm {
         attrs.tokens = fun_app.tokens.clone();
 
         match fun_app.params[0].clone() {
-            FunAppFormParam::Wildcard => {
-                attrs.name = None;
-            }
-            FunAppFormParam::Symbol(symbol) => {
-                attrs.name = Some(symbol);
-            }
-            _ => {
-                return Err(Error::Semantic(SemanticError {
-                    loc: fun_app.loc(),
-                    desc: "expected a symbol".into(),
-                }));
-            }
-        }
-
-        match fun_app.params[1].clone() {
             FunAppFormParam::FunApp(form) => {
                 if form.name != "prod" {
                     return Err(Error::Semantic(SemanticError {
@@ -110,8 +89,7 @@ impl AttrsForm {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         format!(
-            "(attrs {} (prod {}))",
-            self.name.clone().unwrap_or_else(|| WILDCARD.to_string()),
+            "(attrs (prod {}))",
             self.values
                 .iter()
                 .map(|v| v.to_string())
@@ -133,7 +111,7 @@ mod tests {
     fn attrs_form_from_str() {
         use super::AttrsForm;
 
-        let mut s = "(attrs x (prod attr))";
+        let mut s = "(attrs (prod attr))";
 
         let mut res = AttrsForm::from_str(s);
 
@@ -141,11 +119,10 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name, Some("x".into()));
         assert_eq!(form.values, vec!["attr".to_string()]);
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(attrs y (prod attr1 attr2 attr3))";
+        s = "(attrs (prod attr1 attr2 attr3))";
 
         res = AttrsForm::from_str(s);
 
@@ -153,7 +130,6 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, Some("y".into()));
         assert_eq!(
             form.values,
             vec![
@@ -162,16 +138,5 @@ mod tests {
                 "attr3".to_string(),
             ]
         );
-
-        s = "(attrs _ (prod attr))";
-
-        res = AttrsForm::from_str(s);
-
-        assert!(res.is_ok());
-
-        form = res.unwrap();
-
-        assert!(form.name.is_none());
-        assert!(form.is_anonymous());
     }
 }

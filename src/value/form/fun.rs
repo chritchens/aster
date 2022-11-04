@@ -2,7 +2,6 @@ use super::{FunAppForm, FunAppFormParam};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::WILDCARD;
 use crate::token::Tokens;
 use std::fmt;
 
@@ -41,7 +40,6 @@ impl fmt::Display for FunFormBody {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct FunForm {
     pub tokens: Tokens,
-    pub name: Option<String>,
     pub params: Vec<String>,
     pub body: FunFormBody,
 }
@@ -59,10 +57,6 @@ impl FunForm {
         self.tokens[0].loc()
     }
 
-    pub fn is_anonymous(&self) -> bool {
-        self.name.is_none()
-    }
-
     pub fn from_fun_app(fun_app: &FunAppForm) -> Result<FunForm> {
         if fun_app.name != "fun" {
             return Err(Error::Semantic(SemanticError {
@@ -71,11 +65,10 @@ impl FunForm {
             }));
         }
 
-        if fun_app.params.len() != 3 {
+        if fun_app.params.len() != 2 {
             return Err(Error::Semantic(SemanticError {
                 loc: fun_app.loc(),
-                desc: "expected a name, a product of symbols and a function app form or a symbol"
-                    .into(),
+                desc: "expected a product of symbols and a function app form or a symbol".into(),
             }));
         }
 
@@ -83,21 +76,6 @@ impl FunForm {
         fun.tokens = fun_app.tokens.clone();
 
         match fun_app.params[0].clone() {
-            FunAppFormParam::Wildcard => {
-                fun.name = None;
-            }
-            FunAppFormParam::Symbol(symbol) => {
-                fun.name = Some(symbol);
-            }
-            _ => {
-                return Err(Error::Semantic(SemanticError {
-                    loc: fun_app.loc(),
-                    desc: "expected a symbol".into(),
-                }));
-            }
-        }
-
-        match fun_app.params[1].clone() {
             FunAppFormParam::Empty => {}
             FunAppFormParam::FunApp(form) => {
                 if form.name != "prod" {
@@ -107,21 +85,14 @@ impl FunForm {
                     }));
                 }
 
-                if form.params.len() < 2 {
+                if form.params.is_empty() {
                     return Err(Error::Semantic(SemanticError {
                         loc: fun_app.loc(),
                         desc: "expected at least one parameter".into(),
                     }));
                 }
 
-                if form.params[0].to_string() != WILDCARD.to_string() {
-                    return Err(Error::Semantic(SemanticError {
-                        loc: fun_app.loc(),
-                        desc: "expected an anonymous product".into(),
-                    }));
-                }
-
-                for param in form.params[1..].iter() {
+                for param in form.params.iter() {
                     match param {
                         FunAppFormParam::Symbol(symbol) => {
                             fun.params.push(symbol.clone());
@@ -143,7 +114,7 @@ impl FunForm {
             }
         }
 
-        match fun_app.params[2].clone() {
+        match fun_app.params[1].clone() {
             FunAppFormParam::Empty => {
                 fun.body = FunFormBody::Empty;
             }
@@ -185,7 +156,7 @@ impl FunForm {
             "()".to_string()
         } else {
             format!(
-                "(prod _ {})",
+                "(prod {})",
                 self.params
                     .iter()
                     .map(|v| v.to_string())
@@ -194,12 +165,7 @@ impl FunForm {
             )
         };
 
-        format!(
-            "(fun {} {} {})",
-            self.name.clone().unwrap_or_else(|| WILDCARD.to_string()),
-            params,
-            self.body.to_string()
-        )
+        format!("(fun {} {})", params, self.body.to_string())
     }
 }
 
@@ -215,7 +181,7 @@ mod tests {
     fn fun_form_from_str() {
         use super::FunForm;
 
-        let mut s = "(fun f1 () ())";
+        let mut s = "(fun () ())";
 
         let mut res = FunForm::from_str(s);
 
@@ -223,12 +189,11 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name, Some("f1".into()));
         assert!(form.params.is_empty());
         assert_eq!(form.body.to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(fun f2 (prod _ a b c d) (+ a b c d 10))";
+        s = "(fun (prod a b c d) (+ a b c d 10))";
 
         res = FunForm::from_str(s);
 
@@ -236,7 +201,6 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, Some("f2".into()));
         assert_eq!(
             form.params,
             vec![
@@ -247,16 +211,5 @@ mod tests {
             ]
         );
         assert_eq!(form.body.to_string(), "(+ a b c d 10)".to_string());
-
-        s = "(fun _ () 10)";
-
-        res = FunForm::from_str(s);
-
-        assert!(res.is_ok());
-
-        form = res.unwrap();
-
-        assert!(form.name.is_none());
-        assert!(form.is_anonymous());
     }
 }
