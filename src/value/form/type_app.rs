@@ -1,7 +1,7 @@
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::is_type_symbol;
+use crate::syntax::{is_type_symbol, symbol_name};
 use crate::token::{TokenKind, Tokens};
 use std::fmt;
 
@@ -64,7 +64,7 @@ impl TypeAppForm {
             }));
         }
 
-        if !is_type_symbol(&tokens[1].to_string()) {
+        if !is_type_symbol(&symbol_name(&tokens[1].to_string())) {
             return Err(Error::Semantic(SemanticError {
                 loc: tokens[1].loc(),
                 desc: "expected a type symbol or a type keyword".into(),
@@ -90,6 +90,20 @@ impl TypeAppForm {
                     idx += 1;
                 }
                 TokenKind::TypeSymbol => {
+                    params.push(TypeAppFormParam::TypeSymbol(tokens[idx].to_string()));
+                    idx += 1;
+                }
+                TokenKind::PathSymbol => {
+                    let value = tokens[idx].to_string();
+                    let unqualified = symbol_name(&value);
+
+                    if !is_type_symbol(&unqualified) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: tokens[idx].loc(),
+                            desc: "expected a type symbol".into(),
+                        }));
+                    }
+
                     params.push(TypeAppFormParam::TypeSymbol(tokens[idx].to_string()));
                     idx += 1;
                 }
@@ -197,7 +211,7 @@ mod tests {
             vec!["A".to_string(), "B".to_string()]
         );
 
-        s = "(App (Fun A B E) C D)";
+        s = "(App (Fun A moduleB.B E) C D)";
 
         res = TypeAppForm::from_str(s);
 
@@ -211,7 +225,7 @@ mod tests {
                 .iter()
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>(),
-            vec!["(Fun A B E)".to_string(), "C".into(), "D".into()]
+            vec!["(Fun A moduleB.B E)".to_string(), "C".into(), "D".into()]
         );
     }
 }

@@ -2,7 +2,7 @@ use super::{FunAppForm, TypeAppForm};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::{is_symbol, is_type_symbol, symbol_name};
+use crate::syntax::{is_symbol, is_type_symbol, is_value_symbol, symbol_name};
 use crate::syntax::{Keyword, WILDCARD};
 use crate::token::{TokenKind, Tokens};
 use std::fmt;
@@ -78,7 +78,7 @@ impl MixedAppForm {
             }));
         }
 
-        if !is_symbol(&tokens[1].to_string()) {
+        if !is_symbol(&symbol_name(&tokens[1].to_string())) {
             return Err(Error::Semantic(SemanticError {
                 loc: tokens[1].loc(),
                 desc: "expected a symbol or a keyword".into(),
@@ -122,11 +122,18 @@ impl MixedAppForm {
                 }
                 TokenKind::PathSymbol => {
                     let name = tokens[idx].to_string();
+                    let unqualified = symbol_name(&name);
 
-                    if is_type_symbol(&name) {
+                    if is_type_symbol(&unqualified) {
                         params.push(MixedAppFormParam::TypeSymbol(tokens[idx].to_string()));
-                    } else {
+                    } else if is_value_symbol(&unqualified) {
                         params.push(MixedAppFormParam::ValueSymbol(tokens[idx].to_string()));
+                    } else {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: tokens[idx].loc(),
+                            desc: "expected a qualified type symbol or a qualified value symbol"
+                                .into(),
+                        }));
                     }
 
                     idx += 1;
@@ -292,7 +299,7 @@ mod tests {
             vec!["-1".to_string(), "T".to_string()]
         );
 
-        s = "(type T Q (Fun A T Q B))";
+        s = "(type T Q (Fun moduleA.A T Q B))";
 
         res = MixedAppForm::from_str(s);
 
@@ -306,7 +313,7 @@ mod tests {
                 .iter()
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>(),
-            vec!["T".to_string(), "Q".into(), "(Fun A T Q B)".into()]
+            vec!["T".to_string(), "Q".into(), "(Fun moduleA.A T Q B)".into()]
         );
     }
 }

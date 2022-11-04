@@ -1,7 +1,7 @@
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::{is_value_symbol, Keyword, WILDCARD};
+use crate::syntax::{is_keyword, is_value_symbol, symbol_name, WILDCARD};
 use crate::token::{TokenKind, Tokens};
 use std::fmt;
 
@@ -70,7 +70,7 @@ impl FunAppForm {
             }));
         }
 
-        if !is_value_symbol(&tokens[1].to_string()) {
+        if !is_value_symbol(&symbol_name(&tokens[1].to_string())) {
             return Err(Error::Semantic(SemanticError {
                 loc: tokens[1].loc(),
                 desc: "expected a value symbol or a value keyword".into(),
@@ -79,7 +79,7 @@ impl FunAppForm {
 
         let name = tokens[1].to_string();
 
-        if Keyword::is(&name) && name == "_" {
+        if is_keyword(&name) && name == "_" {
             return Err(Error::Semantic(SemanticError {
                 loc: tokens[1].loc(),
                 desc: "unexpected wildcard keyword".into(),
@@ -106,6 +106,20 @@ impl FunAppForm {
                 }
                 TokenKind::ValueSymbol => {
                     params.push(FunAppFormParam::Symbol(tokens[idx].to_string()));
+                    idx += 1;
+                }
+                TokenKind::PathSymbol => {
+                    let value = tokens[idx].to_string();
+                    let unqualified = symbol_name(&value);
+
+                    if is_keyword(&unqualified) {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: tokens[idx].loc(),
+                            desc: "a path symbol cannot end with a keyword".into(),
+                        }));
+                    }
+
+                    params.push(FunAppFormParam::Symbol(value));
                     idx += 1;
                 }
                 TokenKind::Keyword => {
@@ -225,7 +239,7 @@ mod tests {
             vec!["a".to_string(), "10".to_string()]
         );
 
-        s = "(app (getFunc \"f\") x y)";
+        s = "(app (moduleX.getFunc \"f\") x y)";
 
         res = FunAppForm::from_str(s);
 
@@ -239,7 +253,11 @@ mod tests {
                 .iter()
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>(),
-            vec!["(getFunc \"f\")".to_string(), "x".into(), "y".into()]
+            vec![
+                "(moduleX.getFunc \"f\")".to_string(),
+                "x".into(),
+                "y".into()
+            ]
         );
     }
 }
