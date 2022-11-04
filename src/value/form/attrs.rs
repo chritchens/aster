@@ -1,4 +1,4 @@
-use super::{FunAppForm, FunAppFormParam};
+use super::{FunAppForm, FunAppFormParam, SymbolProdForm};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
@@ -44,25 +44,10 @@ impl AttrsForm {
 
         match fun_app.params[0].clone() {
             FunAppFormParam::App(app) => {
-                if app.name != "prod" {
-                    return Err(Error::Semantic(SemanticError {
-                        loc: fun_app.loc(),
-                        desc: "expected a product of symbols".into(),
-                    }));
-                }
+                let prod = SymbolProdForm::from_fun_app(&app)?;
 
-                for param in app.params.iter() {
-                    match param {
-                        FunAppFormParam::Symbol(symbol) => {
-                            attrs.values.push(symbol.clone());
-                        }
-                        _ => {
-                            return Err(Error::Semantic(SemanticError {
-                                loc: fun_app.loc(),
-                                desc: "expected a symbol".into(),
-                            }));
-                        }
-                    }
+                for value in prod.values {
+                    attrs.values.push(value.to_string());
                 }
 
                 Ok(attrs)

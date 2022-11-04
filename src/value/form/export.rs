@@ -1,7 +1,10 @@
+use super::{MixedAppForm, MixedAppFormParam};
+use super::{SymbolProdForm, SymbolProdFormValue};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::token::{TokenKind, Tokens};
+use crate::syntax::{is_keyword, is_qualified};
+use crate::token::Tokens;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct ExportForm {
@@ -24,99 +27,80 @@ impl ExportForm {
     }
 
     pub fn from_tokens(tokens: &Tokens) -> Result<ExportForm> {
-        let len = tokens.len();
+        let mixed_app = MixedAppForm::from_tokens(tokens)?;
 
-        if tokens[0].kind != TokenKind::FormStart {
+        if mixed_app.name != "export" {
             return Err(Error::Semantic(SemanticError {
-                loc: tokens[0].loc(),
-                desc: "expected a form".into(),
+                loc: mixed_app.loc(),
+                desc: "expected an export keyword".into(),
             }));
         }
 
-        if tokens[len - 1].kind != TokenKind::FormEnd {
+        if mixed_app.params.len() != 1 {
             return Err(Error::Semantic(SemanticError {
-                loc: tokens[len - 1].loc(),
-                desc: "expected a form".into(),
+                loc: mixed_app.loc(),
+                desc: "expected a product of exported symbols or an empty literal".into(),
             }));
         }
 
-        if tokens[1].to_string() != "export" {
-            return Err(Error::Semantic(SemanticError {
-                loc: tokens[1].loc(),
-                desc: "expected an export form".into(),
-            }));
-        }
+        let mut export = ExportForm::new();
+        export.tokens = mixed_app.tokens.clone();
 
-        let mut type_defs = vec![];
-        let mut value_defs = vec![];
-        let mut idx = 2;
+        for param in mixed_app.params.clone() {
+            match param {
+                MixedAppFormParam::Empty => {}
+                MixedAppFormParam::MixedApp(app) => {
+                    let prod = SymbolProdForm::from_mixed_app(&app)?;
 
-        match tokens[idx].kind {
-            TokenKind::TypeSymbol => {
-                type_defs.push(tokens[idx].to_string());
-                idx += 1;
-            }
-            TokenKind::ValueSymbol => {
-                value_defs.push(tokens[idx].to_string());
-                idx += 1;
-            }
-            TokenKind::FormStart => {
-                idx += 1;
+                    for value in prod.values {
+                        match value {
+                            SymbolProdFormValue::ValueSymbol(symbol) => {
+                                if is_qualified(&symbol) {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: mixed_app.loc(),
+                                        desc: "expected an unqualified symbol".into(),
+                                    }));
+                                }
 
-                if tokens[idx].to_string() != "prod" {
-                    return Err(Error::Semantic(SemanticError {
-                        loc: tokens[idx].loc(),
-                        desc: "expected a product form".into(),
-                    }));
-                }
+                                if is_keyword(&symbol) {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: mixed_app.loc(),
+                                        desc: "unexpected keyword".into(),
+                                    }));
+                                }
 
-                idx += 1;
+                                export.value_defs.push(symbol);
+                            }
+                            SymbolProdFormValue::TypeSymbol(symbol) => {
+                                if is_qualified(&symbol) {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: mixed_app.loc(),
+                                        desc: "expected an unqualified symbol".into(),
+                                    }));
+                                }
 
-                let start_idx = idx;
+                                if is_keyword(&symbol) {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: mixed_app.loc(),
+                                        desc: "unexpected keyword".into(),
+                                    }));
+                                }
 
-                for tidx in start_idx..len {
-                    let token = tokens[tidx].clone();
-                    idx += 1;
-
-                    match token.kind {
-                        TokenKind::FormEnd => {
-                            break;
-                        }
-                        TokenKind::TypeSymbol => {
-                            type_defs.push(token.to_string());
-                        }
-                        TokenKind::ValueSymbol => {
-                            value_defs.push(token.to_string());
-                        }
-                        _ => {
-                            return Err(Error::Semantic(SemanticError {
-                                loc: token.loc(),
-                                desc: format!("unexpected token: {}", token.to_string()),
-                            }));
+                                export.type_defs.push(symbol);
+                            }
                         }
                     }
                 }
-            }
-            _ => {
-                return Err(Error::Semantic(SemanticError {
-                    loc: tokens[idx].loc(),
-                    desc: format!("unexpected token: {}", tokens[idx].to_string()),
-                }));
+                _ => {
+                    return Err(Error::Semantic(SemanticError {
+                        loc: mixed_app.loc(),
+                        desc: "expected a product of symbols or an empty literal".into(),
+                    }));
+                }
             }
         }
 
-        if idx + 1 < len {
-            return Err(Error::Semantic(SemanticError {
-                loc: tokens[idx].loc(),
-                desc: format!("unexpected token: {}", tokens[idx].to_string()),
-            }));
-        }
-
-        Ok(ExportForm {
-            tokens: tokens.clone(),
-            type_defs,
-            value_defs,
-        })
+        Ok(export)
     }
 
     pub fn from_str(s: &str) -> Result<ExportForm> {
@@ -132,7 +116,7 @@ mod tests {
     fn export_form_from_str() {
         use super::ExportForm;
 
-        let mut s = "(export A)";
+        let mut s = "(export (prod A))";
 
         let mut res = ExportForm::from_str(s);
 
@@ -152,5 +136,16 @@ mod tests {
 
         assert_eq!(form.type_defs, vec!["C".to_string(), "E".to_string()]);
         assert_eq!(form.value_defs, vec!["b".to_string(), "d".to_string()]);
+
+        s = "(export ())";
+
+        res = ExportForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert!(form.type_defs.is_empty());
+        assert!(form.value_defs.is_empty());
     }
 }

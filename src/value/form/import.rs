@@ -1,7 +1,11 @@
+use super::{MixedAppForm, MixedAppFormParam};
+use super::{SymbolProdForm, SymbolProdFormValue};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::token::{TokenKind, Tokens};
+use crate::syntax::{is_keyword, is_path_symbol, is_qualified};
+use crate::syntax::{symbol_name, symbol_with_qualifier};
+use crate::token::Tokens;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct ImportForm {
@@ -26,108 +30,150 @@ impl ImportForm {
     }
 
     pub fn from_tokens(tokens: &Tokens) -> Result<ImportForm> {
-        let len = tokens.len();
+        let mixed_app = MixedAppForm::from_tokens(tokens)?;
 
-        if tokens[0].kind != TokenKind::FormStart {
+        if mixed_app.name != "import" {
             return Err(Error::Semantic(SemanticError {
-                loc: tokens[0].loc(),
-                desc: "expected a form".into(),
+                loc: mixed_app.loc(),
+                desc: "expected an import keyword".into(),
             }));
         }
 
-        if tokens[len - 1].kind != TokenKind::FormEnd {
+        let mut import = ImportForm::new();
+        import.tokens = mixed_app.tokens.clone();
+
+        let len = mixed_app.params.len();
+
+        if len < 2 {
             return Err(Error::Semantic(SemanticError {
-                loc: tokens[len - 1].loc(),
-                desc: "expected a form".into(),
+                loc: mixed_app.loc(),
+                desc: "expected at least a module parameter and an empty literal".into(),
             }));
         }
 
-        if tokens[1].to_string() != "import" {
+        if len > 3 {
             return Err(Error::Semantic(SemanticError {
-                loc: tokens[1].loc(),
-                desc: "expected an import form".into(),
+                loc: mixed_app.loc(),
+                desc: "expected at most a module, a product of value symbols and a value symbol"
+                    .into(),
             }));
         }
 
-        if tokens[2].kind != TokenKind::PathSymbol {
+        let module = mixed_app.params[0].to_string();
+
+        if is_path_symbol(&module) {
+            if is_keyword(&symbol_name(&module)) {
+                return Err(Error::Semantic(SemanticError {
+                    loc: mixed_app.loc(),
+                    desc: "a path cannot end with a keyword".into(),
+                }));
+            }
+        } else if is_keyword(&module) {
             return Err(Error::Semantic(SemanticError {
-                loc: tokens[2].loc(),
+                loc: mixed_app.loc(),
                 desc: "expected a module path".into(),
             }));
         }
 
-        let module = tokens[2].to_string();
+        import.module = module;
 
         let mut type_defs = vec![];
         let mut value_defs = vec![];
-        let mut qualifier = None;
-        let mut idx = 3;
 
-        match tokens[idx].kind {
-            TokenKind::ValueSymbol => {
-                qualifier = Some(tokens[idx].to_string());
-            }
-            TokenKind::FormStart => {
-                idx += 1;
+        if len > 1 {
+            match mixed_app.params[1].clone() {
+                MixedAppFormParam::Empty => {}
+                MixedAppFormParam::ValueSymbol(symbol) => {
+                    if len > 2 {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: mixed_app.loc(),
+                            desc: "expected a product of symbols or an empty literal".into(),
+                        }));
+                    }
 
-                if tokens[idx].to_string() != "prod" {
-                    return Err(Error::Semantic(SemanticError {
-                        loc: tokens[idx].loc(),
-                        desc: "expected a product form".into(),
-                    }));
+                    import.qualifier = Some(symbol);
                 }
+                MixedAppFormParam::MixedApp(app) => {
+                    let prod = SymbolProdForm::from_mixed_app(&app)?;
 
-                idx += 1;
+                    for value in prod.values {
+                        match value {
+                            SymbolProdFormValue::ValueSymbol(symbol) => {
+                                if is_qualified(&symbol) {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: mixed_app.loc(),
+                                        desc: "expected an unqualified symbol".into(),
+                                    }));
+                                }
 
-                let start_idx = idx;
+                                if is_keyword(&symbol) {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: mixed_app.loc(),
+                                        desc: "unexpected keyword".into(),
+                                    }));
+                                }
 
-                for tidx in start_idx..len {
-                    let token = tokens[tidx].clone();
-                    idx += 1;
+                                value_defs.push(symbol);
+                            }
+                            SymbolProdFormValue::TypeSymbol(symbol) => {
+                                if is_qualified(&symbol) {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: mixed_app.loc(),
+                                        desc: "expected an unqualified symbol".into(),
+                                    }));
+                                }
 
-                    match token.kind {
-                        TokenKind::FormEnd => {
-                            break;
-                        }
-                        TokenKind::TypeSymbol => {
-                            type_defs.push(token.to_string());
-                        }
-                        TokenKind::ValueSymbol => {
-                            value_defs.push(token.to_string());
-                        }
-                        _ => {
-                            return Err(Error::Semantic(SemanticError {
-                                loc: token.loc(),
-                                desc: format!("unexpected token: {}", token.to_string()),
-                            }));
+                                if is_keyword(&symbol) {
+                                    return Err(Error::Semantic(SemanticError {
+                                        loc: mixed_app.loc(),
+                                        desc: "unexpected keyword".into(),
+                                    }));
+                                }
+
+                                type_defs.push(symbol);
+                            }
                         }
                     }
                 }
-            }
-            _ => {
-                return Err(Error::Semantic(SemanticError {
-                    loc: tokens[idx].loc(),
-                    desc: format!("unexpected token: {}", tokens[idx].to_string()),
-                }));
+                _ => {
+                    return Err(Error::Semantic(SemanticError {
+                        loc: mixed_app.loc(),
+                        desc: "expected a product of symbols or a value symbol".into(),
+                    }));
+                }
             }
         }
 
-        if qualifier.is_some() && idx + 1 < len {
-            return Err(Error::Semantic(SemanticError {
-                loc: tokens[idx].loc(),
-                desc: format!("unexpected token: {}", tokens[idx].to_string()),
-            }));
-        } else if tokens[idx].kind == TokenKind::ValueSymbol {
-            qualifier = Some(tokens[idx].to_string());
+        if len > 2 {
+            match mixed_app.params[2].clone() {
+                MixedAppFormParam::ValueSymbol(symbol) => {
+                    import.qualifier = Some(symbol);
+                }
+                _ => {
+                    return Err(Error::Semantic(SemanticError {
+                        loc: mixed_app.loc(),
+                        desc: "expected a value symbol".into(),
+                    }));
+                }
+            }
         }
 
-        Ok(ImportForm {
-            tokens: tokens.clone(),
-            module,
-            qualifier,
-            type_defs,
-            value_defs,
-        })
+        if let Some(qualifier) = import.qualifier.clone() {
+            type_defs = type_defs
+                .iter()
+                .map(|d| symbol_with_qualifier(d, &qualifier))
+                .collect();
+
+            value_defs = value_defs
+                .iter()
+                .map(|d| symbol_with_qualifier(d, &qualifier))
+                .collect();
+        }
+
+        import.type_defs = type_defs;
+        import.value_defs = value_defs;
+
+        Ok(import)
     }
 
     pub fn from_str(s: &str) -> Result<ImportForm> {
@@ -143,17 +189,56 @@ mod tests {
     fn import_form_from_str() {
         use super::ImportForm;
 
-        let s = "(import std.x (prod a B c D) x)";
+        let mut s = "(import std.x (prod a B c D) x)";
 
-        let res = ImportForm::from_str(s);
+        let mut res = ImportForm::from_str(s);
 
         assert!(res.is_ok());
 
-        let form = res.unwrap();
+        let mut form = res.unwrap();
 
         assert_eq!(form.module, "std.x".to_string());
         assert_eq!(form.qualifier, Some("x".into()));
+        assert_eq!(form.type_defs, vec!["x.B".to_string(), "x.D".to_string()]);
+        assert_eq!(form.value_defs, vec!["x.a".to_string(), "x.c".to_string()]);
+
+        s = "(import std.x (prod a B c D))";
+
+        res = ImportForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.module, "std.x".to_string());
+        assert_eq!(form.qualifier, None);
         assert_eq!(form.type_defs, vec!["B".to_string(), "D".to_string()]);
         assert_eq!(form.value_defs, vec!["a".to_string(), "c".to_string()]);
+
+        s = "(import std.x () x)";
+
+        res = ImportForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.module, "std.x".to_string());
+        assert_eq!(form.qualifier, Some("x".into()));
+        assert!(form.type_defs.is_empty());
+        assert!(form.value_defs.is_empty());
+
+        s = "(import std.x ())";
+
+        res = ImportForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.module, "std.x".to_string());
+        assert_eq!(form.qualifier, None);
+        assert!(form.type_defs.is_empty());
+        assert!(form.value_defs.is_empty());
     }
 }

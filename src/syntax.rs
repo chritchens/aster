@@ -406,6 +406,10 @@ pub fn is_path_symbol(s: &str) -> bool {
         && !s.ends_with(SYMBOL_PATH_SEPARATOR)
 }
 
+pub fn is_qualified(s: &str) -> bool {
+    s.chars().any(|c| c == SYMBOL_PATH_SEPARATOR)
+}
+
 pub fn symbol_qualifier(s: &str) -> String {
     let mut parts: Vec<String> = s.split('.').map(|s| s.into()).collect();
 

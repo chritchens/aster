@@ -1,4 +1,5 @@
 use super::{FunAppForm, FunAppFormParam};
+use super::{ValueProdForm, ValueProdFormValue};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
@@ -78,29 +79,17 @@ impl FunForm {
         match fun_app.params[0].clone() {
             FunAppFormParam::Empty => {}
             FunAppFormParam::App(app) => {
-                if app.name != "prod" {
-                    return Err(Error::Semantic(SemanticError {
-                        loc: fun_app.loc(),
-                        desc: "expected a product of symbols".into(),
-                    }));
-                }
+                let prod = ValueProdForm::from_fun_app(&app)?;
 
-                if app.params.is_empty() {
-                    return Err(Error::Semantic(SemanticError {
-                        loc: fun_app.loc(),
-                        desc: "expected at least one parameter".into(),
-                    }));
-                }
-
-                for param in app.params.iter() {
-                    match param {
-                        FunAppFormParam::Symbol(symbol) => {
-                            fun.params.push(symbol.clone());
+                for value in prod.values {
+                    match value {
+                        ValueProdFormValue::Symbol(symbol) => {
+                            fun.params.push(symbol);
                         }
                         _ => {
                             return Err(Error::Semantic(SemanticError {
                                 loc: fun_app.loc(),
-                                desc: "expected a symbol".into(),
+                                desc: "expected a type symbol".into(),
                             }));
                         }
                     }

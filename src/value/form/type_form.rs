@@ -1,4 +1,5 @@
-use super::{MixedAppForm, MixedAppFormParam, TypeAppForm};
+use super::{MixedAppForm, MixedAppFormParam};
+use super::{TypeAppForm, TypeProdForm, TypeProdFormValue};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
@@ -76,25 +77,13 @@ impl TypeForm {
 
         match mixed_app.params[0].clone() {
             MixedAppFormParam::Empty => {}
-            MixedAppFormParam::MixedApp(form) => {
-                if form.name != "prod" {
-                    return Err(Error::Semantic(SemanticError {
-                        loc: mixed_app.loc(),
-                        desc: "expected a product of symbols".into(),
-                    }));
-                }
+            MixedAppFormParam::MixedApp(app) => {
+                let prod = TypeProdForm::from_mixed_app(&app)?;
 
-                if form.params.is_empty() {
-                    return Err(Error::Semantic(SemanticError {
-                        loc: mixed_app.loc(),
-                        desc: "expected at least one parameter".into(),
-                    }));
-                }
-
-                for param in form.params.iter() {
-                    match param {
-                        MixedAppFormParam::TypeSymbol(symbol) => {
-                            type_form.params.push(symbol.clone());
+                for value in prod.values {
+                    match value {
+                        TypeProdFormValue::Symbol(symbol) => {
+                            type_form.params.push(symbol);
                         }
                         _ => {
                             return Err(Error::Semantic(SemanticError {
