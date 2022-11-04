@@ -15,12 +15,12 @@
 (def sig boolToUInt (Fun Bool UInt))
 (def fun boolToUInt pred
   (case pred 
-    true 1 
-    false 0))
+    true (fun p 1)
+    false (fun p 0)))
 
 (def sig printBoolAsUInt (Fun IO Bool IO))
 (def fun printBoolAsUInt io pred 
-  (caseMap pred 
+  (case pred 
     true  (fun t 
       (printf io "true as uint: {}\n" (boolToUInt t)))
     false (fun f 
