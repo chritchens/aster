@@ -410,7 +410,7 @@ mod tests {
         assert_eq!(form.to_string(), s.to_string());
         assert_eq!(form.as_fun_app().unwrap().to_string(), s.to_string());
 
-        s = "(type T Q (Fun moduleA.A T Q B))";
+        s = "(type T Q (Fun (Prod moduleA.A T Q) B))";
 
         res = MixedAppForm::from_str(s);
 
@@ -424,7 +424,11 @@ mod tests {
                 .iter()
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>(),
-            vec!["T".to_string(), "Q".into(), "(Fun moduleA.A T Q B)".into()]
+            vec![
+                "T".to_string(),
+                "Q".into(),
+                "(Fun (Prod moduleA.A T Q) B)".into()
+            ]
         );
         assert!(form.is_mixed_app());
 
