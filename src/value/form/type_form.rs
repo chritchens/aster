@@ -138,7 +138,7 @@ impl TypeForm {
             "()".to_string()
         } else {
             format!(
-                "(prod _ {})",
+                "(prod {})",
                 self.params
                     .iter()
                     .map(|v| v.to_string())

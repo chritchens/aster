@@ -1,4 +1,5 @@
 pub mod attrs;
+pub mod def;
 pub mod export;
 #[allow(clippy::module_inception)]
 pub mod form;
@@ -16,6 +17,7 @@ pub mod type_prod;
 pub mod value_prod;
 
 pub use attrs::*;
+pub use def::*;
 pub use export::*;
 pub use form::*;
 pub use fun::*;
