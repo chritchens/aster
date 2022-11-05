@@ -7,16 +7,16 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum TypeAppFormParam {
-    TypeSymbol(String),
-    TypeApp(TypeAppForm),
+    Symbol(String),
+    App(TypeAppForm),
 }
 
 impl TypeAppFormParam {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            TypeAppFormParam::TypeSymbol(symbol) => symbol.clone(),
-            TypeAppFormParam::TypeApp(type_app) => type_app.to_string(),
+            TypeAppFormParam::Symbol(symbol) => symbol.clone(),
+            TypeAppFormParam::App(type_app) => type_app.to_string(),
         }
     }
 }
@@ -86,11 +86,11 @@ impl TypeAppForm {
                         }));
                     }
 
-                    params.push(TypeAppFormParam::TypeSymbol(tokens[idx].to_string()));
+                    params.push(TypeAppFormParam::Symbol(tokens[idx].to_string()));
                     idx += 1;
                 }
                 TokenKind::TypeSymbol => {
-                    params.push(TypeAppFormParam::TypeSymbol(tokens[idx].to_string()));
+                    params.push(TypeAppFormParam::Symbol(tokens[idx].to_string()));
                     idx += 1;
                 }
                 TokenKind::PathSymbol => {
@@ -104,7 +104,7 @@ impl TypeAppForm {
                         }));
                     }
 
-                    params.push(TypeAppFormParam::TypeSymbol(tokens[idx].to_string()));
+                    params.push(TypeAppFormParam::Symbol(tokens[idx].to_string()));
                     idx += 1;
                 }
                 TokenKind::FormStart => {
@@ -133,7 +133,7 @@ impl TypeAppForm {
 
                     let type_app = TypeAppForm::from_tokens(&new_tokens)?;
 
-                    params.push(TypeAppFormParam::TypeApp(type_app));
+                    params.push(TypeAppFormParam::App(type_app));
                 }
                 TokenKind::FormEnd => {
                     idx += 1;

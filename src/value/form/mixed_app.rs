@@ -150,10 +150,10 @@ impl MixedAppForm {
         for param in self.params.clone() {
             match param {
                 MixedAppFormParam::TypeSymbol(symbol) => {
-                    type_app.params.push(TypeAppFormParam::TypeSymbol(symbol));
+                    type_app.params.push(TypeAppFormParam::Symbol(symbol));
                 }
                 MixedAppFormParam::TypeApp(app) => {
-                    type_app.params.push(TypeAppFormParam::TypeApp(app));
+                    type_app.params.push(TypeAppFormParam::App(app));
                 }
                 _ => unreachable!(),
             }
