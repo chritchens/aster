@@ -211,7 +211,7 @@ mod tests {
             vec!["A".to_string(), "B".to_string()]
         );
 
-        s = "(App (Fun A moduleB.B E) C D)";
+        s = "(App (Fun (Prod A moduleB.B) E) (Prod A moduleB.B))";
 
         res = TypeAppForm::from_str(s);
 
@@ -225,7 +225,10 @@ mod tests {
                 .iter()
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>(),
-            vec!["(Fun A moduleB.B E)".to_string(), "C".into(), "D".into()]
+            vec![
+                "(Fun (Prod A moduleB.B) E)".to_string(),
+                "(Prod A moduleB.B)".into()
+            ]
         );
     }
 }
