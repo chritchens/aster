@@ -3,8 +3,7 @@ use super::{TypeAppForm, TypeAppFormParam};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::Keyword;
-use crate::syntax::{is_symbol, is_type_symbol, is_value_symbol, symbol_name};
+use crate::syntax::{is_keyword, is_symbol, is_type_symbol, is_value_symbol, symbol_name};
 use crate::token::{TokenKind, Tokens};
 use std::fmt;
 
@@ -182,7 +181,7 @@ impl MixedAppForm {
 
         let name = tokens[1].to_string();
 
-        if Keyword::is(&name) && name == "_" {
+        if is_keyword(&name) && name == "_" {
             return Err(Error::Semantic(SemanticError {
                 loc: tokens[1].loc(),
                 desc: "unexpected wildcard keyword".into(),

@@ -1,8 +1,7 @@
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::is_type_symbol;
-use crate::syntax::Keyword;
+use crate::syntax::{is_keyword, is_type_symbol};
 use crate::token::{Token, TokenKind};
 use crate::typing::Type;
 use std::fmt;
@@ -41,7 +40,7 @@ impl SymbolValue {
     }
 
     pub fn is_keyword(&self) -> bool {
-        Keyword::is(&self.value)
+        is_keyword(&self.value)
     }
 
     pub fn is_type(&self) -> bool {
@@ -79,7 +78,7 @@ impl SymbolValue {
                     symbol.typing = Type::Type;
                 } else {
                     symbol.kind = SymbolKind::Value;
-                    symbol.typing = if Keyword::is(&string_value) {
+                    symbol.typing = if is_keyword(&string_value) {
                         Type::Builtin
                     } else {
                         Type::Unknown(string_value.clone())

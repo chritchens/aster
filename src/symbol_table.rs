@@ -1,7 +1,6 @@
 use crate::error::{Error, SemanticError};
 use crate::result::Result;
-use crate::syntax::is_type_symbol;
-use crate::syntax::Keyword;
+use crate::syntax::{is_keyword, is_type_symbol};
 use crate::syntax::{symbol_name, symbol_qualifier, symbol_with_qualifier};
 use crate::value::{FormKind, Value, Values};
 use std::collections::{BTreeMap, BTreeSet};
@@ -287,7 +286,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::is(&name) {
+                            if is_keyword(&name) {
                                 name = match form.values[2].clone() {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -343,7 +342,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::is(&name) {
+                            if is_keyword(&name) {
                                 name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -390,7 +389,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::is(&name) {
+                            if is_keyword(&name) {
                                 name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -435,7 +434,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::is(&name) {
+                            if is_keyword(&name) {
                                 name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -480,7 +479,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::is(&name) {
+                            if is_keyword(&name) {
                                 name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -525,7 +524,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::is(&name) {
+                            if is_keyword(&name) {
                                 name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -581,7 +580,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let mut name = symbol.to_string();
 
-                            if Keyword::is(&name) {
+                            if is_keyword(&name) {
                                 name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
@@ -633,7 +632,7 @@ impl SymbolTable {
                         Value::Symbol(symbol) => {
                             let tmp_name = symbol.to_string();
 
-                            if Keyword::is(&tmp_name) {
+                            if is_keyword(&tmp_name) {
                                 name = match &form.values[2] {
                                     Value::Symbol(symbol) => symbol.to_string(),
                                     _ => {
