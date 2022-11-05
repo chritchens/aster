@@ -1,4 +1,5 @@
-use super::{FunAppForm, TypeAppForm};
+use super::{FunAppForm, FunAppFormParam};
+use super::{TypeAppForm, TypeAppFormParam};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
@@ -59,6 +60,106 @@ impl MixedAppForm {
 
     pub fn loc(&self) -> Option<Loc> {
         self.tokens[0].loc()
+    }
+
+    pub fn is_fun_app(&self) -> bool {
+        if !is_value_symbol(&symbol_name(&self.name)) {
+            return false;
+        }
+
+        for param in self.params.iter() {
+            match param {
+                MixedAppFormParam::TypeSymbol(_)
+                | MixedAppFormParam::TypeApp(_)
+                | MixedAppFormParam::MixedApp(_) => {
+                    return false;
+                }
+                _ => {}
+            }
+        }
+
+        true
+    }
+
+    pub fn is_type_app(&self) -> bool {
+        if !is_type_symbol(&symbol_name(&self.name)) {
+            return false;
+        }
+
+        for param in self.params.iter() {
+            match param {
+                MixedAppFormParam::Empty
+                | MixedAppFormParam::Wildcard
+                | MixedAppFormParam::Prim(_)
+                | MixedAppFormParam::ValueSymbol(_)
+                | MixedAppFormParam::FunApp(_)
+                | MixedAppFormParam::MixedApp(_) => {
+                    return false;
+                }
+                _ => {}
+            }
+        }
+
+        true
+    }
+
+    pub fn is_mixed_app(&self) -> bool {
+        !(self.is_fun_app() || self.is_type_app())
+    }
+
+    pub fn as_fun_app(&self) -> Option<FunAppForm> {
+        if !self.is_fun_app() {
+            return None;
+        }
+
+        let mut fun_app = FunAppForm::new();
+        fun_app.name = self.name.clone();
+
+        for param in self.params.clone() {
+            match param {
+                MixedAppFormParam::Empty => {
+                    fun_app.params.push(FunAppFormParam::Empty);
+                }
+                MixedAppFormParam::Wildcard => {
+                    fun_app.params.push(FunAppFormParam::Wildcard);
+                }
+                MixedAppFormParam::Prim(prim) => {
+                    fun_app.params.push(FunAppFormParam::Prim(prim));
+                }
+                MixedAppFormParam::ValueSymbol(symbol) => {
+                    fun_app.params.push(FunAppFormParam::Symbol(symbol));
+                }
+                MixedAppFormParam::FunApp(app) => {
+                    fun_app.params.push(FunAppFormParam::App(app));
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        Some(fun_app)
+    }
+
+    pub fn as_type_app(&self) -> Option<TypeAppForm> {
+        if !self.is_type_app() {
+            return None;
+        }
+
+        let mut type_app = TypeAppForm::new();
+        type_app.name = self.name.clone();
+
+        for param in self.params.clone() {
+            match param {
+                MixedAppFormParam::TypeSymbol(symbol) => {
+                    type_app.params.push(TypeAppFormParam::TypeSymbol(symbol));
+                }
+                MixedAppFormParam::TypeApp(app) => {
+                    type_app.params.push(TypeAppFormParam::TypeApp(app));
+                }
+                _ => unreachable!(),
+            }
+        }
+
+        Some(type_app)
     }
 
     pub fn from_tokens(tokens: &Tokens) -> Result<MixedAppForm> {
@@ -298,6 +399,27 @@ mod tests {
                 .collect::<Vec<String>>(),
             vec!["-1".to_string(), "T".to_string()]
         );
+        assert!(form.is_mixed_app());
+
+        s = "(x.f a 'b' 0)";
+
+        res = MixedAppForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.name, "x.f".to_string());
+        assert_eq!(
+            form.params
+                .iter()
+                .map(|p| p.to_string())
+                .collect::<Vec<String>>(),
+            vec!["a".to_string(), "'b'".to_string(), "0".to_string()]
+        );
+        assert!(form.is_fun_app());
+        assert_eq!(form.to_string(), s.to_string());
+        assert_eq!(form.as_fun_app().unwrap().to_string(), s.to_string());
 
         s = "(type T Q (Fun moduleA.A T Q B))";
 
@@ -315,5 +437,26 @@ mod tests {
                 .collect::<Vec<String>>(),
             vec!["T".to_string(), "Q".into(), "(Fun moduleA.A T Q B)".into()]
         );
+        assert!(form.is_mixed_app());
+
+        s = "(Sum A B c.C Char)";
+
+        res = MixedAppForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.name, "Sum".to_string());
+        assert_eq!(
+            form.params
+                .iter()
+                .map(|p| p.to_string())
+                .collect::<Vec<String>>(),
+            vec!["A".to_string(), "B".into(), "c.C".into(), "Char".into()]
+        );
+        assert!(form.is_type_app());
+        assert_eq!(form.to_string(), s.to_string());
+        assert_eq!(form.as_type_app().unwrap().to_string(), s.to_string());
     }
 }
