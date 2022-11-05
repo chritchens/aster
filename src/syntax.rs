@@ -3,11 +3,11 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 41] = [
+pub const KEYWORDS: [&str; 40] = [
     "builtin", "import", "export", "def", "type", "prim", "sum", "prod", "sig", "fun", "attrs",
     "app", "case", "size", "load", "store", "cast", "dup", "drop", "panic", "Builtin", "Empty",
     "Prim", "UInt", "Int", "Float", "Size", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum",
-    "Prod", "Sig", "Fun", "App", "Attrs", "Type", "_",
+    "Prod", "Sig", "Fun", "App", "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -56,7 +56,6 @@ pub enum Keyword {
     AppT,
     AttrsT,
     TypeT,
-    Wildcard,
 }
 
 impl fmt::Display for Keyword {
@@ -102,7 +101,6 @@ impl fmt::Display for Keyword {
             Keyword::AppT => write!(f, "App"),
             Keyword::AttrsT => write!(f, "Attrs"),
             Keyword::TypeT => write!(f, "Type"),
-            Keyword::Wildcard => write!(f, "_"),
         }
     }
 }
@@ -154,7 +152,6 @@ impl Keyword {
             "App" => Ok(Keyword::AppT),
             "Attrs" => Ok(Keyword::AttrsT),
             "Type" => Ok(Keyword::TypeT),
-            "_" => Ok(Keyword::Wildcard),
             _ => Err(Error::Syntax(SyntaxError {
                 loc: None,
                 desc: "expected keyword".into(),
@@ -438,12 +435,6 @@ pub const FORM_END: char = ')';
 
 pub fn is_form_end(s: &str) -> bool {
     s == FORM_END.to_string()
-}
-
-pub const WILDCARD: char = '_';
-
-pub fn is_wildcard(s: &str) -> bool {
-    s == WILDCARD.to_string()
 }
 
 pub const EMPTY: &str = "";

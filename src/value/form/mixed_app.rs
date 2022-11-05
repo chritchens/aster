@@ -3,15 +3,14 @@ use super::{TypeAppForm, TypeAppFormParam};
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
+use crate::syntax::Keyword;
 use crate::syntax::{is_symbol, is_type_symbol, is_value_symbol, symbol_name};
-use crate::syntax::{Keyword, WILDCARD};
 use crate::token::{TokenKind, Tokens};
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum MixedAppFormParam {
     Empty,
-    Wildcard,
     Prim(String),
     ValueSymbol(String),
     TypeSymbol(String),
@@ -25,7 +24,6 @@ impl MixedAppFormParam {
     pub fn to_string(&self) -> String {
         match self {
             MixedAppFormParam::Empty => "()".into(),
-            MixedAppFormParam::Wildcard => "_".into(),
             MixedAppFormParam::Prim(prim) => prim.clone(),
             MixedAppFormParam::ValueSymbol(symbol) => symbol.clone(),
             MixedAppFormParam::TypeSymbol(symbol) => symbol.clone(),
@@ -89,7 +87,6 @@ impl MixedAppForm {
         for param in self.params.iter() {
             match param {
                 MixedAppFormParam::Empty
-                | MixedAppFormParam::Wildcard
                 | MixedAppFormParam::Prim(_)
                 | MixedAppFormParam::ValueSymbol(_)
                 | MixedAppFormParam::FunApp(_)
@@ -119,9 +116,6 @@ impl MixedAppForm {
             match param {
                 MixedAppFormParam::Empty => {
                     fun_app.params.push(FunAppFormParam::Empty);
-                }
-                MixedAppFormParam::Wildcard => {
-                    fun_app.params.push(FunAppFormParam::Wildcard);
                 }
                 MixedAppFormParam::Prim(prim) => {
                     fun_app.params.push(FunAppFormParam::Prim(prim));
@@ -242,17 +236,13 @@ impl MixedAppForm {
                 TokenKind::Keyword => {
                     let value = tokens[idx].to_string();
 
-                    if value == WILDCARD.to_string() {
-                        if idx != 2 {
-                            return Err(Error::Semantic(SemanticError {
-                                loc: tokens[idx].loc(),
-                                desc: "expected the wildcard keyword".into(),
-                            }));
-                        } else {
-                            params.push(MixedAppFormParam::Wildcard);
-                        }
-                    } else if is_type_symbol(&value) {
+                    if is_type_symbol(&symbol_name(&value)) {
                         params.push(MixedAppFormParam::TypeSymbol(value));
+                    } else {
+                        return Err(Error::Semantic(SemanticError {
+                            loc: tokens[idx].loc(),
+                            desc: "expected a type keyword".into(),
+                        }));
                     }
 
                     idx += 1;

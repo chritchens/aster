@@ -96,12 +96,6 @@ impl ValueProdForm {
                 FunAppFormParam::App(app) => {
                     prod.values.push(ValueProdFormValue::App(app));
                 }
-                _ => {
-                    return Err(Error::Semantic(SemanticError {
-                        loc: fun_app.loc(),
-                        desc: "unexpected wildcard keyword".into(),
-                    }));
-                }
             }
         }
 

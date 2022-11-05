@@ -1,14 +1,13 @@
 use crate::error::{Error, SemanticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::{is_keyword, is_value_symbol, symbol_name, WILDCARD};
+use crate::syntax::{is_keyword, is_value_symbol, symbol_name};
 use crate::token::{TokenKind, Tokens};
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FunAppFormParam {
     Empty,
-    Wildcard,
     Prim(String),
     Symbol(String),
     App(FunAppForm),
@@ -19,7 +18,6 @@ impl FunAppFormParam {
     pub fn to_string(&self) -> String {
         match self {
             FunAppFormParam::Empty => "()".into(),
-            FunAppFormParam::Wildcard => "_".into(),
             FunAppFormParam::Prim(prim) => prim.clone(),
             FunAppFormParam::Symbol(symbol) => symbol.clone(),
             FunAppFormParam::App(app) => app.to_string(),
@@ -120,19 +118,6 @@ impl FunAppForm {
                     }
 
                     params.push(FunAppFormParam::Symbol(value));
-                    idx += 1;
-                }
-                TokenKind::Keyword => {
-                    let value = tokens[idx].to_string();
-
-                    if value != WILDCARD.to_string() || idx != 2 {
-                        return Err(Error::Semantic(SemanticError {
-                            loc: tokens[idx].loc(),
-                            desc: "expected the wildcard keyword".into(),
-                        }));
-                    }
-
-                    params.push(FunAppFormParam::Wildcard);
                     idx += 1;
                 }
                 TokenKind::FormStart => {

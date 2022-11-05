@@ -116,12 +116,6 @@ impl FunForm {
             FunAppFormParam::App(app) => {
                 fun.body = FunFormBody::App(app);
             }
-            _ => {
-                return Err(Error::Semantic(SemanticError {
-                    loc: fun_app.loc(),
-                    desc: "expected a function application form, or a symbol or a primitive".into(),
-                }));
-            }
         }
 
         Ok(fun)
