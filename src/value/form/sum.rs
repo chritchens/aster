@@ -133,7 +133,7 @@ mod tests {
         assert_eq!(form.value.to_string(), "10".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(sum (app f 10 20 \"a\"))";
+        s = "(sum (app f (prod 10 20 \"a\")))";
 
         res = SumForm::from_str(s);
 
@@ -141,6 +141,9 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.value.to_string(), "(app f 10 20 \"a\")".to_string());
+        assert_eq!(
+            form.value.to_string(),
+            "(app f (prod 10 20 \"a\"))".to_string()
+        );
     }
 }
