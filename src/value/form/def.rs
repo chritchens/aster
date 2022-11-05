@@ -487,7 +487,7 @@ mod tests {
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_function_application_form());
 
-        s = "(def Y (Fun A B C D))";
+        s = "(def Y (Fun (Prod A B C) D))";
 
         res = DefForm::from_str(s);
 
@@ -496,7 +496,7 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name, "Y".to_string());
-        assert_eq!(form.value.to_string(), "(Fun A B C D)".to_string());
+        assert_eq!(form.value.to_string(), "(Fun (Prod A B C) D)".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_type_application_form());
     }
