@@ -150,6 +150,9 @@ impl Form {
 
         while idx < len {
             match tokens[idx].kind {
+                TokenKind::Comment | TokenKind::DocComment => {
+                    idx += 1;
+                }
                 TokenKind::EmptyLiteral => {
                     params.push(FormParam::Empty);
                     idx += 1;
@@ -238,12 +241,6 @@ impl Form {
                 TokenKind::FormEnd => {
                     idx += 1;
                     break;
-                }
-                _ => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: tokens[idx].loc(),
-                        desc: format!("unexpected token: {}", tokens[idx].to_string()),
-                    }));
                 }
             }
         }
