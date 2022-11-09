@@ -58,7 +58,6 @@ pub enum DefFormValue {
     AppForm(AppForm),
     TypeForm(TypeForm),
     ValueForm(ValueForm),
-    MixedForm(Form),
 }
 
 impl Default for DefFormValue {
@@ -83,7 +82,6 @@ impl DefFormValue {
             DefFormValue::AppForm(form) => form.to_string(),
             DefFormValue::TypeForm(form) => form.to_string(),
             DefFormValue::ValueForm(form) => form.to_string(),
-            DefFormValue::MixedForm(form) => form.to_string(),
         }
     }
 }
@@ -202,13 +200,6 @@ impl DefForm {
     pub fn is_value_form(&self) -> bool {
         match self.value {
             DefFormValue::ValueForm(_) => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_mixed_form(&self) -> bool {
-        match self.value {
-            DefFormValue::MixedForm(_) => true,
             _ => false,
         }
     }
@@ -369,13 +360,22 @@ impl DefForm {
                             if let Ok(form) = TypeForm::from_form(&form) {
                                 def.value = DefFormValue::TypeForm(form);
                             } else {
-                                def.value = DefFormValue::MixedForm(form);
+                                return Err(Error::Syntactic(SyntacticError {
+                                    loc: form.loc(),
+                                    desc: "unexpected mixed form".to_string(),
+                                }));
                             }
                         } else if let Ok(form) = AppForm::from_form(&form) {
                             def.value = DefFormValue::AppForm(form);
                         } else {
-                            let form = ValueForm::from_form(&form)?;
-                            def.value = DefFormValue::ValueForm(form);
+                            if let Ok(form) = ValueForm::from_form(&form) {
+                                def.value = DefFormValue::ValueForm(form);
+                            } else {
+                                return Err(Error::Syntactic(SyntacticError {
+                                    loc: form.loc(),
+                                    desc: "unexpected mixed form".to_string(),
+                                }));
+                            }
                         }
                     }
                 },
@@ -423,13 +423,22 @@ impl DefForm {
                             if let Ok(form) = TypeForm::from_form(&form) {
                                 def.value = DefFormValue::TypeForm(form);
                             } else {
-                                def.value = DefFormValue::MixedForm(form);
+                                return Err(Error::Syntactic(SyntacticError {
+                                    loc: form.loc(),
+                                    desc: "unexpected mixed form".to_string(),
+                                }));
                             }
                         } else if let Ok(form) = AppForm::from_form(&form) {
                             def.value = DefFormValue::AppForm(form);
                         } else {
-                            let form = ValueForm::from_form(&form)?;
-                            def.value = DefFormValue::ValueForm(form);
+                            if let Ok(form) = ValueForm::from_form(&form) {
+                                def.value = DefFormValue::ValueForm(form);
+                            } else {
+                                return Err(Error::Syntactic(SyntacticError {
+                                    loc: form.loc(),
+                                    desc: "unexpected mixed form".to_string(),
+                                }));
+                            }
                         }
                     }
                 },
