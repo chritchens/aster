@@ -3,19 +3,26 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 40] = [
-    "builtin", "import", "export", "def", "type", "prim", "sum", "prod", "sig", "fun", "attrs",
-    "app", "case", "size", "load", "store", "cast", "dup", "drop", "panic", "Builtin", "Empty",
-    "Prim", "UInt", "Int", "Float", "Size", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum",
-    "Prod", "Sig", "Fun", "App", "Attrs", "Type",
+pub const KEYWORDS: [&str; 41] = [
+    "_", "builtin", "import", "export", "def", "type", "prim", "sum", "prod", "sig", "fun",
+    "attrs", "app", "case", "size", "load", "store", "cast", "dup", "drop", "panic", "Builtin",
+    "Empty", "Prim", "UInt", "Int", "Float", "Size", "Char", "String", "Mem", "Path", "IO", "Ctx",
+    "Sum", "Prod", "Sig", "Fun", "App", "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
     KEYWORDS.iter().any(|&k| k == s)
 }
 
+pub const IGNORE: &str = "_";
+
+pub fn is_ignore_keyword(s: &str) -> bool {
+    s == IGNORE
+}
+
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum Keyword {
+    Ignore,
     Builtin,
     Import,
     Export,
@@ -61,6 +68,7 @@ pub enum Keyword {
 impl fmt::Display for Keyword {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Keyword::Ignore => write!(f, "_"),
             Keyword::Builtin => write!(f, "builtin"),
             Keyword::Import => write!(f, "import"),
             Keyword::Export => write!(f, "export"),
@@ -108,6 +116,7 @@ impl fmt::Display for Keyword {
 impl Keyword {
     pub fn from_str(s: &str) -> Result<Self> {
         match s {
+            "_" => Ok(Keyword::Ignore),
             "builtin" => Ok(Keyword::Builtin),
             "import" => Ok(Keyword::Import),
             "export" => Ok(Keyword::Export),
@@ -333,7 +342,7 @@ pub fn is_path_symbol_start_char(c: char) -> bool {
 }
 
 pub fn is_path_symbol_char(c: char) -> bool {
-    ('A'..='Z').any(|l| l == c) || ('a'..='z').any(|l| l == c)
+    ('A'..='Z').any(|l| l == c) || ('a'..='z').any(|l| l == c) || is_symbol_punctuation(c)
 }
 
 pub fn is_symbol_char(c: char) -> bool {
