@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError};
+use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::{Token, TokenKind};
@@ -29,7 +29,7 @@ impl PrimValue {
         let expected = PrimValue::from_token(self.token.clone())?;
 
         if self != &expected {
-            Err(Error::Semantic(SemanticError {
+            Err(Error::Syntactic(SyntacticError {
                 loc: self.token.loc(),
                 desc: "expected primitive to represent its token".into(),
             }))
@@ -63,7 +63,7 @@ impl PrimValue {
 
                 Ok(prim)
             }
-            _ => Err(Error::Semantic(SemanticError {
+            _ => Err(Error::Syntactic(SyntacticError {
                 loc: token.loc(),
                 desc: "expected a primitive value".into(),
             })),

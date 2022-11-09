@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError};
+use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -86,14 +86,14 @@ impl ProdForm {
 
     pub fn from_form(form: &Form) -> Result<ProdForm> {
         if form.name != "prod" {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a prod keyword".into(),
             }));
         }
 
         if form.params.len() < 2 {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected at least two values".into(),
             }));
@@ -134,7 +134,7 @@ impl ProdForm {
                     }
                 }
                 _ => {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: "expected ignore".into(),
                     }));

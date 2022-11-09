@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError};
+use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_qualified;
@@ -120,14 +120,14 @@ impl FunForm {
 
     pub fn from_form(form: &Form) -> Result<FunForm> {
         if form.name != "fun" {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a fun keyword".into(),
             }));
         }
 
         if form.params.len() != 2 {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a symbol or form and a primitive, or a symbol or a form".into(),
             }));
@@ -140,7 +140,7 @@ impl FunForm {
             FormParam::Empty => {}
             FormParam::ValueSymbol(symbol) => {
                 if is_qualified(&symbol) {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: "expected an unqualified symbol".into(),
                     }));
@@ -150,7 +150,7 @@ impl FunForm {
             }
             FormParam::TypeSymbol(symbol) => {
                 if is_qualified(&symbol) {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: "expected an unqualified symbol".into(),
                     }));
@@ -164,7 +164,7 @@ impl FunForm {
                         match value {
                             ProdFormValue::TypeSymbol(symbol) => {
                                 if is_qualified(&symbol) {
-                                    return Err(Error::Semantic(SemanticError {
+                                    return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "expected an unqualified symbol".into(),
                                     }));
@@ -174,7 +174,7 @@ impl FunForm {
                             }
                             ProdFormValue::ValueSymbol(symbol) => {
                                 if is_qualified(&symbol) {
-                                    return Err(Error::Semantic(SemanticError {
+                                    return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "expected an unqualified symbol".into(),
                                     }));
@@ -183,7 +183,7 @@ impl FunForm {
                                 fun.params.push(FunFormParam::ValueSymbol(symbol.clone()));
                             }
                             _ => {
-                                return Err(Error::Semantic(SemanticError {
+                                return Err(Error::Syntactic(SyntacticError {
                                     loc: form.loc(),
                                     desc: "expected a product of symbols".into(),
                                 }));
@@ -191,14 +191,14 @@ impl FunForm {
                         }
                     }
                 } else {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: "expected a product of symbols".into(),
                     }));
                 }
             }
             x => {
-                return Err(Error::Semantic(SemanticError {
+                return Err(Error::Syntactic(SyntacticError {
                     loc: form.loc(),
                     desc: format!("unexpected function params: {}", x.to_string()),
                 }));
@@ -233,7 +233,7 @@ impl FunForm {
                 }
             }
             x => {
-                return Err(Error::Semantic(SemanticError {
+                return Err(Error::Syntactic(SyntacticError {
                     loc: form.loc(),
                     desc: format!("unexpected function body: {}", x.to_string()),
                 }));

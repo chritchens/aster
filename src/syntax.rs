@@ -1,4 +1,4 @@
-use crate::error::{Error, SyntaxError};
+use crate::error::{Error, SyntacticError};
 use crate::result::Result;
 use std::convert;
 use std::fmt;
@@ -157,7 +157,7 @@ impl Keyword {
             "App" => Ok(Keyword::AppT),
             "Attrs" => Ok(Keyword::AttrsT),
             "Type" => Ok(Keyword::TypeT),
-            _ => Err(Error::Syntax(SyntaxError {
+            _ => Err(Error::Syntactic(SyntacticError {
                 loc: None,
                 desc: "expected keyword".into(),
             })),

@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError};
+use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_keyword, is_qualified};
@@ -79,14 +79,14 @@ impl ExportForm {
         let form = Form::from_tokens(tokens)?;
 
         if form.name != "export" {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected an export keyword".into(),
             }));
         }
 
         if form.params.len() != 1 {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a product of exported symbols or an empty literal".into(),
             }));
@@ -100,14 +100,14 @@ impl ExportForm {
                 FormParam::Empty => {}
                 FormParam::TypeSymbol(symbol) => {
                     if is_qualified(&symbol) {
-                        return Err(Error::Semantic(SemanticError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "expected an unqualified symbol".into(),
                         }));
                     }
 
                     if is_keyword(&symbol) {
-                        return Err(Error::Semantic(SemanticError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "unexpected keyword".into(),
                         }));
@@ -117,14 +117,14 @@ impl ExportForm {
                 }
                 FormParam::ValueSymbol(symbol) => {
                     if is_qualified(&symbol) {
-                        return Err(Error::Semantic(SemanticError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "expected an unqualified symbol".into(),
                         }));
                     }
 
                     if is_keyword(&symbol) {
-                        return Err(Error::Semantic(SemanticError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "unexpected keyword".into(),
                         }));
@@ -139,14 +139,14 @@ impl ExportForm {
                         match value {
                             ProdFormValue::ValueSymbol(symbol) => {
                                 if is_qualified(&symbol) {
-                                    return Err(Error::Semantic(SemanticError {
+                                    return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "expected an unqualified symbol".into(),
                                     }));
                                 }
 
                                 if is_keyword(&symbol) {
-                                    return Err(Error::Semantic(SemanticError {
+                                    return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "unexpected keyword".into(),
                                     }));
@@ -156,14 +156,14 @@ impl ExportForm {
                             }
                             ProdFormValue::TypeSymbol(symbol) => {
                                 if is_qualified(&symbol) {
-                                    return Err(Error::Semantic(SemanticError {
+                                    return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "expected an unqualified symbol".into(),
                                     }));
                                 }
 
                                 if is_keyword(&symbol) {
-                                    return Err(Error::Semantic(SemanticError {
+                                    return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "unexpected keyword".into(),
                                     }));
@@ -172,7 +172,7 @@ impl ExportForm {
                                 export.defs.push(ExportFormDef::TypeSymbol(symbol));
                             }
                             _ => {
-                                return Err(Error::Semantic(SemanticError {
+                                return Err(Error::Syntactic(SyntacticError {
                                     loc: form.loc(),
                                     desc: "expected a product of value or type symbols".into(),
                                 }));
@@ -181,7 +181,7 @@ impl ExportForm {
                     }
                 }
                 _ => {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: "expected a product of symbols or an empty literal".into(),
                     }));

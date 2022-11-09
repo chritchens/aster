@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError};
+use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_keyword, is_symbol, is_type_symbol, is_value_symbol, symbol_name};
@@ -122,21 +122,21 @@ impl Form {
         let len = tokens.len();
 
         if tokens[0].kind != TokenKind::FormStart {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: tokens[0].loc(),
                 desc: "expected a form".into(),
             }));
         }
 
         if tokens[len - 1].kind != TokenKind::FormEnd {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: tokens[len - 1].loc(),
                 desc: "expected a form".into(),
             }));
         }
 
         if !is_symbol(&symbol_name(&tokens[1].to_string())) {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: tokens[1].loc(),
                 desc: "expected a symbol or a keyword".into(),
             }));
@@ -188,7 +188,7 @@ impl Form {
                     let unqualified = symbol_name(&name);
 
                     if is_keyword(&unqualified) {
-                        return Err(Error::Semantic(SemanticError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: tokens[idx].loc(),
                             desc: "a path symbol cannot end with a keyword".into(),
                         }));
@@ -199,7 +199,7 @@ impl Form {
                     } else if is_value_symbol(&unqualified) {
                         params.push(FormParam::ValueSymbol(tokens[idx].to_string()));
                     } else {
-                        return Err(Error::Semantic(SemanticError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: tokens[idx].loc(),
                             desc: "expected a qualified type symbol or a qualified value symbol"
                                 .into(),
@@ -240,7 +240,7 @@ impl Form {
                     break;
                 }
                 _ => {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: tokens[idx].loc(),
                         desc: format!("unexpected token: {}", tokens[idx].to_string()),
                     }));
@@ -249,7 +249,7 @@ impl Form {
         }
 
         if idx + 1 < len {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: tokens[idx].loc(),
                 desc: format!("unexpected token: {}", tokens[idx].to_string()),
             }));

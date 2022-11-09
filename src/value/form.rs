@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError};
+use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_type_symbol;
@@ -81,7 +81,7 @@ impl FormKind {
                                     "attrs" => FormKind::DefAttrs,
                                     "app" => FormKind::DefApp,
                                     _ => {
-                                        return Err(Error::Semantic(SemanticError {
+                                        return Err(Error::Syntactic(SyntacticError {
                                             loc: head.loc(),
                                             desc: "expected a different head value".into(),
                                         }));
@@ -89,14 +89,14 @@ impl FormKind {
                                 }
                             }
                             _ => {
-                                return Err(Error::Semantic(SemanticError {
+                                return Err(Error::Syntactic(SyntacticError {
                                     loc: form.values[2].loc(),
                                     desc: "expected a form".into(),
                                 }));
                             }
                         },
                         _ => {
-                            return Err(Error::Semantic(SemanticError {
+                            return Err(Error::Syntactic(SyntacticError {
                                 loc: tail_head.loc(),
                                 desc: format!("expected {} to be a symbol", value),
                             }));
@@ -290,7 +290,7 @@ impl FormValue {
             FormKind::AnonType => match &self.values[self.values.len() - 1] {
                 Value::Form(form) => {
                     if form.kind != FormKind::TypeApp {
-                        return Err(Error::Semantic(SemanticError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "expected a type application".into(),
                         }));
@@ -303,7 +303,7 @@ impl FormValue {
             FormKind::AnonFun => match &self.values[self.values.len() - 1] {
                 Value::Form(form) => {
                     if form.kind != FormKind::FunApp {
-                        return Err(Error::Semantic(SemanticError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "expected a function application".into(),
                         }));

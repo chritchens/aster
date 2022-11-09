@@ -5,40 +5,22 @@ use std::fmt;
 use std::io;
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct SyntaxError {
+pub struct SyntacticError {
     pub loc: Option<Loc>,
     pub desc: String,
 }
 
-impl fmt::Display for SyntaxError {
+impl fmt::Display for SyntacticError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(ref loc) = self.loc {
-            write!(f, "{}: {}", loc.to_string(), self.desc)
+            write!(f, "syntactic error at {}: {}", loc.to_string(), self.desc)
         } else {
-            write!(f, "(no location): {}", self.desc)
+            write!(f, "syntactic error: {}", self.desc)
         }
     }
 }
 
-impl error::Error for SyntaxError {}
-
-#[derive(Debug, Eq, PartialEq)]
-pub struct ParsingError {
-    pub loc: Option<Loc>,
-    pub desc: String,
-}
-
-impl fmt::Display for ParsingError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(ref loc) = self.loc {
-            write!(f, "{}: {}", loc.to_string(), self.desc)
-        } else {
-            write!(f, "(no location): {}", self.desc)
-        }
-    }
-}
-
-impl error::Error for ParsingError {}
+impl error::Error for SyntacticError {}
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct SemanticError {
@@ -49,9 +31,9 @@ pub struct SemanticError {
 impl fmt::Display for SemanticError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(ref loc) = self.loc {
-            write!(f, "{}: {}", loc.to_string(), self.desc)
+            write!(f, "semantic error at {}: {}", loc.to_string(), self.desc)
         } else {
-            write!(f, "(no location): {}", self.desc)
+            write!(f, "semantic error: {}", self.desc)
         }
     }
 }
@@ -60,8 +42,7 @@ impl error::Error for SemanticError {}
 
 #[derive(Debug)]
 pub enum Error {
-    Syntax(SyntaxError),
-    Parsing(ParsingError),
+    Syntactic(SyntacticError),
     Semantic(SemanticError),
     IO(io::Error),
 }
@@ -69,8 +50,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Syntax(err) => err.fmt(f),
-            Self::Parsing(err) => err.fmt(f),
+            Self::Syntactic(err) => err.fmt(f),
             Self::Semantic(err) => err.fmt(f),
             Self::IO(err) => err.fmt(f),
         }
@@ -80,8 +60,7 @@ impl fmt::Display for Error {
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Self::Syntax(err) => err.source(),
-            Self::Parsing(err) => err.source(),
+            Self::Syntactic(err) => err.source(),
             Self::Semantic(err) => err.source(),
             Self::IO(err) => err.source(),
         }

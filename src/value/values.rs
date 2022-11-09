@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError};
+use crate::error::{Error, SyntacticError};
 use crate::result::Result;
 use crate::token::{TokenKind, Tokens};
 use crate::value::{FormKind, FormValue};
@@ -86,7 +86,7 @@ impl Values {
                                 form.values[form_len - 1] = Value::Form(inner_form);
                             }
                             x => {
-                                return Err(Error::Semantic(SemanticError {
+                                return Err(Error::Syntactic(SyntacticError {
                                     loc: x.loc(),
                                     desc: format!("expected {} to be a form", x.to_string()),
                                 }));

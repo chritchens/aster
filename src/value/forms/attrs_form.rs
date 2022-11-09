@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError};
+use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -80,14 +80,14 @@ impl AttrsForm {
 
     pub fn from_form(form: &Form) -> Result<AttrsForm> {
         if form.name != "attrs" {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a attrs keyword".into(),
             }));
         }
 
         if form.params.len() != 1 {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a keyword or symbol or a product of keywords or products".into(),
             }));
@@ -135,7 +135,7 @@ impl AttrsForm {
                                     .push(AttrsFormValue::ValueSymbol(symbol.clone()));
                             }
                             _ => {
-                                return Err(Error::Semantic(SemanticError {
+                                return Err(Error::Syntactic(SyntacticError {
                                     loc: form.loc(),
                                     desc: "expected a product of symbols".into(),
                                 }));
@@ -143,16 +143,16 @@ impl AttrsForm {
                         }
                     }
                 } else {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: "expected a product of symbols".into(),
                     }));
                 }
             }
             x => {
-                return Err(Error::Semantic(SemanticError {
+                return Err(Error::Syntactic(SyntacticError {
                     loc: form.loc(),
-                    desc: format!("unexpected attrsction params: {}", x.to_string()),
+                    desc: format!("unexpected value: {}", x.to_string()),
                 }));
             }
         }

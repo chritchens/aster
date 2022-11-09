@@ -1,5 +1,5 @@
 use crate::chunk::StringChunks;
-use crate::error::{Error, SyntaxError};
+use crate::error::{Error, SyntacticError};
 use crate::result::Result;
 use crate::syntax::is_keyword;
 use crate::syntax::SINGLE_QUOTE;
@@ -127,7 +127,7 @@ impl Tokens {
                 }
                 x if is_single_quote(&x) => {
                     if idx + 2 > len {
-                        return Err(Error::Syntax(SyntaxError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: Some(chunks[idx].loc.clone()),
                             desc: format!("expected {} to be a char", x),
                         }));
@@ -141,7 +141,7 @@ impl Tokens {
 
                         let c = chunks[idx].content.clone();
                         if c.len() != 1 {
-                            return Err(Error::Syntax(SyntaxError {
+                            return Err(Error::Syntactic(SyntacticError {
                                 loc: Some(chunks[idx].loc.clone()),
                                 desc: format!("expected {} to be a char", x),
                             }));
@@ -161,7 +161,7 @@ impl Tokens {
                     }
 
                     if !schunk.content.ends_with(SINGLE_QUOTE) {
-                        return Err(Error::Syntax(SyntaxError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: Some(chunks[idx].loc.clone()),
                             desc: format!("expected {} to be a char", x),
                         }));
@@ -178,7 +178,7 @@ impl Tokens {
                     let mut schunk = chunk;
 
                     if idx + 1 >= len {
-                        return Err(Error::Syntax(SyntaxError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: Some(chunks[idx].loc.clone()),
                             desc: format!("expected {} to be a string", x),
                         }));
@@ -256,7 +256,7 @@ impl Tokens {
                     forms_count -= 1;
 
                     if forms_count < 0 {
-                        return Err(Error::Syntax(SyntaxError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: Some(chunks[idx].loc.clone()),
                             desc: "closing a form never opened".into(),
                         }));
@@ -293,7 +293,7 @@ impl Tokens {
                     idx += 1;
                 }
                 _ => {
-                    return Err(Error::Syntax(SyntaxError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: Some(chunks[idx].loc.clone()),
                         desc: "unrecognized syntax".into(),
                     }));
@@ -311,7 +311,7 @@ impl Tokens {
                 )
             };
 
-            return Err(Error::Syntax(SyntaxError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: Some(chunks[err_idx].loc.clone()),
                 desc,
             }));
@@ -560,7 +560,7 @@ mod tests {
     #[test]
     fn forms_tokens() {
         use super::Tokens;
-        use crate::error::{Error, SyntaxError};
+        use crate::error::{Error, SyntacticError};
         use crate::token::TokenKind;
 
         let mut s = "()))";
@@ -570,7 +570,7 @@ mod tests {
         assert!(res.is_err());
 
         match res {
-            Err(Error::Syntax(SyntaxError { loc, desc })) => {
+            Err(Error::Syntactic(SyntacticError { loc, desc })) => {
                 assert_eq!(loc.unwrap().pos, 2);
 
                 let err_desc: String = "closing a form never opened".into();
@@ -586,7 +586,7 @@ mod tests {
         assert!(res.is_err());
 
         match res {
-            Err(Error::Syntax(SyntaxError { loc, desc })) => {
+            Err(Error::Syntactic(SyntacticError { loc, desc })) => {
                 assert_eq!(loc.unwrap().pos, 0);
 
                 let err_desc: String = "form not closed".into();

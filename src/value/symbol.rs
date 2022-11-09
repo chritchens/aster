@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError};
+use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_keyword, is_type_symbol};
@@ -55,7 +55,7 @@ impl SymbolValue {
         let expected = SymbolValue::from_token(self.token.clone())?;
 
         if self != &expected {
-            Err(Error::Semantic(SemanticError {
+            Err(Error::Syntactic(SyntacticError {
                 loc: self.token.loc(),
                 desc: "expected symbol to represent its token".into(),
             }))
@@ -90,7 +90,7 @@ impl SymbolValue {
 
                 Ok(symbol)
             }
-            _ => Err(Error::Semantic(SemanticError {
+            _ => Err(Error::Syntactic(SyntacticError {
                 loc: token.loc(),
                 desc: "expected a symbol".into(),
             })),

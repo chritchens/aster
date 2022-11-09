@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError};
+use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_value_symbol, symbol_name};
@@ -70,7 +70,7 @@ impl ValueForm {
 
     pub fn from_form(form: &Form) -> Result<ValueForm> {
         if !is_value_symbol(&symbol_name(&form.name)) {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a value".into(),
             }));
@@ -103,14 +103,14 @@ impl ValueForm {
                     if form.is_value_form() {
                         type_form.params.push(ValueFormParam::Form(form.clone()));
                     } else {
-                        return Err(Error::Semantic(SemanticError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "expected a form of values".into(),
                         }));
                     }
                 }
                 x => {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: format!("unexpected value: {}", x.to_string()),
                     }));

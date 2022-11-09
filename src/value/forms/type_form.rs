@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError};
+use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_type_symbol, symbol_name};
@@ -68,7 +68,7 @@ impl TypeForm {
 
     pub fn from_form(form: &Form) -> Result<TypeForm> {
         if !is_type_symbol(&symbol_name(&form.name)) {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a type".into(),
             }));
@@ -96,14 +96,14 @@ impl TypeForm {
                     if form.is_type_form() {
                         type_form.params.push(TypeFormParam::Form(form.clone()));
                     } else {
-                        return Err(Error::Semantic(SemanticError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "expected a form of types".into(),
                         }));
                     }
                 }
                 x => {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: format!("unexpected type value: {}", x.to_string()),
                     }));

@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError};
+use crate::error::{Error, SyntacticError};
 use crate::result::Result;
 use crate::syntax::{is_qualified, is_type_symbol};
 use crate::token::Tokens;
@@ -209,7 +209,7 @@ impl DefForm {
 
     pub fn from_form(form: &Form) -> Result<DefForm> {
         if form.name != "def" {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a def keyword".into(),
             }));
@@ -218,14 +218,14 @@ impl DefForm {
         let len = form.params.len();
 
         if len < 2 {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a name, an optional product of types and a value".into(),
             }));
         }
 
         if len > 3 {
-            return Err(Error::Semantic(SemanticError {
+            return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a name, an optional product of types and a value".into(),
             }));
@@ -237,7 +237,7 @@ impl DefForm {
         match form.params[0].clone() {
             FormParam::ValueSymbol(symbol) => {
                 if is_qualified(&symbol) {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: "expected an unqualified symbol".into(),
                     }));
@@ -247,7 +247,7 @@ impl DefForm {
             }
             FormParam::TypeSymbol(symbol) => {
                 if is_qualified(&symbol) {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: "expected an unqualified symbol".into(),
                     }));
@@ -256,7 +256,7 @@ impl DefForm {
                 def.name = symbol;
             }
             _ => {
-                return Err(Error::Semantic(SemanticError {
+                return Err(Error::Syntactic(SyntacticError {
                     loc: form.loc(),
                     desc: "expected a value symbol or a type symbol".into(),
                 }));
@@ -273,7 +273,7 @@ impl DefForm {
                 }
                 FormParam::TypeSymbol(symbol) => {
                     if is_qualified(&symbol) {
-                        return Err(Error::Semantic(SemanticError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "expected an unqualified symbol".into(),
                         }));
@@ -291,7 +291,7 @@ impl DefForm {
                                 }
                                 ProdFormValue::TypeSymbol(symbol) => {
                                     if is_qualified(&symbol) {
-                                        return Err(Error::Semantic(SemanticError {
+                                        return Err(Error::Syntactic(SyntacticError {
                                             loc: form.loc(),
                                             desc: "expected an unqualified symbol".into(),
                                         }));
@@ -304,7 +304,7 @@ impl DefForm {
                                     def.type_params.push(DefFormTypeParam::Form(form.clone()));
                                 }
                                 _ => {
-                                    return Err(Error::Semantic(SemanticError {
+                                    return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "expected a product of type symbols or type forms"
                                             .into(),
@@ -313,14 +313,14 @@ impl DefForm {
                             }
                         }
                     } else {
-                        return Err(Error::Semantic(SemanticError {
+                        return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "expected a product of type symbols".into(),
                         }));
                     }
                 }
                 x => {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: format!("unexpected type parameter: {}", x.to_string()),
                     }));
@@ -372,7 +372,7 @@ impl DefForm {
                     }
                 },
                 x => {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: format!("unexpected value: {}", x.to_string()),
                     }));
@@ -424,7 +424,7 @@ impl DefForm {
                     }
                 },
                 x => {
-                    return Err(Error::Semantic(SemanticError {
+                    return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: format!("unexpected value: {}", x.to_string()),
                     }));
