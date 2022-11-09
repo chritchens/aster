@@ -6,6 +6,7 @@ use crate::value::forms::app_form::AppForm;
 use crate::value::forms::attrs_form::AttrsForm;
 use crate::value::forms::form::{Form, FormParam};
 use crate::value::forms::fun_form::FunForm;
+use crate::value::forms::let_form::LetForm;
 use crate::value::forms::prod_form::{ProdForm, ProdFormValue};
 use crate::value::forms::type_form::TypeForm;
 use crate::value::forms::value_form::ValueForm;
@@ -53,6 +54,7 @@ pub enum DefFormValue {
     AttrsForm(AttrsForm),
     ProdForm(ProdForm),
     FunForm(FunForm),
+    LetForm(LetForm),
     AppForm(AppForm),
     TypeForm(TypeForm),
     ValueForm(ValueForm),
@@ -77,6 +79,7 @@ impl DefFormValue {
             DefFormValue::AttrsForm(form) => form.to_string(),
             DefFormValue::ProdForm(form) => form.to_string(),
             DefFormValue::FunForm(form) => form.to_string(),
+            DefFormValue::LetForm(form) => form.to_string(),
             DefFormValue::AppForm(form) => form.to_string(),
             DefFormValue::TypeForm(form) => form.to_string(),
             DefFormValue::ValueForm(form) => form.to_string(),
@@ -178,6 +181,13 @@ impl DefForm {
     pub fn is_application_form(&self) -> bool {
         match self.value {
             DefFormValue::AppForm(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_let_form(&self) -> bool {
+        match self.value {
+            DefFormValue::LetForm(_) => true,
             _ => false,
         }
     }
@@ -350,6 +360,10 @@ impl DefForm {
                         let form = FunForm::from_form(&form)?;
                         def.value = DefFormValue::FunForm(form);
                     }
+                    "let" => {
+                        let form = LetForm::from_form(&form)?;
+                        def.value = DefFormValue::LetForm(form);
+                    }
                     x => {
                         if is_type_symbol(x) {
                             if let Ok(form) = TypeForm::from_form(&form) {
@@ -399,6 +413,10 @@ impl DefForm {
                     "fun" => {
                         let form = FunForm::from_form(&form)?;
                         def.value = DefFormValue::FunForm(form);
+                    }
+                    "let" => {
+                        let form = LetForm::from_form(&form)?;
+                        def.value = DefFormValue::LetForm(form);
                     }
                     x => {
                         if is_type_symbol(x) {
@@ -576,5 +594,22 @@ mod tests {
         assert_eq!(form.value.to_string(), "(Sum T E)".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_type_form());
+
+        s = "(def err T (let (def StringError String) (unwrap (prod T StringError) \"error\")))";
+
+        res = DefForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.name, "err".to_string());
+        assert_eq!(form.type_params_to_string(), "T".to_string());
+        assert_eq!(
+            form.value.to_string(),
+            "(let (def StringError String) (unwrap (prod T StringError) \"error\"))".to_string()
+        );
+        assert_eq!(form.to_string(), s.to_string());
+        assert!(form.is_let_form());
     }
 }
