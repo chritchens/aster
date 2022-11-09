@@ -105,21 +105,17 @@ impl DefForm {
     }
 
     pub fn type_params_to_string(&self) -> String {
-        let len = self.type_params.len();
-
-        if len > 1 {
-            format!(
+        match self.type_params.len() {
+            1 => self.type_params[0].to_string(),
+            x if x > 1 => format!(
                 "(prod {})",
                 self.type_params
                     .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(" ")
-            )
-        } else if len == 1 {
-            self.type_params[0].to_string()
-        } else {
-            "".to_string()
+            ),
+            _ => "".to_string(),
         }
     }
 
@@ -361,13 +357,11 @@ impl DefForm {
                             } else {
                                 def.value = DefFormValue::MixedForm(form);
                             }
+                        } else if let Ok(form) = AppForm::from_form(&form) {
+                            def.value = DefFormValue::AppForm(form);
                         } else {
-                            if let Ok(form) = AppForm::from_form(&form) {
-                                def.value = DefFormValue::AppForm(form);
-                            } else {
-                                let form = ValueForm::from_form(&form)?;
-                                def.value = DefFormValue::ValueForm(form);
-                            }
+                            let form = ValueForm::from_form(&form)?;
+                            def.value = DefFormValue::ValueForm(form);
                         }
                     }
                 },
@@ -413,13 +407,11 @@ impl DefForm {
                             } else {
                                 def.value = DefFormValue::MixedForm(form);
                             }
+                        } else if let Ok(form) = AppForm::from_form(&form) {
+                            def.value = DefFormValue::AppForm(form);
                         } else {
-                            if let Ok(form) = AppForm::from_form(&form) {
-                                def.value = DefFormValue::AppForm(form);
-                            } else {
-                                let form = ValueForm::from_form(&form)?;
-                                def.value = DefFormValue::ValueForm(form);
-                            }
+                            let form = ValueForm::from_form(&form)?;
+                            def.value = DefFormValue::ValueForm(form);
                         }
                     }
                 },

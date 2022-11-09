@@ -60,21 +60,17 @@ impl AttrsForm {
     }
 
     pub fn values_to_string(&self) -> String {
-        let len = self.values.len();
-
-        if len > 1 {
-            format!(
+        match self.values.len() {
+            1 => self.values[0].to_string(),
+            x if x > 1 => format!(
                 "(prod {})",
                 self.values
                     .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(" ")
-            )
-        } else if len == 1 {
-            self.values[0].to_string()
-        } else {
-            "()".to_string()
+            ),
+            _ => "()".to_string(),
         }
     }
 

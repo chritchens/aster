@@ -86,7 +86,7 @@ impl ValueForm {
                     type_form.params.push(ValueFormParam::Prim(prim.clone()));
                 }
                 FormParam::ValueKeyword(keyword) => {
-                    if keyword.to_string() == "()" {
+                    if keyword == "()" {
                         type_form.params.push(ValueFormParam::Empty);
                     } else {
                         type_form

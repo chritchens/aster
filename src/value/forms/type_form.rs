@@ -81,7 +81,7 @@ impl TypeForm {
         for param in form.params.iter() {
             match param {
                 FormParam::TypeKeyword(keyword) => {
-                    if keyword.to_string() == "Empty" {
+                    if keyword == "Empty" {
                         type_form.params.push(TypeFormParam::Empty);
                     } else {
                         type_form

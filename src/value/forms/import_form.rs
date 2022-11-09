@@ -60,21 +60,17 @@ impl ImportForm {
     }
 
     pub fn defs_to_string(&self) -> String {
-        let len = self.defs.len();
-
-        if len > 1 {
-            format!(
+        match self.defs.len() {
+            1 => self.defs[0].to_string(),
+            x if x > 1 => format!(
                 "(prod {})",
                 self.defs
                     .iter()
-                    .map(|d| d.to_string())
+                    .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(" ")
-            )
-        } else if len == 1 {
-            self.defs[0].to_string()
-        } else {
-            "()".to_string()
+            ),
+            _ => "()".to_string(),
         }
     }
 

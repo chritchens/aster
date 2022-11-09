@@ -100,21 +100,17 @@ impl FunForm {
     }
 
     pub fn params_to_string(&self) -> String {
-        let len = self.params.len();
-
-        if len > 1 {
-            format!(
+        match self.params.len() {
+            1 => self.params[0].to_string(),
+            x if x > 1 => format!(
                 "(prod {})",
                 self.params
                     .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(" ")
-            )
-        } else if len == 1 {
-            self.params[0].to_string()
-        } else {
-            "()".to_string()
+            ),
+            _ => "()".to_string(),
         }
     }
 
