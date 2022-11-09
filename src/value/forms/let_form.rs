@@ -190,22 +190,26 @@ mod tests {
             form.defs[0].to_string(),
             "(def Result (attrs union))".to_string()
         );
-        assert!(form.defs[0].is_attributes_form());
+        assert!(form.defs[0].is_type_attributes_form());
+        assert!(form.defs[0].is_attributes());
         assert_eq!(
             form.defs[2].to_string(),
             "(def unwrap (attrs inline))".to_string()
         );
-        assert!(form.defs[0].is_attributes_form());
+        assert!(form.defs[2].is_value_attributes_form());
+        assert!(form.defs[2].is_attributes());
         assert_eq!(
             form.defs[4].to_string(),
             "(def unwrap (fun res (case res (branch T id) (branch E (panic E)))))".to_string()
         );
         assert!(form.defs[4].is_function_form());
+        assert!(form.defs[4].is_value());
         assert_eq!(
             form.defs[8].to_string(),
             "(def res (unwrap (prod String StringError) \"res\"))".to_string()
         );
         assert!(form.defs[8].is_application_form());
+        assert!(form.defs[8].is_value());
         assert_eq!(
             form.value.to_string(),
             "(return (prod res res2))".to_string()

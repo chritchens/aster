@@ -1,6 +1,6 @@
 use crate::error::{Error, SyntacticError};
 use crate::result::Result;
-use crate::syntax::{is_qualified, is_type_symbol};
+use crate::syntax::{is_qualified, is_type_symbol, is_value_symbol};
 use crate::token::Tokens;
 use crate::value::forms::app_form::AppForm;
 use crate::value::forms::attrs_form::AttrsForm;
@@ -120,7 +120,7 @@ impl DefForm {
         }
     }
 
-    pub fn is_empty_primitive(&self) -> bool {
+    pub fn is_empty_literal(&self) -> bool {
         match self.value {
             DefFormValue::Empty => true,
             _ => false,
@@ -155,9 +155,16 @@ impl DefForm {
         }
     }
 
-    pub fn is_attributes_form(&self) -> bool {
+    pub fn is_value_attributes_form(&self) -> bool {
         match self.value {
-            DefFormValue::AttrsForm(_) => true,
+            DefFormValue::AttrsForm(_) => is_value_symbol(&self.name),
+            _ => false,
+        }
+    }
+
+    pub fn is_type_attributes_form(&self) -> bool {
+        match self.value {
+            DefFormValue::AttrsForm(_) => is_type_symbol(&self.name),
             _ => false,
         }
     }
@@ -202,6 +209,29 @@ impl DefForm {
             DefFormValue::ValueForm(_) => true,
             _ => false,
         }
+    }
+
+    pub fn is_attributes(&self) -> bool {
+        self.is_type_attributes_form() || self.is_value_attributes_form()
+    }
+
+    pub fn is_value(&self) -> bool {
+        self.is_empty_literal()
+            || self.is_primitive()
+            || self.is_value_symbol()
+            || self.is_product_form()
+            || self.is_function_form()
+            || self.is_value_form()
+            || (self.is_let_form() && is_value_symbol(&self.name))
+            || (self.is_application_form() && is_value_symbol(&self.name))
+    }
+
+    pub fn is_type(&self) -> bool {
+        self.is_type_keyword()
+            || self.is_type_symbol()
+            || self.is_type_form()
+            || (self.is_let_form() && is_type_symbol(&self.name))
+            || (self.is_application_form() && is_type_symbol(&self.name))
     }
 
     pub fn from_form(form: &Form) -> Result<DefForm> {
@@ -504,7 +534,8 @@ mod tests {
         assert_eq!(form.name, "empty".to_string());
         assert_eq!(form.value.to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
-        assert!(form.is_empty_primitive());
+        assert!(form.is_empty_literal());
+        assert!(form.is_value());
 
         s = "(def x 10)";
 
@@ -518,6 +549,7 @@ mod tests {
         assert_eq!(form.value.to_string(), "10".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_primitive());
+        assert!(form.is_value());
 
         s = "(def w x)";
 
@@ -531,6 +563,7 @@ mod tests {
         assert_eq!(form.value.to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_value_symbol());
+        assert!(form.is_value());
 
         s = "(def s (math.+ (prod 10.323 1)))";
 
@@ -547,6 +580,7 @@ mod tests {
         );
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_application_form());
+        assert!(form.is_value());
 
         s = "(def p (prod a b c d))";
 
@@ -560,6 +594,7 @@ mod tests {
         assert_eq!(form.value.to_string(), "(prod a b c d)".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_product_form());
+        assert!(form.is_value());
 
         s = "(def p (prod a b (f x y 10) 11))";
 
@@ -576,6 +611,7 @@ mod tests {
         );
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_product_form());
+        assert!(form.is_value());
 
         s = "(def C Char)";
 
@@ -589,6 +625,7 @@ mod tests {
         assert_eq!(form.value.to_string(), "Char".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_type_keyword());
+        assert!(form.is_type());
 
         s = "(def Result (prod T E) (Sum T E))";
 
@@ -603,6 +640,7 @@ mod tests {
         assert_eq!(form.value.to_string(), "(Sum T E)".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_type_form());
+        assert!(form.is_type());
 
         s = "(def err T (let (def StringError String) (unwrap (prod T StringError) \"error\")))";
 
@@ -620,5 +658,6 @@ mod tests {
         );
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_let_form());
+        assert!(form.is_value());
     }
 }
