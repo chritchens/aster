@@ -253,6 +253,7 @@ impl ImportForm {
         ImportForm::from_tokens(&tokens)
     }
 
+    #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         if let Some(qualifier) = self.qualifier.clone() {
             format!(
@@ -264,6 +265,12 @@ impl ImportForm {
         } else {
             format!("(import {} {})", self.module, self.defs_to_string(),)
         }
+    }
+}
+
+impl fmt::Display for ImportForm {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 

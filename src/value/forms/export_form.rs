@@ -194,8 +194,15 @@ impl ExportForm {
         ExportForm::from_tokens(&tokens)
     }
 
+    #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         format!("(export {})", self.defs_to_string(),)
+    }
+}
+
+impl fmt::Display for ExportForm {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
