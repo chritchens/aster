@@ -397,15 +397,13 @@ impl DefForm {
                             }
                         } else if let Ok(form) = AppForm::from_form(&form) {
                             def.value = DefFormValue::AppForm(form);
+                        } else if let Ok(form) = ValueForm::from_form(&form) {
+                            def.value = DefFormValue::ValueForm(form);
                         } else {
-                            if let Ok(form) = ValueForm::from_form(&form) {
-                                def.value = DefFormValue::ValueForm(form);
-                            } else {
-                                return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "unexpected mixed form".to_string(),
-                                }));
-                            }
+                            return Err(Error::Syntactic(SyntacticError {
+                                loc: form.loc(),
+                                desc: "unexpected mixed form".to_string(),
+                            }));
                         }
                     }
                 },
@@ -460,15 +458,13 @@ impl DefForm {
                             }
                         } else if let Ok(form) = AppForm::from_form(&form) {
                             def.value = DefFormValue::AppForm(form);
+                        } else if let Ok(form) = ValueForm::from_form(&form) {
+                            def.value = DefFormValue::ValueForm(form);
                         } else {
-                            if let Ok(form) = ValueForm::from_form(&form) {
-                                def.value = DefFormValue::ValueForm(form);
-                            } else {
-                                return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "unexpected mixed form".to_string(),
-                                }));
-                            }
+                            return Err(Error::Syntactic(SyntacticError {
+                                loc: form.loc(),
+                                desc: "unexpected mixed form".to_string(),
+                            }));
                         }
                     }
                 },
