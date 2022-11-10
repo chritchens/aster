@@ -39,7 +39,7 @@ impl fmt::Display for ExportFormDef {
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct ExportForm {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub defs: Vec<ExportFormDef>,
 }
 

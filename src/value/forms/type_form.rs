@@ -40,7 +40,7 @@ impl fmt::Display for TypeFormParam {
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct TypeForm {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub name: String,
     pub params: Vec<TypeFormParam>,
 }

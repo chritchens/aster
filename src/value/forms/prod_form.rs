@@ -58,7 +58,7 @@ impl fmt::Display for ProdFormValue {
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct ProdForm {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub values: Vec<ProdFormValue>,
 }
 

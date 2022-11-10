@@ -85,7 +85,7 @@ impl fmt::Display for FunFormBody {
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct FunForm {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub params: Vec<FunFormParam>,
     pub body: FunFormBody,
 }

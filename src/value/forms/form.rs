@@ -41,7 +41,7 @@ impl fmt::Display for FormParam {
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Form {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub name: String,
     pub params: Vec<FormParam>,
 }
@@ -253,7 +253,7 @@ impl Form {
         }
 
         Ok(Form {
-            tokens: tokens.clone(),
+            tokens: Box::new(tokens.to_owned()),
             name,
             params,
         })

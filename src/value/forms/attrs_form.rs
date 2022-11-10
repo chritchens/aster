@@ -42,7 +42,7 @@ impl fmt::Display for AttrsFormValue {
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct AttrsForm {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub values: Vec<AttrsFormValue>,
 }
 

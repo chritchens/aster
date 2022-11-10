@@ -40,7 +40,7 @@ impl fmt::Display for ImportFormDef {
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct ImportForm {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub module: String,
     pub qualifier: Option<String>,
     pub defs: Vec<ImportFormDef>,

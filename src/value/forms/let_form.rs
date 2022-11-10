@@ -8,6 +8,7 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct LetForm {
+    pub tokens: Box<Tokens>,
     pub defs: Vec<DefForm>,
     pub value: AppForm,
 }
@@ -47,6 +48,7 @@ impl LetForm {
         }
 
         let mut let_form = LetForm::new();
+        let_form.tokens = form.tokens.clone();
 
         if len == 1 {
             match form.params[0].clone() {

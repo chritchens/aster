@@ -119,7 +119,7 @@ impl fmt::Display for CaseFormMatchAction {
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct CaseFormMatch {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub case: CaseFormMatchCase,
     pub action: CaseFormMatchAction,
 }
@@ -249,7 +249,7 @@ impl fmt::Display for CaseFormMatch {
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct CaseForm {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub param: CaseFormParam,
     pub matches: Vec<CaseFormMatch>,
 }

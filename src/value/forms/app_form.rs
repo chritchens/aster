@@ -91,7 +91,7 @@ impl fmt::Display for AppFormParam {
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct AppForm {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub name: String,
     pub type_params: Vec<AppFormTypeParam>,
     pub params: Vec<AppFormParam>,

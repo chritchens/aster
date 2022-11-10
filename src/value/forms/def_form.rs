@@ -94,7 +94,7 @@ impl fmt::Display for DefFormValue {
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct DefForm {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub name: String,
     pub type_params: Vec<DefFormTypeParam>,
     pub value: DefFormValue,
