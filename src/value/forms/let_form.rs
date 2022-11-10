@@ -167,7 +167,7 @@ mod tests {
 
             (def unwrap (attrs inline))
             (def unwrap (prod T E) (Fun (Result T E) T))
-            (def unwrap (fun res (case res (branch T id) (branch E (panic E)))))
+            (def unwrap (fun res (case res (match T id) (match E (panic E)))))
 
             (def StringError String)
             (def StringResult (Result String StringResult))
@@ -200,7 +200,7 @@ mod tests {
         assert!(form.defs[2].is_attributes());
         assert_eq!(
             form.defs[4].to_string(),
-            "(def unwrap (fun res (case res (branch T id) (branch E (panic E)))))".to_string()
+            "(def unwrap (fun res (case res (match T id) (match E (panic E)))))".to_string()
         );
         assert!(form.defs[4].is_function_form());
         assert!(form.defs[4].is_value());

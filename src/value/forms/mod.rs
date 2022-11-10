@@ -1,5 +1,6 @@
 pub mod app_form;
 pub mod attrs_form;
+pub mod case_form;
 pub mod def_form;
 pub mod export_form;
 #[allow(clippy::module_inception)]
