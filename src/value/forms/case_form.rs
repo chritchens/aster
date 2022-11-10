@@ -79,9 +79,15 @@ impl Default for CaseFormMatchCase {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum CaseFormMatchAction {
     Ignore,
+    Panic,
+    Prim(String),
+    TypeKeyword(String),
+    TypeSymbol(String),
+    ValueSymbol(String),
     Fun(FunForm),
 }
 
@@ -90,6 +96,11 @@ impl CaseFormMatchAction {
     pub fn to_string(&self) -> String {
         match self {
             CaseFormMatchAction::Ignore => "_".into(),
+            CaseFormMatchAction::Panic => "panic".into(),
+            CaseFormMatchAction::Prim(prim) => prim.clone(),
+            CaseFormMatchAction::TypeKeyword(keyword) => keyword.clone(),
+            CaseFormMatchAction::TypeSymbol(symbol) => symbol.clone(),
+            CaseFormMatchAction::ValueSymbol(symbol) => symbol.clone(),
             CaseFormMatchAction::Fun(form) => form.to_string(),
         }
     }
@@ -165,6 +176,28 @@ impl CaseFormMatch {
         match form.params[1].clone() {
             FormParam::Ignore => {
                 case_match.action = CaseFormMatchAction::Ignore;
+            }
+            FormParam::Prim(prim) => {
+                case_match.action = CaseFormMatchAction::Prim(prim);
+            }
+            FormParam::ValueKeyword(keyword) => {
+                if keyword != "panic" {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "expected the panic keyword".into(),
+                    }));
+                }
+
+                case_match.action = CaseFormMatchAction::Panic;
+            }
+            FormParam::TypeKeyword(keyword) => {
+                case_match.action = CaseFormMatchAction::TypeKeyword(keyword);
+            }
+            FormParam::TypeSymbol(symbol) => {
+                case_match.action = CaseFormMatchAction::TypeSymbol(symbol);
+            }
+            FormParam::ValueSymbol(symbol) => {
+                case_match.action = CaseFormMatchAction::ValueSymbol(symbol);
             }
             FormParam::Form(form) => {
                 if let Ok(form) = FunForm::from_form(&form) {
@@ -277,7 +310,7 @@ impl CaseForm {
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected an let form or an application form".into(),
+                        desc: "expected a let form or an application form".into(),
                     }));
                 }
             }
@@ -347,9 +380,21 @@ mod tests {
     fn case_form_match_from_str() {
         use super::CaseFormMatch;
 
-        let mut s = "(match True (fun t \"True\"))";
+        let mut s = "(match True \"True\")";
 
         let mut res = CaseFormMatch::from_str(s);
+
+        assert!(res.is_ok());
+
+        s = "(match True id)";
+
+        res = CaseFormMatch::from_str(s);
+
+        assert!(res.is_ok());
+
+        s = "(match True (fun t \"True\"))";
+
+        res = CaseFormMatch::from_str(s);
 
         assert!(res.is_ok());
 
@@ -372,6 +417,18 @@ mod tests {
         assert!(res.is_ok());
 
         s = "(match () _)";
+
+        res = CaseFormMatch::from_str(s);
+
+        assert!(res.is_ok());
+
+        s = "(match T id)";
+
+        res = CaseFormMatch::from_str(s);
+
+        assert!(res.is_ok());
+
+        s = "(match E panic)";
 
         res = CaseFormMatch::from_str(s);
 
@@ -405,5 +462,13 @@ mod tests {
         res = CaseForm::from_str(s);
 
         assert!(res.is_ok());
+
+        s = "(case res (match T id) (match E panic))";
+
+        res = CaseForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        res.unwrap();
     }
 }

@@ -229,7 +229,7 @@ mod tests {
         assert_eq!(form.values_to_string(), "moduleX.X".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(attrs (prod type a moduleA.A Type))";
+        s = "(attrs (prod union a moduleA.A Type))";
 
         res = AttrsForm::from_str(s);
 
@@ -239,7 +239,7 @@ mod tests {
 
         assert_eq!(
             form.values_to_string(),
-            "(prod type a moduleA.A Type)".to_string()
+            "(prod union a moduleA.A Type)".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
     }

@@ -3,10 +3,12 @@ use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_qualified;
 use crate::token::Tokens;
+use crate::value::forms::app_form::AppForm;
+use crate::value::forms::case_form::CaseForm;
 use crate::value::forms::form::{Form, FormParam};
+use crate::value::forms::let_form::LetForm;
 use crate::value::forms::prod_form::{ProdForm, ProdFormValue};
 use crate::value::forms::type_form::TypeForm;
-use crate::value::forms::value_form::ValueForm;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -46,9 +48,10 @@ pub enum FunFormBody {
     TypeKeyword(String),
     ValueSymbol(String),
     TypeSymbol(String),
-    ValueForm(ValueForm),
     TypeForm(TypeForm),
-    MixedForm(Form),
+    AppForm(AppForm),
+    LetForm(LetForm),
+    CaseForm(CaseForm),
 }
 
 impl Default for FunFormBody {
@@ -66,9 +69,10 @@ impl FunFormBody {
             FunFormBody::TypeKeyword(keyword) => keyword.clone(),
             FunFormBody::ValueSymbol(symbol) => symbol.clone(),
             FunFormBody::TypeSymbol(symbol) => symbol.clone(),
-            FunFormBody::ValueForm(form) => form.to_string(),
             FunFormBody::TypeForm(form) => form.to_string(),
-            FunFormBody::MixedForm(form) => form.to_string(),
+            FunFormBody::AppForm(form) => form.to_string(),
+            FunFormBody::LetForm(form) => form.to_string(),
+            FunFormBody::CaseForm(form) => form.to_string(),
         }
     }
 }
@@ -218,14 +222,19 @@ impl FunForm {
                 fun.body = FunFormBody::TypeSymbol(symbol);
             }
             FormParam::Form(form) => {
-                if form.is_value_form() {
-                    let form = ValueForm::from_form(&form)?;
-                    fun.body = FunFormBody::ValueForm(form);
-                } else if form.is_type_form() {
-                    let form = TypeForm::from_form(&form)?;
+                if let Ok(form) = TypeForm::from_form(&form) {
                     fun.body = FunFormBody::TypeForm(form);
+                } else if let Ok(form) = LetForm::from_form(&form) {
+                    fun.body = FunFormBody::LetForm(form);
+                } else if let Ok(form) = CaseForm::from_form(&form) {
+                    fun.body = FunFormBody::CaseForm(form);
+                } else if let Ok(form) = AppForm::from_form(&form) {
+                    fun.body = FunFormBody::AppForm(form);
                 } else {
-                    fun.body = FunFormBody::MixedForm(form);
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "expected a type form, a let form or an application form".into(),
+                    }));
                 }
             }
             x => {
@@ -319,7 +328,7 @@ mod tests {
         assert_eq!(form.body.to_string(), "moduleX.x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(fun (prod a b c d) (math.+ a b 10 (math.* c d 10)))";
+        s = "(fun (prod a b c d) (math.+ (prod a b 10 (math.* (prod c d 10)))))";
 
         res = FunForm::from_str(s);
 
@@ -330,7 +339,7 @@ mod tests {
         assert_eq!(form.params_to_string(), "(prod a b c d)".to_string());
         assert_eq!(
             form.body.to_string(),
-            "(math.+ a b 10 (math.* c d 10))".to_string()
+            "(math.+ (prod a b 10 (math.* (prod c d 10))))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
     }

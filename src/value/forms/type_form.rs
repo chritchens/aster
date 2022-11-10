@@ -66,6 +66,31 @@ impl TypeForm {
             .join(" ")
     }
 
+    pub fn as_form(&self) -> Form {
+        let mut form = Form::new();
+        form.tokens = self.tokens.clone();
+        form.name = self.name.clone();
+
+        for param in self.params.iter() {
+            match param.clone() {
+                TypeFormParam::Empty => {
+                    form.params.push(FormParam::Empty);
+                }
+                TypeFormParam::Keyword(keyword) => {
+                    form.params.push(FormParam::TypeKeyword(keyword));
+                }
+                TypeFormParam::Symbol(symbol) => {
+                    form.params.push(FormParam::TypeSymbol(symbol));
+                }
+                TypeFormParam::Form(type_form) => {
+                    form.params.push(FormParam::Form(type_form));
+                }
+            }
+        }
+
+        form
+    }
+
     pub fn from_form(form: &Form) -> Result<TypeForm> {
         if !is_type_symbol(&symbol_name(&form.name)) {
             return Err(Error::Syntactic(SyntacticError {

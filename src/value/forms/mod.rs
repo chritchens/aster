@@ -10,4 +10,3 @@ pub mod import_form;
 pub mod let_form;
 pub mod prod_form;
 pub mod type_form;
-pub mod value_form;

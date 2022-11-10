@@ -1,12 +1,14 @@
 use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::{is_keyword, is_qualified, is_value_symbol, symbol_name};
+use crate::syntax::{is_qualified, is_value_symbol, symbol_name};
 use crate::token::Tokens;
+use crate::value::forms::case_form::CaseForm;
 use crate::value::forms::form::{Form, FormParam};
+use crate::value::forms::fun_form::FunForm;
+use crate::value::forms::let_form::LetForm;
 use crate::value::forms::prod_form::{ProdForm, ProdFormValue};
 use crate::value::forms::type_form::TypeForm;
-use crate::value::forms::value_form::ValueForm;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -49,8 +51,11 @@ pub enum AppFormParam {
     TypeSymbol(String),
     ValueSymbol(String),
     TypeForm(TypeForm),
-    ValueForm(ValueForm),
-    MixedForm(Form),
+    ProdForm(ProdForm),
+    FunForm(FunForm),
+    LetForm(LetForm),
+    CaseForm(CaseForm),
+    AppForm(AppForm),
 }
 
 impl Default for AppFormParam {
@@ -69,8 +74,11 @@ impl AppFormParam {
             AppFormParam::TypeSymbol(symbol) => symbol.clone(),
             AppFormParam::ValueSymbol(symbol) => symbol.clone(),
             AppFormParam::TypeForm(form) => form.to_string(),
-            AppFormParam::ValueForm(form) => form.to_string(),
-            AppFormParam::MixedForm(form) => form.to_string(),
+            AppFormParam::ProdForm(form) => form.to_string(),
+            AppFormParam::FunForm(form) => form.to_string(),
+            AppFormParam::LetForm(form) => form.to_string(),
+            AppFormParam::CaseForm(form) => form.to_string(),
+            AppFormParam::AppForm(form) => form.to_string(),
         }
     }
 }
@@ -133,7 +141,7 @@ impl AppForm {
     }
 
     pub fn from_form(form: &Form) -> Result<AppForm> {
-        if !is_value_symbol(&symbol_name(&form.name)) || is_keyword(&symbol_name(&form.name)) {
+        if !is_value_symbol(&symbol_name(&form.name)) {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a value symbol".into(),
@@ -254,11 +262,17 @@ impl AppForm {
                                 ProdFormValue::TypeForm(form) => {
                                     app.params.push(AppFormParam::TypeForm(form));
                                 }
-                                ProdFormValue::ValueForm(form) => {
-                                    app.params.push(AppFormParam::ValueForm(form));
+                                ProdFormValue::FunForm(form) => {
+                                    app.params.push(AppFormParam::FunForm(form));
                                 }
-                                ProdFormValue::MixedForm(form) => {
-                                    app.params.push(AppFormParam::MixedForm(form));
+                                ProdFormValue::LetForm(form) => {
+                                    app.params.push(AppFormParam::LetForm(form));
+                                }
+                                ProdFormValue::CaseForm(form) => {
+                                    app.params.push(AppFormParam::CaseForm(form));
+                                }
+                                ProdFormValue::AppForm(form) => {
+                                    app.params.push(AppFormParam::AppForm(form));
                                 }
                                 _ => {
                                     return Err(Error::Syntactic(SyntacticError {
@@ -268,14 +282,21 @@ impl AppForm {
                                 }
                             }
                         }
-                    } else if form.is_type_form() {
-                        let form = TypeForm::from_form(&form)?;
+                    } else if let Ok(form) = TypeForm::from_form(&form) {
                         app.params.push(AppFormParam::TypeForm(form));
-                    } else if form.is_value_form() {
-                        let form = ValueForm::from_form(&form)?;
-                        app.params.push(AppFormParam::ValueForm(form));
+                    } else if let Ok(form) = FunForm::from_form(&form) {
+                        app.params.push(AppFormParam::FunForm(form));
+                    } else if let Ok(form) = LetForm::from_form(&form) {
+                        app.params.push(AppFormParam::LetForm(form));
+                    } else if let Ok(form) = CaseForm::from_form(&form) {
+                        app.params.push(AppFormParam::CaseForm(form));
+                    } else if let Ok(form) = AppForm::from_form(&form) {
+                        app.params.push(AppFormParam::AppForm(form));
                     } else {
-                        app.params.push(AppFormParam::MixedForm(form));
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: form.loc(),
+                            desc: "expected a product of keywords or symbols".into(),
+                        }));
                     }
                 }
                 x => {
@@ -319,11 +340,17 @@ impl AppForm {
                                 ProdFormValue::TypeForm(form) => {
                                     app.params.push(AppFormParam::TypeForm(form));
                                 }
-                                ProdFormValue::ValueForm(form) => {
-                                    app.params.push(AppFormParam::ValueForm(form));
+                                ProdFormValue::FunForm(form) => {
+                                    app.params.push(AppFormParam::FunForm(form));
                                 }
-                                ProdFormValue::MixedForm(form) => {
-                                    app.params.push(AppFormParam::MixedForm(form));
+                                ProdFormValue::LetForm(form) => {
+                                    app.params.push(AppFormParam::LetForm(form));
+                                }
+                                ProdFormValue::CaseForm(form) => {
+                                    app.params.push(AppFormParam::CaseForm(form));
+                                }
+                                ProdFormValue::AppForm(form) => {
+                                    app.params.push(AppFormParam::AppForm(form));
                                 }
                                 _ => {
                                     return Err(Error::Syntactic(SyntacticError {
@@ -333,14 +360,21 @@ impl AppForm {
                                 }
                             }
                         }
-                    } else if form.is_type_form() {
-                        let form = TypeForm::from_form(&form)?;
+                    } else if let Ok(form) = TypeForm::from_form(&form) {
                         app.params.push(AppFormParam::TypeForm(form));
-                    } else if form.is_value_form() {
-                        let form = ValueForm::from_form(&form)?;
-                        app.params.push(AppFormParam::ValueForm(form));
+                    } else if let Ok(form) = FunForm::from_form(&form) {
+                        app.params.push(AppFormParam::FunForm(form));
+                    } else if let Ok(form) = LetForm::from_form(&form) {
+                        app.params.push(AppFormParam::LetForm(form));
+                    } else if let Ok(form) = CaseForm::from_form(&form) {
+                        app.params.push(AppFormParam::CaseForm(form));
+                    } else if let Ok(form) = AppForm::from_form(&form) {
+                        app.params.push(AppFormParam::AppForm(form));
                     } else {
-                        app.params.push(AppFormParam::MixedForm(form));
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: form.loc(),
+                            desc: "expected a product of keywords or symbols".into(),
+                        }));
                     }
                 }
                 x => {
@@ -424,6 +458,21 @@ mod tests {
         assert_eq!(form.params_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
+        s = "(panic E)";
+
+        res = AppForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.name, "panic".to_string());
+        assert!(form.type_params.is_empty());
+        assert_eq!(form.params, vec![AppFormParam::TypeSymbol("E".into())]);
+        assert_eq!(form.type_params_to_string(), "".to_string());
+        assert_eq!(form.params_to_string(), "E".to_string());
+        assert_eq!(form.to_string(), s.to_string());
+
         s = "(unwrap _ stdIO)";
 
         res = AppForm::from_str(s);
@@ -462,7 +511,7 @@ mod tests {
         assert_eq!(form.params_to_string(), "stdIO".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(unwrap (prod (Fun (Prod Int Int) Int) Error) (fun (prod a b) (math.+ a b)))";
+        s = "(unwrap (prod (Fun (Prod Int Int) Int) Error) (fun (prod a b) (math.+ (prod a b))))";
 
         res = AppForm::from_str(s);
 
@@ -476,7 +525,7 @@ mod tests {
         );
         assert_eq!(
             form.params_to_string(),
-            "(fun (prod a b) (math.+ a b))".to_string()
+            "(fun (prod a b) (math.+ (prod a b)))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
     }

@@ -2,9 +2,12 @@ use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
+use crate::value::forms::app_form::AppForm;
+use crate::value::forms::case_form::CaseForm;
 use crate::value::forms::form::{Form, FormParam};
+use crate::value::forms::fun_form::FunForm;
+use crate::value::forms::let_form::LetForm;
 use crate::value::forms::type_form::TypeForm;
-use crate::value::forms::value_form::ValueForm;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -15,9 +18,11 @@ pub enum ProdFormValue {
     TypeKeyword(String),
     ValueSymbol(String),
     TypeSymbol(String),
-    ValueForm(ValueForm),
     TypeForm(TypeForm),
-    MixedForm(Form),
+    FunForm(FunForm),
+    CaseForm(CaseForm),
+    LetForm(LetForm),
+    AppForm(AppForm),
 }
 
 impl Default for ProdFormValue {
@@ -36,9 +41,11 @@ impl ProdFormValue {
             ProdFormValue::TypeKeyword(keyword) => keyword.clone(),
             ProdFormValue::ValueSymbol(symbol) => symbol.clone(),
             ProdFormValue::TypeSymbol(symbol) => symbol.clone(),
-            ProdFormValue::ValueForm(form) => form.to_string(),
             ProdFormValue::TypeForm(form) => form.to_string(),
-            ProdFormValue::MixedForm(form) => form.to_string(),
+            ProdFormValue::FunForm(form) => form.to_string(),
+            ProdFormValue::CaseForm(form) => form.to_string(),
+            ProdFormValue::LetForm(form) => form.to_string(),
+            ProdFormValue::AppForm(form) => form.to_string(),
         }
     }
 }
@@ -123,14 +130,21 @@ impl ProdForm {
                     prod.values.push(ProdFormValue::TypeSymbol(symbol));
                 }
                 FormParam::Form(form) => {
-                    if form.is_value_form() {
-                        let form = ValueForm::from_form(&form)?;
-                        prod.values.push(ProdFormValue::ValueForm(form));
-                    } else if form.is_type_form() {
-                        let form = TypeForm::from_form(&form)?;
+                    if let Ok(form) = TypeForm::from_form(&form) {
                         prod.values.push(ProdFormValue::TypeForm(form));
+                    } else if let Ok(form) = FunForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::FunForm(form));
+                    } else if let Ok(form) = CaseForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::CaseForm(form));
+                    } else if let Ok(form) = LetForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::LetForm(form));
+                    } else if let Ok(form) = AppForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::AppForm(form))
                     } else {
-                        prod.values.push(ProdFormValue::MixedForm(form));
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: form.loc(),
+                            desc: "expected a function form, a case form or a let form or an application form".into(),
+                        }));
                     }
                 }
                 _ => {
@@ -211,7 +225,7 @@ mod tests {
         assert_eq!(form.values_to_string(), "moduleX.X y".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(prod 0 (type (Fun A B)))";
+        s = "(prod 0 (Fun A B))";
 
         res = ProdForm::from_str(s);
 
@@ -224,9 +238,9 @@ mod tests {
                 .iter()
                 .map(|v| v.to_string())
                 .collect::<Vec<String>>(),
-            vec!["0".to_string(), "(type (Fun A B))".to_string()]
+            vec!["0".to_string(), "(Fun A B)".to_string()]
         );
-        assert_eq!(form.values_to_string(), "0 (type (Fun A B))".to_string());
+        assert_eq!(form.values_to_string(), "0 (Fun A B)".to_string());
         assert_eq!(form.to_string(), s.to_string());
     }
 }

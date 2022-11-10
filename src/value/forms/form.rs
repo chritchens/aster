@@ -316,7 +316,7 @@ mod tests {
         assert!(form.is_value_form());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(type T Q (Fun (Prod moduleA.A T Q) B))";
+        s = "(Fun (Prod T Q) (Fun (Prod moduleA.A T Q) B))";
 
         res = Form::from_str(s);
 
@@ -324,23 +324,22 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "type".to_string());
+        assert_eq!(form.name, "Fun".to_string());
         assert_eq!(
             form.params
                 .iter()
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>(),
             vec![
-                "T".to_string(),
-                "Q".into(),
+                "(Prod T Q)".to_string(),
                 "(Fun (Prod moduleA.A T Q) B)".into()
             ]
         );
         assert_eq!(
             form.params_to_string(),
-            "T Q (Fun (Prod moduleA.A T Q) B)".to_string()
+            "(Prod T Q) (Fun (Prod moduleA.A T Q) B)".to_string()
         );
-        assert!(form.is_mixed_form());
+        assert!(form.is_type_form());
 
         s = "(Sum A B c.C Char)";
 

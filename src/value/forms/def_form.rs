@@ -4,12 +4,12 @@ use crate::syntax::{is_qualified, is_type_symbol, is_value_symbol};
 use crate::token::Tokens;
 use crate::value::forms::app_form::AppForm;
 use crate::value::forms::attrs_form::AttrsForm;
+use crate::value::forms::case_form::CaseForm;
 use crate::value::forms::form::{Form, FormParam};
 use crate::value::forms::fun_form::FunForm;
 use crate::value::forms::let_form::LetForm;
 use crate::value::forms::prod_form::{ProdForm, ProdFormValue};
 use crate::value::forms::type_form::TypeForm;
-use crate::value::forms::value_form::ValueForm;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -52,12 +52,12 @@ pub enum DefFormValue {
     TypeSymbol(String),
     ValueSymbol(String),
     AttrsForm(AttrsForm),
+    TypeForm(TypeForm),
     ProdForm(ProdForm),
     FunForm(FunForm),
     LetForm(LetForm),
     AppForm(AppForm),
-    TypeForm(TypeForm),
-    ValueForm(ValueForm),
+    CaseForm(CaseForm),
 }
 
 impl Default for DefFormValue {
@@ -76,12 +76,12 @@ impl DefFormValue {
             DefFormValue::TypeSymbol(symbol) => symbol.clone(),
             DefFormValue::ValueSymbol(symbol) => symbol.clone(),
             DefFormValue::AttrsForm(form) => form.to_string(),
+            DefFormValue::TypeForm(form) => form.to_string(),
             DefFormValue::ProdForm(form) => form.to_string(),
             DefFormValue::FunForm(form) => form.to_string(),
             DefFormValue::LetForm(form) => form.to_string(),
             DefFormValue::AppForm(form) => form.to_string(),
-            DefFormValue::TypeForm(form) => form.to_string(),
-            DefFormValue::ValueForm(form) => form.to_string(),
+            DefFormValue::CaseForm(form) => form.to_string(),
         }
     }
 }
@@ -204,9 +204,9 @@ impl DefForm {
         }
     }
 
-    pub fn is_value_form(&self) -> bool {
+    pub fn is_case_form(&self) -> bool {
         match self.value {
-            DefFormValue::ValueForm(_) => true,
+            DefFormValue::CaseForm(_) => true,
             _ => false,
         }
     }
@@ -221,7 +221,7 @@ impl DefForm {
             || self.is_value_symbol()
             || self.is_product_form()
             || self.is_function_form()
-            || self.is_value_form()
+            || self.is_case_form()
             || (self.is_let_form() && is_value_symbol(&self.name))
             || (self.is_application_form() && is_value_symbol(&self.name))
     }
@@ -385,6 +385,10 @@ impl DefForm {
                         let form = LetForm::from_form(&form)?;
                         def.value = DefFormValue::LetForm(form);
                     }
+                    "case" => {
+                        let form = CaseForm::from_form(&form)?;
+                        def.value = DefFormValue::CaseForm(form);
+                    }
                     x => {
                         if is_type_symbol(x) {
                             if let Ok(form) = TypeForm::from_form(&form) {
@@ -397,8 +401,6 @@ impl DefForm {
                             }
                         } else if let Ok(form) = AppForm::from_form(&form) {
                             def.value = DefFormValue::AppForm(form);
-                        } else if let Ok(form) = ValueForm::from_form(&form) {
-                            def.value = DefFormValue::ValueForm(form);
                         } else {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
@@ -446,6 +448,10 @@ impl DefForm {
                         let form = LetForm::from_form(&form)?;
                         def.value = DefFormValue::LetForm(form);
                     }
+                    "case" => {
+                        let form = CaseForm::from_form(&form)?;
+                        def.value = DefFormValue::CaseForm(form);
+                    }
                     x => {
                         if is_type_symbol(x) {
                             if let Ok(form) = TypeForm::from_form(&form) {
@@ -458,8 +464,6 @@ impl DefForm {
                             }
                         } else if let Ok(form) = AppForm::from_form(&form) {
                             def.value = DefFormValue::AppForm(form);
-                        } else if let Ok(form) = ValueForm::from_form(&form) {
-                            def.value = DefFormValue::ValueForm(form);
                         } else {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
@@ -592,7 +596,7 @@ mod tests {
         assert!(form.is_product_form());
         assert!(form.is_value());
 
-        s = "(def p (prod a b (f x y 10) 11))";
+        s = "(def p (prod a b (f (prod x y 10)) 11))";
 
         res = DefForm::from_str(s);
 
@@ -603,7 +607,7 @@ mod tests {
         assert_eq!(form.name, "p".to_string());
         assert_eq!(
             form.value.to_string(),
-            "(prod a b (f x y 10) 11)".to_string()
+            "(prod a b (f (prod x y 10)) 11)".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_product_form());
@@ -654,6 +658,24 @@ mod tests {
         );
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_let_form());
+        assert!(form.is_value());
+
+        s = "(def unwrap (fun res (case res (match T id) (match E panic))))";
+
+        res = DefForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.name, "unwrap".to_string());
+        assert_eq!(form.type_params_to_string(), "".to_string());
+        assert_eq!(
+            form.value.to_string(),
+            "(fun res (case res (match T id) (match E panic)))".to_string()
+        );
+        assert_eq!(form.to_string(), s.to_string());
+        assert!(form.is_function_form());
         assert!(form.is_value());
     }
 }
