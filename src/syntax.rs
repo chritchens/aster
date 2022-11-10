@@ -3,11 +3,11 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 41] = [
+pub const KEYWORDS: [&str; 42] = [
     "_", "builtin", "import", "export", "def", "type", "prim", "sum", "prod", "sig", "fun",
-    "attrs", "app", "case", "size", "load", "store", "cast", "dup", "drop", "panic", "Builtin",
-    "Empty", "Prim", "UInt", "Int", "Float", "Size", "Char", "String", "Mem", "Path", "IO", "Ctx",
-    "Sum", "Prod", "Sig", "Fun", "App", "Attrs", "Type",
+    "attrs", "app", "case", "match", "size", "load", "store", "cast", "dup", "drop", "panic",
+    "Builtin", "Empty", "Prim", "UInt", "Int", "Float", "Size", "Char", "String", "Mem", "Path",
+    "IO", "Ctx", "Sum", "Prod", "Sig", "Fun", "App", "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -36,6 +36,7 @@ pub enum Keyword {
     Attrs,
     App,
     Case,
+    Match,
     Size,
     Load,
     Store,
@@ -82,6 +83,7 @@ impl fmt::Display for Keyword {
             Keyword::Attrs => write!(f, "attrs"),
             Keyword::App => write!(f, "app"),
             Keyword::Case => write!(f, "case"),
+            Keyword::Match => write!(f, "match"),
             Keyword::Size => write!(f, "size"),
             Keyword::Load => write!(f, "load"),
             Keyword::Store => write!(f, "store"),
@@ -130,6 +132,7 @@ impl Keyword {
             "attrs" => Ok(Keyword::Attrs),
             "app" => Ok(Keyword::App),
             "case" => Ok(Keyword::Case),
+            "match" => Ok(Keyword::Match),
             "size" => Ok(Keyword::Size),
             "load" => Ok(Keyword::Load),
             "store" => Ok(Keyword::Store),
