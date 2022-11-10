@@ -15,8 +15,8 @@ pub enum CaseFormParam {
     TypeKeyword(String),
     TypeSymbol(String),
     ValueSymbol(String),
-    App(Box<AppForm>),
-    Let(Box<LetForm>),
+    AppForm(Box<AppForm>),
+    LetForm(Box<LetForm>),
 }
 
 impl Default for CaseFormParam {
@@ -34,8 +34,8 @@ impl CaseFormParam {
             CaseFormParam::TypeKeyword(keyword) => keyword.clone(),
             CaseFormParam::TypeSymbol(symbol) => symbol.clone(),
             CaseFormParam::ValueSymbol(symbol) => symbol.clone(),
-            CaseFormParam::App(form) => form.to_string(),
-            CaseFormParam::Let(form) => form.to_string(),
+            CaseFormParam::AppForm(form) => form.to_string(),
+            CaseFormParam::LetForm(form) => form.to_string(),
         }
     }
 }
@@ -88,8 +88,8 @@ pub enum CaseFormMatchAction {
     TypeKeyword(String),
     TypeSymbol(String),
     ValueSymbol(String),
-    Prod(Box<ProdForm>),
-    Fun(Box<FunForm>),
+    ProdForm(Box<ProdForm>),
+    FunForm(Box<FunForm>),
 }
 
 impl CaseFormMatchAction {
@@ -102,8 +102,8 @@ impl CaseFormMatchAction {
             CaseFormMatchAction::TypeKeyword(keyword) => keyword.clone(),
             CaseFormMatchAction::TypeSymbol(symbol) => symbol.clone(),
             CaseFormMatchAction::ValueSymbol(symbol) => symbol.clone(),
-            CaseFormMatchAction::Prod(form) => form.to_string(),
-            CaseFormMatchAction::Fun(form) => form.to_string(),
+            CaseFormMatchAction::ProdForm(form) => form.to_string(),
+            CaseFormMatchAction::FunForm(form) => form.to_string(),
         }
     }
 }
@@ -203,9 +203,9 @@ impl CaseFormMatch {
             }
             FormParam::Form(form) => {
                 if let Ok(form) = ProdForm::from_form(&form) {
-                    case_match.action = CaseFormMatchAction::Prod(Box::new(form));
+                    case_match.action = CaseFormMatchAction::ProdForm(Box::new(form));
                 } else if let Ok(form) = FunForm::from_form(&form) {
-                    case_match.action = CaseFormMatchAction::Fun(Box::new(form));
+                    case_match.action = CaseFormMatchAction::FunForm(Box::new(form));
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
@@ -308,9 +308,9 @@ impl CaseForm {
             }
             FormParam::Form(form) => {
                 if let Ok(form) = LetForm::from_form(&form) {
-                    case.param = CaseFormParam::Let(Box::new(form));
+                    case.param = CaseFormParam::LetForm(Box::new(form));
                 } else if let Ok(form) = AppForm::from_form(&form) {
-                    case.param = CaseFormParam::App(Box::new(form));
+                    case.param = CaseFormParam::AppForm(Box::new(form));
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
