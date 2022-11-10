@@ -49,6 +49,7 @@ pub enum FunFormBody {
     ValueSymbol(String),
     TypeSymbol(String),
     TypeForm(Box<TypeForm>),
+    ProdForm(Box<ProdForm>),
     AppForm(Box<AppForm>),
     LetForm(Box<LetForm>),
     CaseForm(Box<CaseForm>),
@@ -70,6 +71,7 @@ impl FunFormBody {
             FunFormBody::ValueSymbol(symbol) => symbol.clone(),
             FunFormBody::TypeSymbol(symbol) => symbol.clone(),
             FunFormBody::TypeForm(form) => form.to_string(),
+            FunFormBody::ProdForm(form) => form.to_string(),
             FunFormBody::AppForm(form) => form.to_string(),
             FunFormBody::LetForm(form) => form.to_string(),
             FunFormBody::CaseForm(form) => form.to_string(),
@@ -224,6 +226,8 @@ impl FunForm {
             FormParam::Form(form) => {
                 if let Ok(form) = TypeForm::from_form(&form) {
                     fun.body = FunFormBody::TypeForm(Box::new(form));
+                } else if let Ok(form) = ProdForm::from_form(&form) {
+                    fun.body = FunFormBody::ProdForm(Box::new(form));
                 } else if let Ok(form) = LetForm::from_form(&form) {
                     fun.body = FunFormBody::LetForm(Box::new(form));
                 } else if let Ok(form) = CaseForm::from_form(&form) {

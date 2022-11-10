@@ -5,6 +5,7 @@ use crate::value::forms::app_form::AppForm;
 use crate::value::forms::form::{Form, FormParam};
 use crate::value::forms::fun_form::FunForm;
 use crate::value::forms::let_form::LetForm;
+use crate::value::forms::prod_form::ProdForm;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -87,6 +88,7 @@ pub enum CaseFormMatchAction {
     TypeKeyword(String),
     TypeSymbol(String),
     ValueSymbol(String),
+    Prod(Box<ProdForm>),
     Fun(Box<FunForm>),
 }
 
@@ -100,6 +102,7 @@ impl CaseFormMatchAction {
             CaseFormMatchAction::TypeKeyword(keyword) => keyword.clone(),
             CaseFormMatchAction::TypeSymbol(symbol) => symbol.clone(),
             CaseFormMatchAction::ValueSymbol(symbol) => symbol.clone(),
+            CaseFormMatchAction::Prod(form) => form.to_string(),
             CaseFormMatchAction::Fun(form) => form.to_string(),
         }
     }
@@ -199,7 +202,9 @@ impl CaseFormMatch {
                 case_match.action = CaseFormMatchAction::ValueSymbol(symbol);
             }
             FormParam::Form(form) => {
-                if let Ok(form) = FunForm::from_form(&form) {
+                if let Ok(form) = ProdForm::from_form(&form) {
+                    case_match.action = CaseFormMatchAction::Prod(Box::new(form));
+                } else if let Ok(form) = FunForm::from_form(&form) {
                     case_match.action = CaseFormMatchAction::Fun(Box::new(form));
                 } else {
                     return Err(Error::Syntactic(SyntacticError {

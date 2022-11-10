@@ -19,6 +19,7 @@ pub enum ProdFormValue {
     ValueSymbol(String),
     TypeSymbol(String),
     TypeForm(Box<TypeForm>),
+    ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
@@ -42,6 +43,7 @@ impl ProdFormValue {
             ProdFormValue::ValueSymbol(symbol) => symbol.clone(),
             ProdFormValue::TypeSymbol(symbol) => symbol.clone(),
             ProdFormValue::TypeForm(form) => form.to_string(),
+            ProdFormValue::ProdForm(form) => form.to_string(),
             ProdFormValue::FunForm(form) => form.to_string(),
             ProdFormValue::CaseForm(form) => form.to_string(),
             ProdFormValue::LetForm(form) => form.to_string(),
@@ -132,6 +134,8 @@ impl ProdForm {
                 FormParam::Form(form) => {
                     if let Ok(form) = TypeForm::from_form(&form) {
                         prod.values.push(ProdFormValue::TypeForm(Box::new(form)));
+                    } else if let Ok(form) = ProdForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::ProdForm(Box::new(form)));
                     } else if let Ok(form) = FunForm::from_form(&form) {
                         prod.values.push(ProdFormValue::FunForm(Box::new(form)));
                     } else if let Ok(form) = CaseForm::from_form(&form) {
