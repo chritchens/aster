@@ -14,7 +14,7 @@ pub enum FormParam {
     TypeKeyword(String),
     ValueSymbol(String),
     TypeSymbol(String),
-    Form(Form),
+    Form(Box<Form>),
 }
 
 impl FormParam {
@@ -236,7 +236,7 @@ impl Form {
                     }
 
                     let inner_form = Form::from_tokens(&inner_tokens)?;
-                    params.push(FormParam::Form(inner_form));
+                    params.push(FormParam::Form(Box::new(inner_form)));
                 }
                 TokenKind::FormEnd => {
                     idx += 1;

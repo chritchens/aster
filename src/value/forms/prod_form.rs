@@ -18,11 +18,11 @@ pub enum ProdFormValue {
     TypeKeyword(String),
     ValueSymbol(String),
     TypeSymbol(String),
-    TypeForm(TypeForm),
-    FunForm(FunForm),
-    CaseForm(CaseForm),
-    LetForm(LetForm),
-    AppForm(AppForm),
+    TypeForm(Box<TypeForm>),
+    FunForm(Box<FunForm>),
+    CaseForm(Box<CaseForm>),
+    LetForm(Box<LetForm>),
+    AppForm(Box<AppForm>),
 }
 
 impl Default for ProdFormValue {
@@ -131,15 +131,15 @@ impl ProdForm {
                 }
                 FormParam::Form(form) => {
                     if let Ok(form) = TypeForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::TypeForm(form));
+                        prod.values.push(ProdFormValue::TypeForm(Box::new(form)));
                     } else if let Ok(form) = FunForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::FunForm(form));
+                        prod.values.push(ProdFormValue::FunForm(Box::new(form)));
                     } else if let Ok(form) = CaseForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::CaseForm(form));
+                        prod.values.push(ProdFormValue::CaseForm(Box::new(form)));
                     } else if let Ok(form) = LetForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::LetForm(form));
+                        prod.values.push(ProdFormValue::LetForm(Box::new(form)));
                     } else if let Ok(form) = AppForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::AppForm(form))
+                        prod.values.push(ProdFormValue::AppForm(Box::new(form)))
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),

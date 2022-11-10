@@ -109,26 +109,18 @@ impl AttrsForm {
             FormParam::Form(form) => {
                 if let Ok(prod) = ProdForm::from_form(&form) {
                     for value in prod.values.iter() {
-                        match value {
+                        match value.clone() {
                             ProdFormValue::TypeKeyword(keyword) => {
-                                attrs
-                                    .values
-                                    .push(AttrsFormValue::TypeKeyword(keyword.clone()));
+                                attrs.values.push(AttrsFormValue::TypeKeyword(keyword));
                             }
                             ProdFormValue::ValueKeyword(keyword) => {
-                                attrs
-                                    .values
-                                    .push(AttrsFormValue::ValueKeyword(keyword.clone()));
+                                attrs.values.push(AttrsFormValue::ValueKeyword(keyword));
                             }
                             ProdFormValue::TypeSymbol(symbol) => {
-                                attrs
-                                    .values
-                                    .push(AttrsFormValue::TypeSymbol(symbol.clone()));
+                                attrs.values.push(AttrsFormValue::TypeSymbol(symbol));
                             }
                             ProdFormValue::ValueSymbol(symbol) => {
-                                attrs
-                                    .values
-                                    .push(AttrsFormValue::ValueSymbol(symbol.clone()));
+                                attrs.values.push(AttrsFormValue::ValueSymbol(symbol));
                             }
                             _ => {
                                 return Err(Error::Syntactic(SyntacticError {

@@ -17,7 +17,7 @@ pub enum DefFormTypeParam {
     Ignore,
     Keyword(String),
     Symbol(String),
-    Form(TypeForm),
+    Form(Box<TypeForm>),
 }
 
 impl Default for DefFormTypeParam {
@@ -51,13 +51,13 @@ pub enum DefFormValue {
     TypeKeyword(String),
     TypeSymbol(String),
     ValueSymbol(String),
-    AttrsForm(AttrsForm),
-    TypeForm(TypeForm),
-    ProdForm(ProdForm),
-    FunForm(FunForm),
-    LetForm(LetForm),
-    AppForm(AppForm),
-    CaseForm(CaseForm),
+    AttrsForm(Box<AttrsForm>),
+    TypeForm(Box<TypeForm>),
+    ProdForm(Box<ProdForm>),
+    FunForm(Box<FunForm>),
+    LetForm(Box<LetForm>),
+    AppForm(Box<AppForm>),
+    CaseForm(Box<CaseForm>),
 }
 
 impl Default for DefFormValue {
@@ -311,10 +311,9 @@ impl DefForm {
                 FormParam::Form(form) => {
                     if let Ok(prod) = ProdForm::from_form(&form) {
                         for value in prod.values.iter() {
-                            match value {
+                            match value.clone() {
                                 ProdFormValue::TypeKeyword(keyword) => {
-                                    def.type_params
-                                        .push(DefFormTypeParam::Keyword(keyword.clone()));
+                                    def.type_params.push(DefFormTypeParam::Keyword(keyword));
                                 }
                                 ProdFormValue::TypeSymbol(symbol) => {
                                     if is_qualified(&symbol) {
@@ -324,11 +323,10 @@ impl DefForm {
                                         }));
                                     }
 
-                                    def.type_params
-                                        .push(DefFormTypeParam::Symbol(symbol.clone()));
+                                    def.type_params.push(DefFormTypeParam::Symbol(symbol));
                                 }
                                 ProdFormValue::TypeForm(form) => {
-                                    def.type_params.push(DefFormTypeParam::Form(form.clone()));
+                                    def.type_params.push(DefFormTypeParam::Form(form));
                                 }
                                 _ => {
                                     return Err(Error::Syntactic(SyntacticError {
@@ -371,28 +369,28 @@ impl DefForm {
                 FormParam::Form(form) => match form.name.as_str() {
                     "attrs" => {
                         let form = AttrsForm::from_form(&form)?;
-                        def.value = DefFormValue::AttrsForm(form);
+                        def.value = DefFormValue::AttrsForm(Box::new(form));
                     }
                     "prod" => {
                         let form = ProdForm::from_form(&form)?;
-                        def.value = DefFormValue::ProdForm(form);
+                        def.value = DefFormValue::ProdForm(Box::new(form));
                     }
                     "fun" => {
                         let form = FunForm::from_form(&form)?;
-                        def.value = DefFormValue::FunForm(form);
+                        def.value = DefFormValue::FunForm(Box::new(form));
                     }
                     "let" => {
                         let form = LetForm::from_form(&form)?;
-                        def.value = DefFormValue::LetForm(form);
+                        def.value = DefFormValue::LetForm(Box::new(form));
                     }
                     "case" => {
                         let form = CaseForm::from_form(&form)?;
-                        def.value = DefFormValue::CaseForm(form);
+                        def.value = DefFormValue::CaseForm(Box::new(form));
                     }
                     x => {
                         if is_type_symbol(x) {
                             if let Ok(form) = TypeForm::from_form(&form) {
-                                def.value = DefFormValue::TypeForm(form);
+                                def.value = DefFormValue::TypeForm(Box::new(form));
                             } else {
                                 return Err(Error::Syntactic(SyntacticError {
                                     loc: form.loc(),
@@ -400,7 +398,7 @@ impl DefForm {
                                 }));
                             }
                         } else if let Ok(form) = AppForm::from_form(&form) {
-                            def.value = DefFormValue::AppForm(form);
+                            def.value = DefFormValue::AppForm(Box::new(form));
                         } else {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
@@ -434,28 +432,28 @@ impl DefForm {
                 FormParam::Form(form) => match form.name.as_str() {
                     "attrs" => {
                         let form = AttrsForm::from_form(&form)?;
-                        def.value = DefFormValue::AttrsForm(form);
+                        def.value = DefFormValue::AttrsForm(Box::new(form));
                     }
                     "prod" => {
                         let form = ProdForm::from_form(&form)?;
-                        def.value = DefFormValue::ProdForm(form);
+                        def.value = DefFormValue::ProdForm(Box::new(form));
                     }
                     "fun" => {
                         let form = FunForm::from_form(&form)?;
-                        def.value = DefFormValue::FunForm(form);
+                        def.value = DefFormValue::FunForm(Box::new(form));
                     }
                     "let" => {
                         let form = LetForm::from_form(&form)?;
-                        def.value = DefFormValue::LetForm(form);
+                        def.value = DefFormValue::LetForm(Box::new(form));
                     }
                     "case" => {
                         let form = CaseForm::from_form(&form)?;
-                        def.value = DefFormValue::CaseForm(form);
+                        def.value = DefFormValue::CaseForm(Box::new(form));
                     }
                     x => {
                         if is_type_symbol(x) {
                             if let Ok(form) = TypeForm::from_form(&form) {
-                                def.value = DefFormValue::TypeForm(form);
+                                def.value = DefFormValue::TypeForm(Box::new(form));
                             } else {
                                 return Err(Error::Syntactic(SyntacticError {
                                     loc: form.loc(),
@@ -463,7 +461,7 @@ impl DefForm {
                                 }));
                             }
                         } else if let Ok(form) = AppForm::from_form(&form) {
-                            def.value = DefFormValue::AppForm(form);
+                            def.value = DefFormValue::AppForm(Box::new(form));
                         } else {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),

@@ -16,7 +16,7 @@ pub enum AppFormTypeParam {
     Ignore,
     Keyword(String),
     Symbol(String),
-    Form(TypeForm),
+    Form(Box<TypeForm>),
 }
 
 impl Default for AppFormTypeParam {
@@ -50,12 +50,12 @@ pub enum AppFormParam {
     TypeKeyword(String),
     TypeSymbol(String),
     ValueSymbol(String),
-    TypeForm(TypeForm),
-    ProdForm(ProdForm),
-    FunForm(FunForm),
-    LetForm(LetForm),
-    CaseForm(CaseForm),
-    AppForm(AppForm),
+    TypeForm(Box<TypeForm>),
+    ProdForm(Box<ProdForm>),
+    FunForm(Box<FunForm>),
+    LetForm(Box<LetForm>),
+    CaseForm(Box<CaseForm>),
+    AppForm(Box<AppForm>),
 }
 
 impl Default for AppFormParam {
@@ -189,10 +189,9 @@ impl AppForm {
                 FormParam::Form(form) => {
                     if let Ok(prod) = ProdForm::from_form(&form) {
                         for value in prod.values.iter() {
-                            match value {
+                            match value.clone() {
                                 ProdFormValue::TypeKeyword(keyword) => {
-                                    app.type_params
-                                        .push(AppFormTypeParam::Keyword(keyword.clone()));
+                                    app.type_params.push(AppFormTypeParam::Keyword(keyword));
                                 }
                                 ProdFormValue::TypeSymbol(symbol) => {
                                     if is_qualified(&symbol) {
@@ -202,11 +201,10 @@ impl AppForm {
                                         }));
                                     }
 
-                                    app.type_params
-                                        .push(AppFormTypeParam::Symbol(symbol.clone()));
+                                    app.type_params.push(AppFormTypeParam::Symbol(symbol));
                                 }
                                 ProdFormValue::TypeForm(form) => {
-                                    app.type_params.push(AppFormTypeParam::Form(form.clone()));
+                                    app.type_params.push(AppFormTypeParam::Form(form));
                                 }
                                 _ => {
                                     return Err(Error::Syntactic(SyntacticError {
@@ -283,15 +281,15 @@ impl AppForm {
                             }
                         }
                     } else if let Ok(form) = TypeForm::from_form(&form) {
-                        app.params.push(AppFormParam::TypeForm(form));
+                        app.params.push(AppFormParam::TypeForm(Box::new(form)));
                     } else if let Ok(form) = FunForm::from_form(&form) {
-                        app.params.push(AppFormParam::FunForm(form));
+                        app.params.push(AppFormParam::FunForm(Box::new(form)));
                     } else if let Ok(form) = LetForm::from_form(&form) {
-                        app.params.push(AppFormParam::LetForm(form));
+                        app.params.push(AppFormParam::LetForm(Box::new(form)));
                     } else if let Ok(form) = CaseForm::from_form(&form) {
-                        app.params.push(AppFormParam::CaseForm(form));
+                        app.params.push(AppFormParam::CaseForm(Box::new(form)));
                     } else if let Ok(form) = AppForm::from_form(&form) {
-                        app.params.push(AppFormParam::AppForm(form));
+                        app.params.push(AppFormParam::AppForm(Box::new(form)));
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
@@ -361,15 +359,15 @@ impl AppForm {
                             }
                         }
                     } else if let Ok(form) = TypeForm::from_form(&form) {
-                        app.params.push(AppFormParam::TypeForm(form));
+                        app.params.push(AppFormParam::TypeForm(Box::new(form)));
                     } else if let Ok(form) = FunForm::from_form(&form) {
-                        app.params.push(AppFormParam::FunForm(form));
+                        app.params.push(AppFormParam::FunForm(Box::new(form)));
                     } else if let Ok(form) = LetForm::from_form(&form) {
-                        app.params.push(AppFormParam::LetForm(form));
+                        app.params.push(AppFormParam::LetForm(Box::new(form)));
                     } else if let Ok(form) = CaseForm::from_form(&form) {
-                        app.params.push(AppFormParam::CaseForm(form));
+                        app.params.push(AppFormParam::CaseForm(Box::new(form)));
                     } else if let Ok(form) = AppForm::from_form(&form) {
-                        app.params.push(AppFormParam::AppForm(form));
+                        app.params.push(AppFormParam::AppForm(Box::new(form)));
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),

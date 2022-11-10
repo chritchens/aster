@@ -14,8 +14,8 @@ pub enum CaseFormParam {
     TypeKeyword(String),
     TypeSymbol(String),
     ValueSymbol(String),
-    App(AppForm),
-    Let(LetForm),
+    App(Box<AppForm>),
+    Let(Box<LetForm>),
 }
 
 impl Default for CaseFormParam {
@@ -79,7 +79,6 @@ impl Default for CaseFormMatchCase {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum CaseFormMatchAction {
     Ignore,
@@ -88,7 +87,7 @@ pub enum CaseFormMatchAction {
     TypeKeyword(String),
     TypeSymbol(String),
     ValueSymbol(String),
-    Fun(FunForm),
+    Fun(Box<FunForm>),
 }
 
 impl CaseFormMatchAction {
@@ -201,7 +200,7 @@ impl CaseFormMatch {
             }
             FormParam::Form(form) => {
                 if let Ok(form) = FunForm::from_form(&form) {
-                    case_match.action = CaseFormMatchAction::Fun(form);
+                    case_match.action = CaseFormMatchAction::Fun(Box::new(form));
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
@@ -304,9 +303,9 @@ impl CaseForm {
             }
             FormParam::Form(form) => {
                 if let Ok(form) = LetForm::from_form(&form) {
-                    case.param = CaseFormParam::Let(form);
+                    case.param = CaseFormParam::Let(Box::new(form));
                 } else if let Ok(form) = AppForm::from_form(&form) {
-                    case.param = CaseFormParam::App(form);
+                    case.param = CaseFormParam::App(Box::new(form));
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),

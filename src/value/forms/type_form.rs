@@ -11,7 +11,7 @@ pub enum TypeFormParam {
     Empty,
     Keyword(String),
     Symbol(String),
-    Form(Form),
+    Form(Box<Form>),
 }
 
 impl Default for TypeFormParam {
@@ -104,22 +104,20 @@ impl TypeForm {
         type_form.name = form.name.clone();
 
         for param in form.params.iter() {
-            match param {
+            match param.clone() {
                 FormParam::TypeKeyword(keyword) => {
                     if keyword == "Empty" {
                         type_form.params.push(TypeFormParam::Empty);
                     } else {
-                        type_form
-                            .params
-                            .push(TypeFormParam::Keyword(keyword.clone()));
+                        type_form.params.push(TypeFormParam::Keyword(keyword));
                     }
                 }
                 FormParam::TypeSymbol(symbol) => {
-                    type_form.params.push(TypeFormParam::Symbol(symbol.clone()));
+                    type_form.params.push(TypeFormParam::Symbol(symbol));
                 }
                 FormParam::Form(form) => {
                     if form.is_type_form() {
-                        type_form.params.push(TypeFormParam::Form(form.clone()));
+                        type_form.params.push(TypeFormParam::Form(form));
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),

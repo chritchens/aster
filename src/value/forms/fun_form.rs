@@ -48,10 +48,10 @@ pub enum FunFormBody {
     TypeKeyword(String),
     ValueSymbol(String),
     TypeSymbol(String),
-    TypeForm(TypeForm),
-    AppForm(AppForm),
-    LetForm(LetForm),
-    CaseForm(CaseForm),
+    TypeForm(Box<TypeForm>),
+    AppForm(Box<AppForm>),
+    LetForm(Box<LetForm>),
+    CaseForm(Box<CaseForm>),
 }
 
 impl Default for FunFormBody {
@@ -161,7 +161,7 @@ impl FunForm {
             FormParam::Form(form) => {
                 if let Ok(prod) = ProdForm::from_form(&form) {
                     for value in prod.values.iter() {
-                        match value {
+                        match value.clone() {
                             ProdFormValue::TypeSymbol(symbol) => {
                                 if is_qualified(&symbol) {
                                     return Err(Error::Syntactic(SyntacticError {
@@ -170,7 +170,7 @@ impl FunForm {
                                     }));
                                 }
 
-                                fun.params.push(FunFormParam::TypeSymbol(symbol.clone()));
+                                fun.params.push(FunFormParam::TypeSymbol(symbol));
                             }
                             ProdFormValue::ValueSymbol(symbol) => {
                                 if is_qualified(&symbol) {
@@ -180,7 +180,7 @@ impl FunForm {
                                     }));
                                 }
 
-                                fun.params.push(FunFormParam::ValueSymbol(symbol.clone()));
+                                fun.params.push(FunFormParam::ValueSymbol(symbol));
                             }
                             _ => {
                                 return Err(Error::Syntactic(SyntacticError {
@@ -223,13 +223,13 @@ impl FunForm {
             }
             FormParam::Form(form) => {
                 if let Ok(form) = TypeForm::from_form(&form) {
-                    fun.body = FunFormBody::TypeForm(form);
+                    fun.body = FunFormBody::TypeForm(Box::new(form));
                 } else if let Ok(form) = LetForm::from_form(&form) {
-                    fun.body = FunFormBody::LetForm(form);
+                    fun.body = FunFormBody::LetForm(Box::new(form));
                 } else if let Ok(form) = CaseForm::from_form(&form) {
-                    fun.body = FunFormBody::CaseForm(form);
+                    fun.body = FunFormBody::CaseForm(Box::new(form));
                 } else if let Ok(form) = AppForm::from_form(&form) {
-                    fun.body = FunFormBody::AppForm(form);
+                    fun.body = FunFormBody::AppForm(Box::new(form));
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
