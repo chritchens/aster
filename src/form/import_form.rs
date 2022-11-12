@@ -74,9 +74,7 @@ impl ImportForm {
         }
     }
 
-    pub fn from_tokens(tokens: &Tokens) -> Result<ImportForm> {
-        let form = Form::from_tokens(tokens)?;
-
+    pub fn from_form(form: &Form) -> Result<ImportForm> {
         if form.name != "import" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
@@ -245,6 +243,12 @@ impl ImportForm {
         }
 
         Ok(import)
+    }
+
+    pub fn from_tokens(tokens: &Tokens) -> Result<ImportForm> {
+        let form = Form::from_tokens(tokens)?;
+
+        ImportForm::from_form(&form)
     }
 
     pub fn from_str(s: &str) -> Result<ImportForm> {

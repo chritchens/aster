@@ -71,9 +71,7 @@ impl ExportForm {
         }
     }
 
-    pub fn from_tokens(tokens: &Tokens) -> Result<ExportForm> {
-        let form = Form::from_tokens(tokens)?;
-
+    pub fn from_form(form: &Form) -> Result<ExportForm> {
         if form.name != "export" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
@@ -186,6 +184,12 @@ impl ExportForm {
         }
 
         Ok(export)
+    }
+
+    pub fn from_tokens(tokens: &Tokens) -> Result<ExportForm> {
+        let form = Form::from_tokens(tokens)?;
+
+        ExportForm::from_form(&form)
     }
 
     pub fn from_str(s: &str) -> Result<ExportForm> {
