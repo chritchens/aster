@@ -83,8 +83,8 @@ impl Default for CaseFormMatchCase {
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum CaseFormMatchAction {
     Ignore,
-    Panic,
     Prim(String),
+    ValueKeyword(String),
     TypeKeyword(String),
     TypeSymbol(String),
     ValueSymbol(String),
@@ -97,8 +97,8 @@ impl CaseFormMatchAction {
     pub fn to_string(&self) -> String {
         match self {
             CaseFormMatchAction::Ignore => "_".into(),
-            CaseFormMatchAction::Panic => "panic".into(),
             CaseFormMatchAction::Prim(prim) => prim.clone(),
+            CaseFormMatchAction::ValueKeyword(keyword) => keyword.clone(),
             CaseFormMatchAction::TypeKeyword(keyword) => keyword.clone(),
             CaseFormMatchAction::TypeSymbol(symbol) => symbol.clone(),
             CaseFormMatchAction::ValueSymbol(symbol) => symbol.clone(),
@@ -183,14 +183,7 @@ impl CaseFormMatch {
                 case_match.action = CaseFormMatchAction::Prim(prim);
             }
             FormParam::ValueKeyword(keyword) => {
-                if keyword != "panic" {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected the panic keyword".into(),
-                    }));
-                }
-
-                case_match.action = CaseFormMatchAction::Panic;
+                case_match.action = CaseFormMatchAction::ValueKeyword(keyword);
             }
             FormParam::TypeKeyword(keyword) => {
                 case_match.action = CaseFormMatchAction::TypeKeyword(keyword);
@@ -394,7 +387,8 @@ mod tests {
 
         res = CaseFormMatch::from_str(s);
 
-        assert!(res.is_ok());
+        //assert!(res.is_ok());
+        res.unwrap();
 
         s = "(match True (fun t \"True\"))";
 
