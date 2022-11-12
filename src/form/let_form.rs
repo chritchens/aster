@@ -1,9 +1,9 @@
 use crate::error::{Error, SyntacticError};
+use crate::form::app_form::AppForm;
+use crate::form::def_form::DefForm;
+use crate::form::form::{Form, FormParam};
 use crate::result::Result;
 use crate::token::Tokens;
-use crate::value::forms::app_form::AppForm;
-use crate::value::forms::def_form::DefForm;
-use crate::value::forms::form::{Form, FormParam};
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]

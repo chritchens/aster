@@ -1,11 +1,11 @@
 use crate::error::{Error, SyntacticError};
+use crate::form::app_form::AppForm;
+use crate::form::form::{Form, FormParam};
+use crate::form::fun_form::FunForm;
+use crate::form::let_form::LetForm;
+use crate::form::prod_form::ProdForm;
 use crate::result::Result;
 use crate::token::Tokens;
-use crate::value::forms::app_form::AppForm;
-use crate::value::forms::form::{Form, FormParam};
-use crate::value::forms::fun_form::FunForm;
-use crate::value::forms::let_form::LetForm;
-use crate::value::forms::prod_form::ProdForm;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -387,8 +387,7 @@ mod tests {
 
         res = CaseFormMatch::from_str(s);
 
-        //assert!(res.is_ok());
-        res.unwrap();
+        assert!(res.is_ok());
 
         s = "(match True (fun t \"True\"))";
 

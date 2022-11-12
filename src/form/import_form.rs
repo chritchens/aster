@@ -1,11 +1,11 @@
 use crate::error::{Error, SyntacticError};
+use crate::form::form::{Form, FormParam};
+use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::symbol_name;
 use crate::syntax::{is_keyword, is_path_symbol, is_qualified};
 use crate::token::Tokens;
-use crate::value::forms::form::{Form, FormParam};
-use crate::value::forms::prod_form::{ProdForm, ProdFormValue};
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
