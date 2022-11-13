@@ -165,18 +165,21 @@ mod tests {
         s = "
         (let
             (def Result (attrs union))
-            (def Result (prod T E) (Sum T E))
+            (def Result (Sum T E))
 
             (def unwrap (attrs inline))
-            (def unwrap (prod T E) (Fun (Result T E) T))
+            (def unwrap (Fun (Result T E) T))
             (def unwrap (fun res (case res (match T id) (match E panic))))
 
             (def StringError String)
             (def StringResult (Result String StringResult))
 
             (def res String)
-            (def res (unwrap (prod String StringError) \"res\"))
-            (def res2 (unwrap _ \"res2\"))
+            (def res (unwrap \"res\"))
+            (def x StringError)
+            (def x \"res2\")
+            (def res2 String)
+            (def res2 (unwrap x)) # will panic
 
             # return as a synonym of `id`
             (return (prod res res2)))";
@@ -187,7 +190,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.defs.len(), 10);
+        assert_eq!(form.defs.len(), 13);
         assert_eq!(
             form.defs[0].to_string(),
             "(def Result (attrs union))".to_string()
@@ -208,7 +211,7 @@ mod tests {
         assert!(form.defs[4].is_value());
         assert_eq!(
             form.defs[8].to_string(),
-            "(def res (unwrap (prod String StringError) \"res\"))".to_string()
+            "(def res (unwrap \"res\"))".to_string()
         );
         assert!(form.defs[8].is_application_form());
         assert!(form.defs[8].is_value());

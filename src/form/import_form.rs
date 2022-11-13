@@ -1,12 +1,45 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormParam};
 use crate::form::prod_form::{ProdForm, ProdFormValue};
+use crate::form::type_form::TypeForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::symbol_name;
 use crate::syntax::{is_keyword, is_path_symbol, is_qualified};
 use crate::token::Tokens;
 use std::fmt;
+
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub enum ImportFormTypeParam {
+    Ignore,
+    Keyword(String),
+    Symbol(String),
+    Form(Box<TypeForm>),
+}
+
+impl Default for ImportFormTypeParam {
+    fn default() -> ImportFormTypeParam {
+        ImportFormTypeParam::Ignore
+    }
+}
+
+impl ImportFormTypeParam {
+    #[allow(clippy::inherent_to_string_shadow_display)]
+    pub fn to_string(&self) -> String {
+        match self {
+            ImportFormTypeParam::Ignore => "_".into(),
+            ImportFormTypeParam::Keyword(keyword) => keyword.clone(),
+            ImportFormTypeParam::Symbol(symbol) => symbol.clone(),
+            ImportFormTypeParam::Form(form) => form.to_string(),
+        }
+    }
+}
+
+impl fmt::Display for ImportFormTypeParam {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ImportFormDef {
@@ -43,6 +76,7 @@ pub struct ImportForm {
     pub tokens: Box<Tokens>,
     pub module: String,
     pub qualifier: Option<String>,
+    pub type_params: Vec<ImportFormTypeParam>,
     pub defs: Vec<ImportFormDef>,
 }
 
@@ -59,6 +93,21 @@ impl ImportForm {
         self.tokens[0].loc()
     }
 
+    pub fn type_params_to_string(&self) -> String {
+        match self.type_params.len() {
+            1 => self.type_params[0].to_string(),
+            x if x > 1 => format!(
+                "(prod {})",
+                self.type_params
+                    .iter()
+                    .map(|p| p.to_string())
+                    .collect::<Vec<String>>()
+                    .join(" ")
+            ),
+            _ => "".to_string(),
+        }
+    }
+
     pub fn defs_to_string(&self) -> String {
         match self.defs.len() {
             1 => self.defs[0].to_string(),
@@ -70,8 +119,200 @@ impl ImportForm {
                     .collect::<Vec<String>>()
                     .join(" ")
             ),
-            _ => "()".to_string(),
+            _ => "".to_string(),
         }
+    }
+
+    fn parse_qualifier(&mut self, form: &Form, idx: usize) -> Result<()> {
+        match form.params[idx].clone() {
+            FormParam::ValueSymbol(symbol) => {
+                if is_qualified(&symbol) {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "expected an unqualified symbol".into(),
+                    }));
+                }
+
+                if is_keyword(&symbol) {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "unexpected keyword".into(),
+                    }));
+                }
+
+                self.qualifier = Some(symbol);
+            }
+            _ => {
+                return Err(Error::Syntactic(SyntacticError {
+                    loc: form.loc(),
+                    desc: "expected a value symbol".into(),
+                }));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn parse_type_params(&mut self, form: &Form, idx: usize) -> Result<()> {
+        match form.params[idx].clone() {
+            FormParam::Ignore => {
+                self.type_params.push(ImportFormTypeParam::Ignore);
+            }
+            FormParam::TypeKeyword(keyword) => {
+                self.type_params.push(ImportFormTypeParam::Keyword(keyword));
+            }
+            FormParam::TypeSymbol(symbol) => {
+                if is_qualified(&symbol) {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "expected an unqualified symbol".into(),
+                    }));
+                }
+
+                self.type_params.push(ImportFormTypeParam::Symbol(symbol));
+            }
+            FormParam::Form(form) => {
+                if let Ok(prod) = ProdForm::from_form(&form) {
+                    for value in prod.values.iter() {
+                        match value.clone() {
+                            ProdFormValue::TypeKeyword(keyword) => {
+                                self.type_params.push(ImportFormTypeParam::Keyword(keyword));
+                            }
+                            ProdFormValue::TypeSymbol(symbol) => {
+                                if is_qualified(&symbol) {
+                                    return Err(Error::Syntactic(SyntacticError {
+                                        loc: form.loc(),
+                                        desc: "expected an unqualified symbol".into(),
+                                    }));
+                                }
+
+                                self.type_params.push(ImportFormTypeParam::Symbol(symbol));
+                            }
+                            ProdFormValue::TypeForm(form) => {
+                                self.type_params.push(ImportFormTypeParam::Form(form));
+                            }
+                            _ => {
+                                return Err(Error::Syntactic(SyntacticError {
+                                    loc: form.loc(),
+                                    desc: "expected a product of type symbols or type forms".into(),
+                                }));
+                            }
+                        }
+                    }
+                } else {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "expected a product of type symbols".into(),
+                    }));
+                }
+            }
+            x => {
+                return Err(Error::Syntactic(SyntacticError {
+                    loc: form.loc(),
+                    desc: format!("unexpected type parameter: {}", x.to_string()),
+                }));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn parse_defs(&mut self, form: &Form, idx: usize) -> Result<()> {
+        match form.params[idx].clone() {
+            FormParam::Empty => {
+                self.defs.push(ImportFormDef::Empty);
+            }
+            FormParam::ValueSymbol(symbol) => {
+                if is_qualified(&symbol) {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "expected an unqualified symbol".into(),
+                    }));
+                }
+
+                if is_keyword(&symbol) {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "unexpected keyword".into(),
+                    }));
+                }
+
+                self.defs.push(ImportFormDef::ValueSymbol(symbol));
+            }
+            FormParam::TypeSymbol(symbol) => {
+                if is_qualified(&symbol) {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "expected an unqualified symbol".into(),
+                    }));
+                }
+
+                if is_keyword(&symbol) {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "unexpected keyword".into(),
+                    }));
+                }
+
+                self.defs.push(ImportFormDef::TypeSymbol(symbol));
+            }
+            FormParam::Form(form) => {
+                let prod = ProdForm::from_form(&form)?;
+
+                for value in prod.values {
+                    match value {
+                        ProdFormValue::ValueSymbol(symbol) => {
+                            if is_qualified(&symbol) {
+                                return Err(Error::Syntactic(SyntacticError {
+                                    loc: form.loc(),
+                                    desc: "expected an unqualified symbol".into(),
+                                }));
+                            }
+
+                            if is_keyword(&symbol) {
+                                return Err(Error::Syntactic(SyntacticError {
+                                    loc: form.loc(),
+                                    desc: "unexpected keyword".into(),
+                                }));
+                            }
+
+                            self.defs.push(ImportFormDef::ValueSymbol(symbol));
+                        }
+                        ProdFormValue::TypeSymbol(symbol) => {
+                            if is_qualified(&symbol) {
+                                return Err(Error::Syntactic(SyntacticError {
+                                    loc: form.loc(),
+                                    desc: "expected an unqualified symbol".into(),
+                                }));
+                            }
+
+                            if is_keyword(&symbol) {
+                                return Err(Error::Syntactic(SyntacticError {
+                                    loc: form.loc(),
+                                    desc: "unexpected keyword".into(),
+                                }));
+                            }
+
+                            self.defs.push(ImportFormDef::TypeSymbol(symbol));
+                        }
+                        _ => {
+                            return Err(Error::Syntactic(SyntacticError {
+                                loc: form.loc(),
+                                desc: "expected a product of value or type symbols".into(),
+                            }));
+                        }
+                    }
+                }
+            }
+            _ => {
+                return Err(Error::Syntactic(SyntacticError {
+                    loc: form.loc(),
+                    desc: "expected a product of symbols or a value symbol".into(),
+                }));
+            }
+        }
+
+        Ok(())
     }
 
     pub fn from_form(form: &Form) -> Result<ImportForm> {
@@ -87,17 +328,17 @@ impl ImportForm {
 
         let len = form.params.len();
 
-        if len < 2 {
+        if len == 0 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected at least a module parameter and an empty literal".into(),
+                desc: "expected at least a module name".into(),
             }));
         }
 
-        if len > 3 {
+        if len > 4 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected at most a module, a product of value symbols or a value symbol, and a value symbol"
+                desc: "expected at most a module, an optional product of types, a product of value symbols or a value symbol, and a value symbol"
                     .into(),
             }));
         }
@@ -121,124 +362,20 @@ impl ImportForm {
         import.module = module;
 
         if len > 1 {
-            match form.params[1].clone() {
-                FormParam::Empty => {}
-                FormParam::ValueSymbol(symbol) => {
-                    if is_qualified(&symbol) {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: "expected an unqualified symbol".into(),
-                        }));
-                    }
-
-                    if is_keyword(&symbol) {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: "unexpected keyword".into(),
-                        }));
-                    }
-
-                    import.defs.push(ImportFormDef::ValueSymbol(symbol));
+            match len {
+                2 => {
+                    import.parse_type_params(&form, 1)?;
                 }
-                FormParam::TypeSymbol(symbol) => {
-                    if is_qualified(&symbol) {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: "expected an unqualified symbol".into(),
-                        }));
-                    }
-
-                    if is_keyword(&symbol) {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: "unexpected keyword".into(),
-                        }));
-                    }
-
-                    import.defs.push(ImportFormDef::TypeSymbol(symbol));
+                3 => {
+                    import.parse_type_params(&form, 1)?;
+                    import.parse_qualifier(&form, 2)?;
                 }
-                FormParam::Form(form) => {
-                    let prod = ProdForm::from_form(&form)?;
-
-                    for value in prod.values {
-                        match value {
-                            ProdFormValue::ValueSymbol(symbol) => {
-                                if is_qualified(&symbol) {
-                                    return Err(Error::Syntactic(SyntacticError {
-                                        loc: form.loc(),
-                                        desc: "expected an unqualified symbol".into(),
-                                    }));
-                                }
-
-                                if is_keyword(&symbol) {
-                                    return Err(Error::Syntactic(SyntacticError {
-                                        loc: form.loc(),
-                                        desc: "unexpected keyword".into(),
-                                    }));
-                                }
-
-                                import.defs.push(ImportFormDef::ValueSymbol(symbol));
-                            }
-                            ProdFormValue::TypeSymbol(symbol) => {
-                                if is_qualified(&symbol) {
-                                    return Err(Error::Syntactic(SyntacticError {
-                                        loc: form.loc(),
-                                        desc: "expected an unqualified symbol".into(),
-                                    }));
-                                }
-
-                                if is_keyword(&symbol) {
-                                    return Err(Error::Syntactic(SyntacticError {
-                                        loc: form.loc(),
-                                        desc: "unexpected keyword".into(),
-                                    }));
-                                }
-
-                                import.defs.push(ImportFormDef::TypeSymbol(symbol));
-                            }
-                            _ => {
-                                return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "expected a product of value or type symbols".into(),
-                                }));
-                            }
-                        }
-                    }
+                4 => {
+                    import.parse_type_params(&form, 1)?;
+                    import.parse_defs(&form, 2)?;
+                    import.parse_qualifier(&form, 3)?;
                 }
-                _ => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a product of symbols or a value symbol".into(),
-                    }));
-                }
-            }
-        }
-
-        if len > 2 {
-            match form.params[2].clone() {
-                FormParam::ValueSymbol(symbol) => {
-                    if is_qualified(&symbol) {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: "expected an unqualified symbol".into(),
-                        }));
-                    }
-
-                    if is_keyword(&symbol) {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: "unexpected keyword".into(),
-                        }));
-                    }
-
-                    import.qualifier = Some(symbol);
-                }
-                _ => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a value symbol".into(),
-                    }));
-                }
+                _ => unreachable!(),
             }
         }
 
@@ -259,15 +396,32 @@ impl ImportForm {
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        if let Some(qualifier) = self.qualifier.clone() {
+        if let Some(ref qualifier) = self.qualifier {
+            if self.defs.is_empty() {
+                format!(
+                    "(import {} {} {})",
+                    self.module,
+                    self.type_params_to_string(),
+                    qualifier,
+                )
+            } else {
+                format!(
+                    "(import {} {} {} {})",
+                    self.module,
+                    self.type_params_to_string(),
+                    self.defs_to_string(),
+                    qualifier,
+                )
+            }
+        } else if self.defs.is_empty() {
+            format!("(import {} {})", self.module, self.type_params_to_string())
+        } else {
             format!(
                 "(import {} {} {})",
                 self.module,
+                self.type_params_to_string(),
                 self.defs_to_string(),
-                qualifier
             )
-        } else {
-            format!("(import {} {})", self.module, self.defs_to_string(),)
         }
     }
 }
@@ -283,8 +437,9 @@ mod tests {
     #[test]
     fn import_form_from_str() {
         use super::ImportForm;
+        use super::ImportFormTypeParam;
 
-        let mut s = "(import std.x (prod a B c D) x)";
+        let mut s = "(import std.x _ (prod a B c D) x)";
 
         let mut res = ImportForm::from_str(s);
 
@@ -294,23 +449,12 @@ mod tests {
 
         assert_eq!(form.module, "std.x".to_string());
         assert_eq!(form.qualifier, Some("x".into()));
+        assert_eq!(form.type_params, vec![ImportFormTypeParam::Ignore]);
+        assert_eq!(form.type_params_to_string(), "_".to_string());
         assert_eq!(form.defs_to_string(), "(prod a B c D)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x (prod a B c D))";
-
-        res = ImportForm::from_str(s);
-
-        assert!(res.is_ok());
-
-        form = res.unwrap();
-
-        assert_eq!(form.module, "std.x".to_string());
-        assert_eq!(form.qualifier, None);
-        assert_eq!(form.defs_to_string(), "(prod a B c D)".to_string());
-        assert_eq!(form.to_string(), s.to_string());
-
-        s = "(import std.x () x)";
+        s = "(import std.x _ x)";
 
         res = ImportForm::from_str(s);
 
@@ -320,10 +464,27 @@ mod tests {
 
         assert_eq!(form.module, "std.x".to_string());
         assert_eq!(form.qualifier, Some("x".into()));
+        assert_eq!(form.type_params, vec![ImportFormTypeParam::Ignore]);
+        assert_eq!(form.type_params_to_string(), "_".to_string());
         assert!(form.defs.is_empty());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x ())";
+        s = "(import std.x _ () x)";
+
+        res = ImportForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.module, "std.x".to_string());
+        assert_eq!(form.qualifier, Some("x".into()));
+        assert_eq!(form.type_params, vec![ImportFormTypeParam::Ignore]);
+        assert_eq!(form.type_params_to_string(), "_".to_string());
+        assert_eq!(form.defs_to_string(), "()".to_string());
+        assert_eq!(form.to_string(), s.to_string());
+
+        s = "(import std.x _)";
 
         res = ImportForm::from_str(s);
 
@@ -333,6 +494,8 @@ mod tests {
 
         assert_eq!(form.module, "std.x".to_string());
         assert_eq!(form.qualifier, None);
+        assert_eq!(form.type_params, vec![ImportFormTypeParam::Ignore]);
+        assert_eq!(form.type_params_to_string(), "_".to_string());
         assert!(form.defs.is_empty());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -346,10 +509,11 @@ mod tests {
 
         assert_eq!(form.module, "std.x".to_string());
         assert_eq!(form.qualifier, None);
-        assert_eq!(form.defs_to_string(), "X".to_string());
+        assert_eq!(form.type_params_to_string(), "X".to_string());
+        assert!(form.defs.is_empty());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x x x)";
+        s = "(import std.x _ x x)";
 
         res = ImportForm::from_str(s);
 
@@ -359,7 +523,51 @@ mod tests {
 
         assert_eq!(form.module, "std.x".to_string());
         assert_eq!(form.qualifier, Some("x".into()));
+        assert_eq!(form.type_params, vec![ImportFormTypeParam::Ignore]);
+        assert_eq!(form.type_params_to_string(), "_".to_string());
         assert_eq!(form.defs_to_string(), "x".to_string());
+        assert_eq!(form.to_string(), s.to_string());
+
+        s = "(import std.x (prod T Q) x x)";
+
+        res = ImportForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.module, "std.x".to_string());
+        assert_eq!(form.qualifier, Some("x".into()));
+        assert_eq!(form.type_params_to_string(), "(prod T Q)");
+        assert_eq!(form.defs_to_string(), "x".to_string());
+        assert_eq!(form.to_string(), s.to_string());
+
+        s = "(import std.x (prod T Q) (prod A b C) x)";
+
+        res = ImportForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.module, "std.x".to_string());
+        assert_eq!(form.qualifier, Some("x".into()));
+        assert_eq!(form.type_params_to_string(), "(prod T Q)");
+        assert_eq!(form.defs_to_string(), "(prod A b C)".to_string());
+        assert_eq!(form.to_string(), s.to_string());
+
+        s = "(import std.x (prod Char Float) x)";
+
+        res = ImportForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.module, "std.x".to_string());
+        assert_eq!(form.qualifier, Some("x".into()));
+        assert_eq!(form.type_params_to_string(), "(prod Char Float)");
+        assert_eq!(form.defs_to_string(), "".to_string());
         assert_eq!(form.to_string(), s.to_string());
     }
 }

@@ -5,44 +5,12 @@ use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
-use crate::form::prod_form::{ProdForm, ProdFormValue};
+use crate::form::prod_form::ProdForm;
 use crate::form::type_form::TypeForm;
 use crate::result::Result;
 use crate::syntax::{is_qualified, is_type_symbol, is_value_symbol};
 use crate::token::Tokens;
 use std::fmt;
-
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub enum DefFormTypeParam {
-    Ignore,
-    Keyword(String),
-    Symbol(String),
-    Form(Box<TypeForm>),
-}
-
-impl Default for DefFormTypeParam {
-    fn default() -> DefFormTypeParam {
-        DefFormTypeParam::Ignore
-    }
-}
-
-impl DefFormTypeParam {
-    #[allow(clippy::inherent_to_string_shadow_display)]
-    pub fn to_string(&self) -> String {
-        match self {
-            DefFormTypeParam::Ignore => "_".into(),
-            DefFormTypeParam::Keyword(keyword) => keyword.clone(),
-            DefFormTypeParam::Symbol(symbol) => symbol.clone(),
-            DefFormTypeParam::Form(form) => form.to_string(),
-        }
-    }
-}
-
-impl fmt::Display for DefFormTypeParam {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
-}
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum DefFormValue {
@@ -96,28 +64,12 @@ impl fmt::Display for DefFormValue {
 pub struct DefForm {
     pub tokens: Box<Tokens>,
     pub name: String,
-    pub type_params: Vec<DefFormTypeParam>,
     pub value: DefFormValue,
 }
 
 impl DefForm {
     pub fn new() -> DefForm {
         DefForm::default()
-    }
-
-    pub fn type_params_to_string(&self) -> String {
-        match self.type_params.len() {
-            1 => self.type_params[0].to_string(),
-            x if x > 1 => format!(
-                "(prod {})",
-                self.type_params
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<String>>()
-                    .join(" ")
-            ),
-            _ => "".to_string(),
-        }
     }
 
     pub fn is_empty_literal(&self) -> bool {
@@ -242,19 +194,11 @@ impl DefForm {
             }));
         }
 
-        let len = form.params.len();
-
-        if len < 2 {
+        if form.params.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a name, an optional product of types and a value".into(),
-            }));
-        }
-
-        if len > 3 {
-            return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
-                desc: "expected a name, an optional product of types and a value".into(),
+                desc: "expected a name and an empty literal or a primitive or a symbol or a form"
+                    .into(),
             }));
         }
 
@@ -290,192 +234,66 @@ impl DefForm {
             }
         }
 
-        if len == 3 {
-            match form.params[1].clone() {
-                FormParam::Ignore => {
-                    def.type_params.push(DefFormTypeParam::Ignore);
+        match form.params[1].clone() {
+            FormParam::Empty => {}
+            FormParam::Prim(prim) => {
+                def.value = DefFormValue::Prim(prim);
+            }
+            FormParam::TypeKeyword(keyword) => {
+                def.value = DefFormValue::TypeKeyword(keyword);
+            }
+            FormParam::TypeSymbol(symbol) => {
+                def.value = DefFormValue::TypeSymbol(symbol);
+            }
+            FormParam::ValueSymbol(symbol) => {
+                def.value = DefFormValue::ValueSymbol(symbol);
+            }
+            FormParam::Form(form) => match form.name.as_str() {
+                "attrs" => {
+                    let form = AttrsForm::from_form(&form)?;
+                    def.value = DefFormValue::AttrsForm(Box::new(form));
                 }
-                FormParam::TypeKeyword(keyword) => {
-                    def.type_params.push(DefFormTypeParam::Keyword(keyword));
+                "prod" => {
+                    let form = ProdForm::from_form(&form)?;
+                    def.value = DefFormValue::ProdForm(Box::new(form));
                 }
-                FormParam::TypeSymbol(symbol) => {
-                    if is_qualified(&symbol) {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: "expected an unqualified symbol".into(),
-                        }));
-                    }
-
-                    def.type_params.push(DefFormTypeParam::Symbol(symbol));
+                "fun" => {
+                    let form = FunForm::from_form(&form)?;
+                    def.value = DefFormValue::FunForm(Box::new(form));
                 }
-                FormParam::Form(form) => {
-                    if let Ok(prod) = ProdForm::from_form(&form) {
-                        for value in prod.values.iter() {
-                            match value.clone() {
-                                ProdFormValue::TypeKeyword(keyword) => {
-                                    def.type_params.push(DefFormTypeParam::Keyword(keyword));
-                                }
-                                ProdFormValue::TypeSymbol(symbol) => {
-                                    if is_qualified(&symbol) {
-                                        return Err(Error::Syntactic(SyntacticError {
-                                            loc: form.loc(),
-                                            desc: "expected an unqualified symbol".into(),
-                                        }));
-                                    }
-
-                                    def.type_params.push(DefFormTypeParam::Symbol(symbol));
-                                }
-                                ProdFormValue::TypeForm(form) => {
-                                    def.type_params.push(DefFormTypeParam::Form(form));
-                                }
-                                _ => {
-                                    return Err(Error::Syntactic(SyntacticError {
-                                        loc: form.loc(),
-                                        desc: "expected a product of type symbols or type forms"
-                                            .into(),
-                                    }));
-                                }
-                            }
+                "let" => {
+                    let form = LetForm::from_form(&form)?;
+                    def.value = DefFormValue::LetForm(Box::new(form));
+                }
+                "case" => {
+                    let form = CaseForm::from_form(&form)?;
+                    def.value = DefFormValue::CaseForm(Box::new(form));
+                }
+                x => {
+                    if is_type_symbol(x) {
+                        if let Ok(form) = TypeForm::from_form(&form) {
+                            def.value = DefFormValue::TypeForm(Box::new(form));
+                        } else {
+                            return Err(Error::Syntactic(SyntacticError {
+                                loc: form.loc(),
+                                desc: "unexpected mixed form".to_string(),
+                            }));
                         }
+                    } else if let Ok(form) = AppForm::from_form(&form) {
+                        def.value = DefFormValue::AppForm(Box::new(form));
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
-                            desc: "expected a product of type symbols".into(),
+                            desc: "unexpected mixed form".to_string(),
                         }));
                     }
                 }
-                x => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected type parameter: {}", x.to_string()),
-                    }));
-                }
-            }
-
-            match form.params[2].clone() {
-                FormParam::Empty => {}
-                FormParam::Prim(prim) => {
-                    def.value = DefFormValue::Prim(prim);
-                }
-                FormParam::TypeKeyword(keyword) => {
-                    def.value = DefFormValue::TypeKeyword(keyword);
-                }
-                FormParam::TypeSymbol(symbol) => {
-                    def.value = DefFormValue::TypeSymbol(symbol);
-                }
-                FormParam::ValueSymbol(symbol) => {
-                    def.value = DefFormValue::ValueSymbol(symbol);
-                }
-                FormParam::Form(form) => match form.name.as_str() {
-                    "attrs" => {
-                        let form = AttrsForm::from_form(&form)?;
-                        def.value = DefFormValue::AttrsForm(Box::new(form));
-                    }
-                    "prod" => {
-                        let form = ProdForm::from_form(&form)?;
-                        def.value = DefFormValue::ProdForm(Box::new(form));
-                    }
-                    "fun" => {
-                        let form = FunForm::from_form(&form)?;
-                        def.value = DefFormValue::FunForm(Box::new(form));
-                    }
-                    "let" => {
-                        let form = LetForm::from_form(&form)?;
-                        def.value = DefFormValue::LetForm(Box::new(form));
-                    }
-                    "case" => {
-                        let form = CaseForm::from_form(&form)?;
-                        def.value = DefFormValue::CaseForm(Box::new(form));
-                    }
-                    x => {
-                        if is_type_symbol(x) {
-                            if let Ok(form) = TypeForm::from_form(&form) {
-                                def.value = DefFormValue::TypeForm(Box::new(form));
-                            } else {
-                                return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "unexpected mixed form".to_string(),
-                                }));
-                            }
-                        } else if let Ok(form) = AppForm::from_form(&form) {
-                            def.value = DefFormValue::AppForm(Box::new(form));
-                        } else {
-                            return Err(Error::Syntactic(SyntacticError {
-                                loc: form.loc(),
-                                desc: "unexpected mixed form".to_string(),
-                            }));
-                        }
-                    }
-                },
-                x => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected value: {}", x.to_string()),
-                    }));
-                }
-            }
-        } else {
-            match form.params[1].clone() {
-                FormParam::Empty => {}
-                FormParam::Prim(prim) => {
-                    def.value = DefFormValue::Prim(prim);
-                }
-                FormParam::TypeKeyword(keyword) => {
-                    def.value = DefFormValue::TypeKeyword(keyword);
-                }
-                FormParam::TypeSymbol(symbol) => {
-                    def.value = DefFormValue::TypeSymbol(symbol);
-                }
-                FormParam::ValueSymbol(symbol) => {
-                    def.value = DefFormValue::ValueSymbol(symbol);
-                }
-                FormParam::Form(form) => match form.name.as_str() {
-                    "attrs" => {
-                        let form = AttrsForm::from_form(&form)?;
-                        def.value = DefFormValue::AttrsForm(Box::new(form));
-                    }
-                    "prod" => {
-                        let form = ProdForm::from_form(&form)?;
-                        def.value = DefFormValue::ProdForm(Box::new(form));
-                    }
-                    "fun" => {
-                        let form = FunForm::from_form(&form)?;
-                        def.value = DefFormValue::FunForm(Box::new(form));
-                    }
-                    "let" => {
-                        let form = LetForm::from_form(&form)?;
-                        def.value = DefFormValue::LetForm(Box::new(form));
-                    }
-                    "case" => {
-                        let form = CaseForm::from_form(&form)?;
-                        def.value = DefFormValue::CaseForm(Box::new(form));
-                    }
-                    x => {
-                        if is_type_symbol(x) {
-                            if let Ok(form) = TypeForm::from_form(&form) {
-                                def.value = DefFormValue::TypeForm(Box::new(form));
-                            } else {
-                                return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "unexpected mixed form".to_string(),
-                                }));
-                            }
-                        } else if let Ok(form) = AppForm::from_form(&form) {
-                            def.value = DefFormValue::AppForm(Box::new(form));
-                        } else {
-                            return Err(Error::Syntactic(SyntacticError {
-                                loc: form.loc(),
-                                desc: "unexpected mixed form".to_string(),
-                            }));
-                        }
-                    }
-                },
-                x => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected value: {}", x.to_string()),
-                    }));
-                }
+            },
+            x => {
+                return Err(Error::Syntactic(SyntacticError {
+                    loc: form.loc(),
+                    desc: format!("unexpected value: {}", x.to_string()),
+                }));
             }
         }
 
@@ -496,16 +314,7 @@ impl DefForm {
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        if self.type_params.is_empty() {
-            format!("(def {} {})", self.name, self.value.to_string())
-        } else {
-            format!(
-                "(def {} {} {})",
-                self.name,
-                self.type_params_to_string(),
-                self.value.to_string()
-            )
-        }
+        format!("(def {} {})", self.name, self.value.to_string())
     }
 }
 
@@ -625,7 +434,7 @@ mod tests {
         assert!(form.is_type_keyword());
         assert!(form.is_type());
 
-        s = "(def Result (prod T E) (Sum T E))";
+        s = "(def Result (Sum T E))";
 
         res = DefForm::from_str(s);
 
@@ -634,13 +443,12 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name, "Result".to_string());
-        assert_eq!(form.type_params_to_string(), "(prod T E)".to_string());
         assert_eq!(form.value.to_string(), "(Sum T E)".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_type_form());
         assert!(form.is_type());
 
-        s = "(def err T (let (def StringError String) (unwrap (prod T StringError) \"error\")))";
+        s = "(def err (let (def StringError String) (unwrap \"error\")))";
 
         res = DefForm::from_str(s);
 
@@ -649,10 +457,9 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name, "err".to_string());
-        assert_eq!(form.type_params_to_string(), "T".to_string());
         assert_eq!(
             form.value.to_string(),
-            "(let (def StringError String) (unwrap (prod T StringError) \"error\"))".to_string()
+            "(let (def StringError String) (unwrap \"error\"))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_let_form());
@@ -667,7 +474,6 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name, "unwrap".to_string());
-        assert_eq!(form.type_params_to_string(), "".to_string());
         assert_eq!(
             form.value.to_string(),
             "(fun res (case res (match T id) (match E panic)))".to_string()
