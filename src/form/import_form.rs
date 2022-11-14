@@ -12,6 +12,7 @@ use std::fmt;
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ImportFormTypeParam {
     Ignore,
+    Empty,
     Keyword(String),
     Symbol(String),
     Form(Box<TypeForm>),
@@ -28,6 +29,7 @@ impl ImportFormTypeParam {
     pub fn to_string(&self) -> String {
         match self {
             ImportFormTypeParam::Ignore => "_".into(),
+            ImportFormTypeParam::Empty => "()".into(),
             ImportFormTypeParam::Keyword(keyword) => keyword.clone(),
             ImportFormTypeParam::Symbol(symbol) => symbol.clone(),
             ImportFormTypeParam::Form(form) => form.to_string(),
@@ -43,6 +45,7 @@ impl fmt::Display for ImportFormTypeParam {
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ImportFormDef {
+    Ignore,
     Empty,
     ValueSymbol(String),
     TypeSymbol(String),
@@ -50,7 +53,7 @@ pub enum ImportFormDef {
 
 impl Default for ImportFormDef {
     fn default() -> ImportFormDef {
-        ImportFormDef::Empty
+        ImportFormDef::Ignore
     }
 }
 
@@ -58,6 +61,7 @@ impl ImportFormDef {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
+            ImportFormDef::Ignore => "_".into(),
             ImportFormDef::Empty => "()".into(),
             ImportFormDef::ValueSymbol(symbol) => symbol.clone(),
             ImportFormDef::TypeSymbol(symbol) => symbol.clone(),
@@ -158,6 +162,9 @@ impl ImportForm {
             FormParam::Ignore => {
                 self.type_params.push(ImportFormTypeParam::Ignore);
             }
+            FormParam::Empty => {
+                self.type_params.push(ImportFormTypeParam::Empty);
+            }
             FormParam::TypeKeyword(keyword) => {
                 self.type_params.push(ImportFormTypeParam::Keyword(keyword));
             }
@@ -219,6 +226,9 @@ impl ImportForm {
 
     fn parse_defs(&mut self, form: &Form, idx: usize) -> Result<()> {
         match form.params[idx].clone() {
+            FormParam::Ignore => {
+                self.defs.push(ImportFormDef::Ignore);
+            }
             FormParam::Empty => {
                 self.defs.push(ImportFormDef::Empty);
             }
@@ -437,6 +447,7 @@ mod tests {
     #[test]
     fn import_form_from_str() {
         use super::ImportForm;
+        use super::ImportFormDef;
         use super::ImportFormTypeParam;
 
         let mut s = "(import std.x _ (prod a B c D) x)";
@@ -452,6 +463,38 @@ mod tests {
         assert_eq!(form.type_params, vec![ImportFormTypeParam::Ignore]);
         assert_eq!(form.type_params_to_string(), "_".to_string());
         assert_eq!(form.defs_to_string(), "(prod a B c D)".to_string());
+        assert_eq!(form.to_string(), s.to_string());
+
+        s = "(import std.x _ () x)";
+
+        res = ImportForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.module, "std.x".to_string());
+        assert_eq!(form.qualifier, Some("x".into()));
+        assert_eq!(form.type_params, vec![ImportFormTypeParam::Ignore]);
+        assert_eq!(form.type_params_to_string(), "_".to_string());
+        assert_eq!(form.defs, vec![ImportFormDef::Empty]);
+        assert_eq!(form.defs_to_string(), "()".to_string());
+        assert_eq!(form.to_string(), s.to_string());
+
+        s = "(import std.x () _ x)";
+
+        res = ImportForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.module, "std.x".to_string());
+        assert_eq!(form.qualifier, Some("x".into()));
+        assert_eq!(form.type_params, vec![ImportFormTypeParam::Empty]);
+        assert_eq!(form.type_params_to_string(), "()".to_string());
+        assert_eq!(form.defs, vec![ImportFormDef::Ignore]);
+        assert_eq!(form.defs_to_string(), "_".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(import std.x _ x)";
