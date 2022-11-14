@@ -374,15 +374,15 @@ impl ImportForm {
         if len > 1 {
             match len {
                 2 => {
-                    import.parse_defs(&form, 1)?;
+                    import.parse_type_params(&form, 1)?;
                 }
                 3 => {
-                    import.parse_defs(&form, 1)?;
-                    import.parse_qualifier(&form, 2)?;
+                    import.parse_type_params(&form, 1)?;
+                    import.parse_defs(&form, 2)?;
                 }
                 4 => {
-                    import.parse_defs(&form, 1)?;
-                    import.parse_type_params(&form, 2)?;
+                    import.parse_type_params(&form, 1)?;
+                    import.parse_defs(&form, 2)?;
                     import.parse_qualifier(&form, 3)?;
                 }
                 _ => unreachable!(),
@@ -407,26 +407,26 @@ impl ImportForm {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         if let Some(ref qualifier) = self.qualifier {
-            if self.type_params.is_empty() {
-                format!(
-                    "(import {} {} {})",
-                    self.module,
-                    self.defs_to_string(),
-                    qualifier
-                )
-            } else {
-                format!(
-                    "(import {} {} {} {})",
-                    self.module,
-                    self.defs_to_string(),
-                    self.type_params_to_string(),
-                    qualifier
-                )
-            }
+            format!(
+                "(import {} {} {} {})",
+                self.module,
+                self.type_params_to_string(),
+                self.defs_to_string(),
+                qualifier
+            )
         } else if self.defs.is_empty() {
-            format!("(import {})", self.module)
+            if self.type_params.is_empty() {
+                format!("(import {})", self.module)
+            } else {
+                format!("(import {} {})", self.module, self.type_params_to_string())
+            }
         } else {
-            format!("(import {} {})", self.module, self.defs_to_string())
+            format!(
+                "(import {} {} {})",
+                self.module,
+                self.type_params_to_string(),
+                self.defs_to_string()
+            )
         }
     }
 }
@@ -445,7 +445,7 @@ mod tests {
         use super::ImportFormDef;
         use super::ImportFormTypeParam;
 
-        let mut s = "(import std.x (prod a B c D) x)";
+        let mut s = "(import std.x _ (prod a B c D) x)";
 
         let mut res = ImportForm::from_str(s);
 
@@ -455,12 +455,12 @@ mod tests {
 
         assert_eq!(form.module, "std.x".to_string());
         assert_eq!(form.qualifier, Some("x".into()));
-        assert!(form.type_params.is_empty());
-        assert_eq!(form.type_params_to_string(), "".to_string());
+        assert_eq!(form.type_params, vec![ImportFormTypeParam::Ignore]);
+        assert_eq!(form.type_params_to_string(), "_".to_string());
         assert_eq!(form.defs_to_string(), "(prod a B c D)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x () _ x)";
+        s = "(import std.x _ () x)";
 
         res = ImportForm::from_str(s);
 
@@ -476,7 +476,7 @@ mod tests {
         assert_eq!(form.defs_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x _ () x)";
+        s = "(import std.x () _ x)";
 
         res = ImportForm::from_str(s);
 
@@ -501,14 +501,12 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.module, "std.x".to_string());
-        assert_eq!(form.qualifier, Some("x".into()));
-        assert_eq!(form.defs, vec![ImportFormDef::Ignore]);
-        assert_eq!(form.defs_to_string(), "_".to_string());
-        assert!(form.type_params.is_empty());
-        assert_eq!(form.type_params_to_string(), "".to_string());
+        assert_eq!(form.qualifier, None);
+        assert_eq!(form.type_params_to_string(), "_".to_string());
+        assert_eq!(form.defs_to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x () _ x)";
+        s = "(import std.x _ ())";
 
         res = ImportForm::from_str(s);
 
@@ -517,7 +515,7 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.module, "std.x".to_string());
-        assert_eq!(form.qualifier, Some("x".into()));
+        assert_eq!(form.qualifier, None);
         assert_eq!(form.type_params, vec![ImportFormTypeParam::Ignore]);
         assert_eq!(form.type_params_to_string(), "_".to_string());
         assert_eq!(form.defs_to_string(), "()".to_string());
@@ -547,25 +545,11 @@ mod tests {
 
         assert_eq!(form.module, "std.x".to_string());
         assert_eq!(form.qualifier, None);
-        assert_eq!(form.defs_to_string(), "X".to_string());
-        assert!(form.type_params.is_empty());
+        assert_eq!(form.type_params_to_string(), "X".to_string());
+        assert!(form.defs.is_empty());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x x x)";
-
-        res = ImportForm::from_str(s);
-
-        assert!(res.is_ok());
-
-        form = res.unwrap();
-
-        assert_eq!(form.module, "std.x".to_string());
-        assert_eq!(form.qualifier, Some("x".into()));
-        assert!(form.type_params.is_empty());
-        assert_eq!(form.defs_to_string(), "x".to_string());
-        assert_eq!(form.to_string(), s.to_string());
-
-        s = "(import std.x x _ x)";
+        s = "(import std.x _ x x)";
 
         res = ImportForm::from_str(s);
 
@@ -580,7 +564,22 @@ mod tests {
         assert_eq!(form.defs_to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x x (prod T Q) x)";
+        s = "(import std.x _ x x)";
+
+        res = ImportForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.module, "std.x".to_string());
+        assert_eq!(form.qualifier, Some("x".into()));
+        assert_eq!(form.type_params, vec![ImportFormTypeParam::Ignore]);
+        assert_eq!(form.type_params_to_string(), "_".to_string());
+        assert_eq!(form.defs_to_string(), "x".to_string());
+        assert_eq!(form.to_string(), s.to_string());
+
+        s = "(import std.x (prod T Q) x x)";
 
         res = ImportForm::from_str(s);
 
@@ -594,7 +593,7 @@ mod tests {
         assert_eq!(form.defs_to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x (prod A b C) (prod T Q) x)";
+        s = "(import std.x (prod T Q) (prod A b C) x)";
 
         res = ImportForm::from_str(s);
 
@@ -608,7 +607,7 @@ mod tests {
         assert_eq!(form.defs_to_string(), "(prod A b C)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x _ (prod Char Float) x)";
+        s = "(import std.x (prod Char Float) _ x)";
 
         res = ImportForm::from_str(s);
 
