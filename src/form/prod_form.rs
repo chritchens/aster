@@ -1,8 +1,12 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::app_form::AppForm;
+use crate::form::attrs_form::AttrsForm;
 use crate::form::case_form::CaseForm;
+use crate::form::def_form::DefForm;
+use crate::form::export_form::ExportForm;
 use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
+use crate::form::import_form::ImportForm;
 use crate::form::let_form::LetForm;
 use crate::form::type_form::TypeForm;
 use crate::loc::Loc;
@@ -19,11 +23,15 @@ pub enum ProdFormValue {
     ValueSymbol(String),
     TypeSymbol(String),
     TypeForm(Box<TypeForm>),
+    AttrsForm(Box<AttrsForm>),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
     AppForm(Box<AppForm>),
+    DefForm(Box<DefForm>),
+    ImportForm(Box<ImportForm>),
+    ExportForm(Box<ExportForm>),
 }
 
 impl Default for ProdFormValue {
@@ -43,11 +51,15 @@ impl ProdFormValue {
             ProdFormValue::ValueSymbol(symbol) => symbol.clone(),
             ProdFormValue::TypeSymbol(symbol) => symbol.clone(),
             ProdFormValue::TypeForm(form) => form.to_string(),
+            ProdFormValue::AttrsForm(form) => form.to_string(),
             ProdFormValue::ProdForm(form) => form.to_string(),
             ProdFormValue::FunForm(form) => form.to_string(),
             ProdFormValue::CaseForm(form) => form.to_string(),
             ProdFormValue::LetForm(form) => form.to_string(),
             ProdFormValue::AppForm(form) => form.to_string(),
+            ProdFormValue::DefForm(form) => form.to_string(),
+            ProdFormValue::ImportForm(form) => form.to_string(),
+            ProdFormValue::ExportForm(form) => form.to_string(),
         }
     }
 }
@@ -144,10 +156,18 @@ impl ProdForm {
                         prod.values.push(ProdFormValue::LetForm(Box::new(form)));
                     } else if let Ok(form) = AppForm::from_form(&form) {
                         prod.values.push(ProdFormValue::AppForm(Box::new(form)))
+                    } else if let Ok(form) = DefForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::DefForm(Box::new(form)))
+                    } else if let Ok(form) = ImportForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::ImportForm(Box::new(form)))
+                    } else if let Ok(form) = ExportForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::ExportForm(Box::new(form)))
+                    } else if let Ok(form) = AttrsForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::AttrsForm(Box::new(form)))
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
-                            desc: "expected a function form, a case form or a let form or an application form".into(),
+                            desc: "unexpected form".into(),
                         }));
                     }
                 }
