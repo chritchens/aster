@@ -7,6 +7,7 @@ use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::ProdForm;
 use crate::form::type_form::TypeForm;
+use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_qualified, is_type_symbol, is_value_symbol};
 use crate::token::Tokens;
@@ -70,6 +71,14 @@ pub struct DefForm {
 impl DefForm {
     pub fn new() -> DefForm {
         DefForm::default()
+    }
+
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
     }
 
     pub fn is_empty_literal(&self) -> bool {

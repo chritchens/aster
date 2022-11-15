@@ -2,6 +2,7 @@ use crate::error::{Error, SyntacticError};
 use crate::form::app_form::AppForm;
 use crate::form::def_form::DefForm;
 use crate::form::form::{Form, FormParam};
+use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
 use std::fmt;
@@ -16,6 +17,14 @@ pub struct LetForm {
 impl LetForm {
     pub fn new() -> LetForm {
         LetForm::default()
+    }
+
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
     }
 
     pub fn defs_to_string(&self) -> String {

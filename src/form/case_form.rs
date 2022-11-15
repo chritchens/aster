@@ -4,6 +4,7 @@ use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::ProdForm;
+use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
 use std::fmt;
@@ -132,6 +133,14 @@ impl CaseFormMatch {
         CaseFormMatch::default()
     }
 
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
+    }
+
     pub fn from_form(form: &Form) -> Result<CaseFormMatch> {
         if form.name != "match" {
             return Err(Error::Syntactic(SyntacticError {
@@ -255,6 +264,14 @@ pub struct CaseForm {
 impl CaseForm {
     pub fn new() -> CaseForm {
         CaseForm::default()
+    }
+
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
     }
 
     pub fn matches_to_string(&self) -> String {
