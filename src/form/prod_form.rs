@@ -165,6 +165,8 @@ impl ProdForm {
                     } else if let Ok(form) = AttrsForm::from_form(&form) {
                         prod.values.push(ProdFormValue::AttrsForm(Box::new(form)))
                     } else {
+                        println!("form: {}", form.to_string());
+                        DefForm::from_form(&form)?;
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "unexpected form".into(),
