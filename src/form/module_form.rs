@@ -98,6 +98,39 @@ impl ModuleForm {
         self.tokens[0].loc()
     }
 
+    pub fn entry_as_import(&self, idx: usize) -> Option<Box<ImportForm>> {
+        if idx > self.entries.len() - 1 {
+            return None;
+        }
+
+        match self.entries[idx].clone() {
+            ModuleFormEntry::ImportForm(form) => Some(form),
+            _ => None,
+        }
+    }
+
+    pub fn entry_as_export(&self, idx: usize) -> Option<Box<ExportForm>> {
+        if idx > self.entries.len() - 1 {
+            return None;
+        }
+
+        match self.entries[idx].clone() {
+            ModuleFormEntry::ExportForm(form) => Some(form),
+            _ => None,
+        }
+    }
+
+    pub fn entry_as_definition(&self, idx: usize) -> Option<Box<DefForm>> {
+        if idx > self.entries.len() - 1 {
+            return None;
+        }
+
+        match self.entries[idx].clone() {
+            ModuleFormEntry::DefForm(form) => Some(form),
+            _ => None,
+        }
+    }
+
     pub fn type_params_to_string(&self) -> String {
         match self.type_params.len() {
             1 => self.type_params[0].to_string(),
@@ -374,14 +407,29 @@ mod tests {
             form.entries[0].to_string(),
             "(def Result (Sum T E))".to_string()
         );
+        assert!(form.entry_as_import(0).is_none());
+        assert!(form.entry_as_export(0).is_none());
+        assert!(form.entry_as_definition(0).is_some());
+        assert!(form.entry_as_definition(0).unwrap().is_type());
+        assert!(form.entry_as_definition(0).unwrap().is_type_form());
         assert_eq!(
             form.entries[1].to_string(),
             "(def unwrap (Fun (Result T E) T))".to_string()
         );
+        assert!(form.entry_as_import(1).is_none());
+        assert!(form.entry_as_export(1).is_none());
+        assert!(form.entry_as_definition(1).is_some());
+        assert!(form.entry_as_definition(1).unwrap().is_type());
+        assert!(form.entry_as_definition(1).unwrap().is_type_form());
         assert_eq!(
             form.entries[2].to_string(),
             "(def unwrap (fun res (case res (match t id) (match e panic))))".to_string()
         );
+        assert!(form.entry_as_import(2).is_none());
+        assert!(form.entry_as_export(2).is_none());
+        assert!(form.entry_as_definition(2).is_some());
+        assert!(form.entry_as_definition(2).unwrap().is_value());
+        assert!(form.entry_as_definition(2).unwrap().is_function_form());
 
         s = "
         (module main () (prod
@@ -410,14 +458,25 @@ mod tests {
             form.entries[0].to_string(),
             "(def StringErr String)".to_string()
         );
+        assert!(form.entry_as_import(0).is_none());
+        assert!(form.entry_as_export(0).is_none());
+        assert!(form.entry_as_definition(0).is_some());
+        assert!(form.entry_as_definition(0).unwrap().is_type());
+        assert!(form.entry_as_definition(0).unwrap().is_type_keyword());
         assert_eq!(
             form.entries[1].to_string(),
             "(import x (prod String StringErr) (prod Result unwrap))".to_string()
         );
+        assert!(form.entry_as_import(1).is_some());
+        assert!(form.entry_as_export(1).is_none());
+        assert!(form.entry_as_definition(1).is_none());
         assert_eq!(
             form.entries[2].to_string(),
             "(import std.io _ println)".to_string()
         );
+        assert!(form.entry_as_import(2).is_some());
+        assert!(form.entry_as_export(2).is_none());
+        assert!(form.entry_as_definition(2).is_none());
 
         s = "
         (module main (prod
