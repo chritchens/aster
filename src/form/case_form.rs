@@ -400,11 +400,23 @@ mod tests {
 
         assert!(res.is_ok());
 
+        let mut case_match = res.unwrap();
+
+        assert_eq!(case_match.case.to_string(), "True".to_string());
+        assert_eq!(case_match.action.to_string(), "\"True\"".to_string());
+        assert_eq!(case_match.to_string(), s.to_string());
+
         s = "(match True id)";
 
         res = CaseFormMatch::from_str(s);
 
         assert!(res.is_ok());
+
+        case_match = res.unwrap();
+
+        assert_eq!(case_match.case.to_string(), "True".to_string());
+        assert_eq!(case_match.action.to_string(), "id".to_string());
+        assert_eq!(case_match.to_string(), s.to_string());
 
         s = "(match True (fun t \"True\"))";
 
@@ -412,11 +424,26 @@ mod tests {
 
         assert!(res.is_ok());
 
+        case_match = res.unwrap();
+
+        assert_eq!(case_match.case.to_string(), "True".to_string());
+        assert_eq!(
+            case_match.action.to_string(),
+            "(fun t \"True\")".to_string()
+        );
+        assert_eq!(case_match.to_string(), s.to_string());
+
         s = "(match 0 (fun n \"0\"))";
 
         res = CaseFormMatch::from_str(s);
 
         assert!(res.is_ok());
+
+        case_match = res.unwrap();
+
+        assert_eq!(case_match.case.to_string(), "0".to_string());
+        assert_eq!(case_match.action.to_string(), "(fun n \"0\")".to_string());
+        assert_eq!(case_match.to_string(), s.to_string());
 
         s = "(match Char (fun t \"Char\"))";
 
@@ -424,11 +451,26 @@ mod tests {
 
         assert!(res.is_ok());
 
+        case_match = res.unwrap();
+
+        assert_eq!(case_match.case.to_string(), "Char".to_string());
+        assert_eq!(
+            case_match.action.to_string(),
+            "(fun t \"Char\")".to_string()
+        );
+        assert_eq!(case_match.to_string(), s.to_string());
+
         s = "(match '0' (fun c 0))";
 
         res = CaseFormMatch::from_str(s);
 
         assert!(res.is_ok());
+
+        case_match = res.unwrap();
+
+        assert_eq!(case_match.case.to_string(), "'0'".to_string());
+        assert_eq!(case_match.action.to_string(), "(fun c 0)".to_string());
+        assert_eq!(case_match.to_string(), s.to_string());
 
         s = "(match () _)";
 
@@ -436,17 +478,35 @@ mod tests {
 
         assert!(res.is_ok());
 
+        case_match = res.unwrap();
+
+        assert_eq!(case_match.case.to_string(), "()".to_string());
+        assert_eq!(case_match.action.to_string(), "_".to_string());
+        assert_eq!(case_match.to_string(), s.to_string());
+
         s = "(match T id)";
 
         res = CaseFormMatch::from_str(s);
 
         assert!(res.is_ok());
 
+        case_match = res.unwrap();
+
+        assert_eq!(case_match.case.to_string(), "T".to_string());
+        assert_eq!(case_match.action.to_string(), "id".to_string());
+        assert_eq!(case_match.to_string(), s.to_string());
+
         s = "(match E panic)";
 
         res = CaseFormMatch::from_str(s);
 
         assert!(res.is_ok());
+
+        case_match = res.unwrap();
+
+        assert_eq!(case_match.case.to_string(), "E".to_string());
+        assert_eq!(case_match.action.to_string(), "panic".to_string());
+        assert_eq!(case_match.to_string(), s.to_string());
     }
 
     #[test]
@@ -459,11 +519,25 @@ mod tests {
 
         assert!(res.is_ok());
 
+        let mut case = res.unwrap();
+
+        assert_eq!(case.param.to_string(), "t".to_string());
+        assert_eq!(
+            case.matches_to_string(),
+            "(match True (fun t \"True\")) (match False (fun f \"False\"))".to_string()
+        );
+        assert_eq!(case.to_string(), s.to_string());
+
         s = "(case (id True) (match True (fun t \"True\")) (match False (fun f \"False\")))";
 
         res = CaseForm::from_str(s);
 
         assert!(res.is_ok());
+
+        case = res.unwrap();
+
+        assert_eq!(case.param.to_string(), "(id True)".to_string());
+        assert_eq!(case.to_string(), s.to_string());
 
         s = "(case (let (id True)) (match True (fun t \"True\")) (match False (fun f \"False\")))";
 
@@ -471,11 +545,21 @@ mod tests {
 
         assert!(res.is_ok());
 
+        case = res.unwrap();
+
+        assert_eq!(case.param.to_string(), "(let (id True))".to_string());
+        assert_eq!(case.to_string(), s.to_string());
+
         s = "(case True (match True (fun t \"True\")) (match False _))";
 
         res = CaseForm::from_str(s);
 
         assert!(res.is_ok());
+
+        case = res.unwrap();
+
+        assert_eq!(case.param.to_string(), "True".to_string());
+        assert_eq!(case.to_string(), s.to_string());
 
         s = "(case res (match T id) (match E panic))";
 
@@ -483,6 +567,13 @@ mod tests {
 
         assert!(res.is_ok());
 
-        res.unwrap();
+        case = res.unwrap();
+
+        assert_eq!(case.param.to_string(), "res".to_string());
+        assert_eq!(
+            case.matches_to_string(),
+            "(match T id) (match E panic)".to_string()
+        );
+        assert_eq!(case.to_string(), s.to_string());
     }
 }
