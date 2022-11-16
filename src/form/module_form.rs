@@ -385,12 +385,15 @@ mod tests {
 
         s = "
         (module main () (prod
-            (import x (prod String String) (prod Result unwrap))
+            (def StringErr String)
+            (import x (prod String StringErr) (prod Result unwrap))
             (import std.io _ println)
 
             (def main (Fun IO IO))
-            (def main (fun io 
-                (println (prod io (unwrap \"Hello, World!\")))))
+            (def main (fun io (let 
+                (def text String)
+                (def text \"Hello, World!\")
+                (println (prod io (unwrap text))))))
         ))";
 
         res = ModuleForm::from_str(s);
@@ -402,24 +405,31 @@ mod tests {
         assert_eq!(form.name, "main".to_string());
         assert_eq!(form.type_params, vec![ModuleFormTypeParam::Empty]);
         assert_eq!(form.type_params_to_string(), "()".to_string());
-        assert_eq!(form.entries.len(), 4);
+        assert_eq!(form.entries.len(), 5);
         assert_eq!(
             form.entries[0].to_string(),
-            "(import x (prod String String) (prod Result unwrap))".to_string()
+            "(def StringErr String)".to_string()
         );
         assert_eq!(
             form.entries[1].to_string(),
+            "(import x (prod String StringErr) (prod Result unwrap))".to_string()
+        );
+        assert_eq!(
+            form.entries[2].to_string(),
             "(import std.io _ println)".to_string()
         );
 
         s = "
         (module main (prod
-            (import x (prod String String) (prod Result unwrap))
+            (def StringErr String)
+            (import x (prod String StringErr) (prod Result unwrap))
             (import std.io _ println)
 
             (def main (Fun IO IO))
-            (def main (fun io 
-                (println (prod io (unwrap \"Hello, World!\")))))
+            (def main (fun io (let
+                (def text String)
+                (def text \"Hello, World!\")
+                (println (prod io (unwrap text))))))
         ))";
 
         res = ModuleForm::from_str(s);
@@ -430,13 +440,17 @@ mod tests {
 
         assert_eq!(form.name, "main".to_string());
         assert!(form.type_params.is_empty());
-        assert_eq!(form.entries.len(), 4);
+        assert_eq!(form.entries.len(), 5);
         assert_eq!(
             form.entries[0].to_string(),
-            "(import x (prod String String) (prod Result unwrap))".to_string()
+            "(def StringErr String)".to_string()
         );
         assert_eq!(
             form.entries[1].to_string(),
+            "(import x (prod String StringErr) (prod Result unwrap))".to_string()
+        );
+        assert_eq!(
+            form.entries[2].to_string(),
             "(import std.io _ println)".to_string()
         );
     }
