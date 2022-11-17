@@ -1,7 +1,8 @@
 use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::{is_keyword, is_symbol, is_type_symbol, is_value_symbol, symbol_name};
+use crate::syntax::{is_keyword, is_type_keyword};
+use crate::syntax::{is_symbol, is_type_symbol, is_value_symbol, symbol_name};
 use crate::token::{TokenKind, Tokens};
 use std::fmt;
 
@@ -168,7 +169,7 @@ impl Form {
                 TokenKind::Keyword => {
                     let value = tokens[idx].to_string();
 
-                    if is_type_symbol(&symbol_name(&value)) {
+                    if is_type_keyword(&value) {
                         params.push(FormParam::TypeKeyword(value));
                     } else if value == "_" {
                         params.push(FormParam::Ignore);

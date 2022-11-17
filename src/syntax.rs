@@ -15,6 +15,14 @@ pub fn is_keyword(s: &str) -> bool {
     KEYWORDS.iter().any(|&k| k == s)
 }
 
+pub fn is_value_keyword(s: &str) -> bool {
+    is_keyword(s) && is_value_symbol_start_char(s.chars().next().unwrap())
+}
+
+pub fn is_type_keyword(s: &str) -> bool {
+    is_keyword(s) && is_type_symbol_start_char(s.chars().next().unwrap())
+}
+
 pub const IGNORE: &str = "_";
 
 pub fn is_ignore_keyword(s: &str) -> bool {
