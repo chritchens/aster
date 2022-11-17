@@ -91,7 +91,7 @@ impl Form {
     }
 
     pub fn is_type_form(&self) -> bool {
-        if !is_type_symbol(&symbol_name(&self.name)) {
+        if !is_type_symbol(&symbol_name(&self.name)) && !is_type_keyword(&self.name) {
             return false;
         }
 
@@ -136,14 +136,14 @@ impl Form {
             }));
         }
 
-        if !is_symbol(&symbol_name(&tokens[1].to_string())) {
+        let name = tokens[1].to_string();
+
+        if !is_symbol(&symbol_name(&name)) && !is_keyword(&name) {
             return Err(Error::Syntactic(SyntacticError {
                 loc: tokens[1].loc(),
                 desc: "expected a symbol or a keyword".into(),
             }));
         }
-
-        let name = tokens[1].to_string();
 
         let mut params = vec![];
 
@@ -190,13 +190,6 @@ impl Form {
                 TokenKind::PathSymbol => {
                     let name = tokens[idx].to_string();
                     let unqualified = symbol_name(&name);
-
-                    if is_keyword(&unqualified) {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: tokens[idx].loc(),
-                            desc: "a path symbol cannot end with a keyword".into(),
-                        }));
-                    }
 
                     if is_type_symbol(&unqualified) {
                         params.push(FormParam::TypeSymbol(tokens[idx].to_string()));

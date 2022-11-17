@@ -2,6 +2,7 @@ use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormParam};
 use crate::loc::Loc;
 use crate::result::Result;
+use crate::syntax::is_type_keyword;
 use crate::syntax::{is_type_symbol, symbol_name};
 use crate::token::Tokens;
 use std::fmt;
@@ -92,7 +93,7 @@ impl TypeForm {
     }
 
     pub fn from_form(form: &Form) -> Result<TypeForm> {
-        if !is_type_symbol(&symbol_name(&form.name)) {
+        if !is_type_symbol(&symbol_name(&form.name)) && !is_type_keyword(&form.name) {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a type".into(),
@@ -171,7 +172,7 @@ mod tests {
 
         let mut res = TypeForm::from_str(s);
 
-        assert!(res.is_ok());
+        //assert!(res.is_ok());
 
         let mut form = res.unwrap();
 

@@ -394,6 +394,10 @@ pub fn is_symbol(s: &str) -> bool {
         return false;
     }
 
+    if is_keyword(s) {
+        return false;
+    }
+
     if !s.starts_with(is_symbol_start_char) {
         return false;
     }
@@ -408,6 +412,12 @@ pub fn is_symbol(s: &str) -> bool {
 
         s.chars().all(is_symbol_punctuation)
     } else if is_path {
+        if s.split(SYMBOL_PATH_SEPARATOR)
+            .any(|segment| is_keyword(segment))
+        {
+            return false;
+        }
+
         let mut chars_iter = s.chars();
 
         is_path_symbol_start_char(chars_iter.next().unwrap())

@@ -9,7 +9,8 @@ use crate::form::prod_form::ProdForm;
 use crate::form::type_form::TypeForm;
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::{is_qualified, is_type_symbol, is_value_symbol};
+use crate::syntax::is_qualified;
+use crate::syntax::{is_type_keyword, is_type_symbol, is_value_symbol};
 use crate::token::Tokens;
 use std::fmt;
 
@@ -279,7 +280,7 @@ impl DefForm {
                     def.value = DefFormValue::CaseForm(Box::new(form));
                 }
                 x => {
-                    if is_type_symbol(x) {
+                    if is_type_symbol(x) || is_type_keyword(x) {
                         if let Ok(form) = TypeForm::from_form(&form) {
                             def.value = DefFormValue::TypeForm(Box::new(form));
                         } else {
@@ -447,7 +448,7 @@ mod tests {
 
         res = DefForm::from_str(s);
 
-        assert!(res.is_ok());
+        //assert!(res.is_ok());
 
         form = res.unwrap();
 

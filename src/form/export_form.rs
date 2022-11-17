@@ -3,7 +3,7 @@ use crate::form::form::{Form, FormParam};
 use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::{is_keyword, is_qualified};
+use crate::syntax::is_qualified;
 use crate::token::Tokens;
 use std::fmt;
 
@@ -100,13 +100,6 @@ impl ExportForm {
                         }));
                     }
 
-                    if is_keyword(&symbol) {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: "unexpected keyword".into(),
-                        }));
-                    }
-
                     export.defs.push(ExportFormDef::TypeSymbol(symbol));
                 }
                 FormParam::ValueSymbol(symbol) => {
@@ -114,13 +107,6 @@ impl ExportForm {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "expected an unqualified symbol".into(),
-                        }));
-                    }
-
-                    if is_keyword(&symbol) {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: "unexpected keyword".into(),
                         }));
                     }
 
@@ -139,13 +125,6 @@ impl ExportForm {
                                     }));
                                 }
 
-                                if is_keyword(&symbol) {
-                                    return Err(Error::Syntactic(SyntacticError {
-                                        loc: form.loc(),
-                                        desc: "unexpected keyword".into(),
-                                    }));
-                                }
-
                                 export.defs.push(ExportFormDef::ValueSymbol(symbol));
                             }
                             ProdFormValue::TypeSymbol(symbol) => {
@@ -153,13 +132,6 @@ impl ExportForm {
                                     return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "expected an unqualified symbol".into(),
-                                    }));
-                                }
-
-                                if is_keyword(&symbol) {
-                                    return Err(Error::Syntactic(SyntacticError {
-                                        loc: form.loc(),
-                                        desc: "unexpected keyword".into(),
                                     }));
                                 }
 

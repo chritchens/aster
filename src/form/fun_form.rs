@@ -235,8 +235,6 @@ impl FunForm {
                 } else if let Ok(form) = AppForm::from_form(&form) {
                     fun.body = FunFormBody::AppForm(Box::new(form));
                 } else {
-                    println!("form: {}", form.to_string());
-                    AppForm::from_form(&form)?;
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: "expected a type form, a let form or an application form".into(),

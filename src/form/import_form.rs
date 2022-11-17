@@ -4,8 +4,7 @@ use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::form::type_form::TypeForm;
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::symbol_name;
-use crate::syntax::{is_keyword, is_path_symbol, is_qualified};
+use crate::syntax::{is_keyword, is_qualified};
 use crate::token::Tokens;
 use std::fmt;
 
@@ -279,13 +278,6 @@ impl ImportForm {
                                 }));
                             }
 
-                            if is_keyword(&symbol) {
-                                return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "unexpected keyword".into(),
-                                }));
-                            }
-
                             self.defs.push(ImportFormDef::ValueSymbol(symbol));
                         }
                         ProdFormValue::TypeSymbol(symbol) => {
@@ -293,13 +285,6 @@ impl ImportForm {
                                 return Err(Error::Syntactic(SyntacticError {
                                     loc: form.loc(),
                                     desc: "expected an unqualified symbol".into(),
-                                }));
-                            }
-
-                            if is_keyword(&symbol) {
-                                return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "unexpected keyword".into(),
                                 }));
                             }
 
@@ -355,14 +340,7 @@ impl ImportForm {
 
         let module = form.params[0].to_string();
 
-        if is_path_symbol(&module) {
-            if is_keyword(&symbol_name(&module)) {
-                return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: "a path cannot end with a keyword".into(),
-                }));
-            }
-        } else if is_keyword(&module) {
+        if is_keyword(&module) {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a module path".into(),
