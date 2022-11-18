@@ -3,12 +3,12 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 49] = [
-    "module", "_", "builtin", "import", "export", "val", "type", "prim", "sum", "prod", "sig",
-    "fun", "attrs", "app", "case", "id", "return", "match", "size", "load", "store", "ref",
-    "deref", "cast", "dup", "drop", "panic", "Builtin", "Empty", "Prim", "UInt", "Int", "Float",
-    "Size", "Pointer", "Ref", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod", "Sig",
-    "Fun", "App", "Attrs", "Type",
+pub const KEYWORDS: [&str; 48] = [
+    "module", "_", "builtin", "import", "export", "val", "type", "prim", "prod", "sig", "fun",
+    "attrs", "app", "case", "id", "return", "match", "size", "load", "store", "ref", "deref",
+    "cast", "dup", "drop", "panic", "Builtin", "Empty", "Prim", "UInt", "Int", "Float", "Size",
+    "Pointer", "Ref", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod", "Sig", "Fun",
+    "App", "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -39,7 +39,6 @@ pub enum Keyword {
     Val,
     Type,
     Prim,
-    Sum,
     Prod,
     Sig,
     Fun,
@@ -93,7 +92,6 @@ impl fmt::Display for Keyword {
             Keyword::Val => write!(f, "val"),
             Keyword::Type => write!(f, "type"),
             Keyword::Prim => write!(f, "prim"),
-            Keyword::Sum => write!(f, "sum"),
             Keyword::Prod => write!(f, "prod"),
             Keyword::Sig => write!(f, "sig"),
             Keyword::Fun => write!(f, "fun"),
@@ -149,7 +147,6 @@ impl Keyword {
             "val" => Ok(Keyword::Val),
             "type" => Ok(Keyword::Type),
             "prim" => Ok(Keyword::Prim),
-            "sum" => Ok(Keyword::Sum),
             "prod" => Ok(Keyword::Prod),
             "sig" => Ok(Keyword::Sig),
             "fun" => Ok(Keyword::Fun),

@@ -429,7 +429,7 @@ mod tests {
         use super::Tokens;
         use crate::token::TokenKind;
 
-        let s = "sum";
+        let s = "prod";
 
         let tokens = Tokens::from_str(s).unwrap();
 
