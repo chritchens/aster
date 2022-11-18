@@ -616,7 +616,7 @@ mod tests {
             _ => panic!("invalid branch"),
         }
 
-        s = "(val fun f b c \n\t\t(g a -b1\n\t\t\t\t(h 3 b +5.8E+36) # this is a comment\n\t\t\t\t(k 6 7 c)))\n(f 1 4 8)\n";
+        s = "(val f (fun b c \n\t\t(g a -b1\n\t\t\t\t(h 3 b +5.8E+36) # this is a comment\n\t\t\t\t(k 6 7 c))))\n(f 1 4 8)\n";
 
         res = Tokens::from_str(s);
 
@@ -624,16 +624,16 @@ mod tests {
 
         let tokens = res.unwrap();
 
-        assert_eq!(tokens.len(), 31);
+        assert_eq!(tokens.len(), 33);
         assert_eq!(tokens[0].kind, TokenKind::FormStart);
         assert_eq!(tokens[1].kind, TokenKind::Keyword);
-        assert_eq!(tokens[2].kind, TokenKind::Keyword);
-        assert_eq!(tokens[3].kind, TokenKind::ValueSymbol);
-        assert_eq!(tokens[9].kind, TokenKind::IntLiteral);
-        assert_eq!(tokens[12].kind, TokenKind::UIntLiteral);
-        assert_eq!(tokens[14].kind, TokenKind::FloatLiteral);
-        assert_eq!(tokens[15].kind, TokenKind::FormEnd);
-        assert_eq!(tokens[16].kind, TokenKind::Comment);
+        assert_eq!(tokens[4].kind, TokenKind::Keyword);
+        assert_eq!(tokens[5].kind, TokenKind::ValueSymbol);
+        assert_eq!(tokens[10].kind, TokenKind::IntLiteral);
+        assert_eq!(tokens[13].kind, TokenKind::UIntLiteral);
+        assert_eq!(tokens[15].kind, TokenKind::FloatLiteral);
+        assert_eq!(tokens[16].kind, TokenKind::FormEnd);
+        assert_eq!(tokens[17].kind, TokenKind::Comment);
     }
 
     #[test]

@@ -333,7 +333,7 @@ mod tests {
     fn char_chunks_from_str() {
         use super::CharChunks;
 
-        let s = "(include std.io)\n\n(printf \"hello world\\n\")";
+        let s = "(import std.io)\n\n(val main (fun io printf io \"hello world\\n\"))";
 
         let chunks = CharChunks::from_str(s);
 
@@ -342,21 +342,21 @@ mod tests {
 
         let chunk = &chunks[19];
 
-        assert_eq!(chunk.content, 'p');
+        assert_eq!(chunk.content, 'a');
         assert_eq!(chunk.loc.file, None);
         assert_eq!(chunk.loc.line, 2);
-        assert_eq!(chunk.loc.pos, 1);
+        assert_eq!(chunk.loc.pos, 2);
     }
 
     #[test]
     fn string_chunks_from_str() {
         use super::StringChunks;
 
-        let s = "(include std.io)\n\n(printf \"hello world\\n\")";
+        let s = "(import std.io)\n\n(val main (fun io printf io \"hello world\\n\"))";
 
         let chunks = StringChunks::from_str(s);
 
-        assert_eq!(chunks.len(), 16);
+        assert_eq!(chunks.len(), 28);
         assert_eq!(chunks.files.len(), 0);
     }
 }
