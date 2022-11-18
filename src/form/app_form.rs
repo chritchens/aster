@@ -4,7 +4,7 @@ use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
-use crate::form::type_form::TypeForm;
+use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_value_keyword, is_value_symbol, symbol_name};
@@ -18,7 +18,7 @@ pub enum AppFormParam {
     TypeKeyword(String),
     TypeSymbol(String),
     ValueSymbol(String),
-    TypeForm(Box<TypeForm>),
+    TypesForm(Box<TypesForm>),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
     LetForm(Box<LetForm>),
@@ -41,7 +41,7 @@ impl AppFormParam {
             AppFormParam::TypeKeyword(keyword) => keyword.clone(),
             AppFormParam::TypeSymbol(symbol) => symbol.clone(),
             AppFormParam::ValueSymbol(symbol) => symbol.clone(),
-            AppFormParam::TypeForm(form) => form.to_string(),
+            AppFormParam::TypesForm(form) => form.to_string(),
             AppFormParam::ProdForm(form) => form.to_string(),
             AppFormParam::FunForm(form) => form.to_string(),
             AppFormParam::LetForm(form) => form.to_string(),
@@ -141,8 +141,8 @@ impl AppForm {
                             ProdFormValue::ValueSymbol(symbol) => {
                                 app.params.push(AppFormParam::ValueSymbol(symbol));
                             }
-                            ProdFormValue::TypeForm(form) => {
-                                app.params.push(AppFormParam::TypeForm(form));
+                            ProdFormValue::TypesForm(form) => {
+                                app.params.push(AppFormParam::TypesForm(form));
                             }
                             ProdFormValue::FunForm(form) => {
                                 app.params.push(AppFormParam::FunForm(form));
@@ -164,8 +164,8 @@ impl AppForm {
                             }
                         }
                     }
-                } else if let Ok(form) = TypeForm::from_form(&form) {
-                    app.params.push(AppFormParam::TypeForm(Box::new(form)));
+                } else if let Ok(form) = TypesForm::from_form(&form) {
+                    app.params.push(AppFormParam::TypesForm(Box::new(form)));
                 } else if let Ok(form) = FunForm::from_form(&form) {
                     app.params.push(AppFormParam::FunForm(Box::new(form)));
                 } else if let Ok(form) = LetForm::from_form(&form) {

@@ -1,7 +1,7 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormParam};
 use crate::form::prod_form::{ProdForm, ProdFormValue};
-use crate::form::type_form::TypeForm;
+use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_keyword, is_qualified};
@@ -14,7 +14,7 @@ pub enum ImportFormTypeParam {
     Empty,
     Keyword(String),
     Symbol(String),
-    Form(Box<TypeForm>),
+    Form(Box<TypesForm>),
 }
 
 impl Default for ImportFormTypeParam {
@@ -194,7 +194,7 @@ impl ImportForm {
 
                                 self.type_params.push(ImportFormTypeParam::Symbol(symbol));
                             }
-                            ProdFormValue::TypeForm(form) => {
+                            ProdFormValue::TypesForm(form) => {
                                 self.type_params.push(ImportFormTypeParam::Form(form));
                             }
                             _ => {

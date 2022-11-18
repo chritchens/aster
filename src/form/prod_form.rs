@@ -8,7 +8,7 @@ use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
 use crate::form::import_form::ImportForm;
 use crate::form::let_form::LetForm;
-use crate::form::type_form::TypeForm;
+use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -22,7 +22,7 @@ pub enum ProdFormValue {
     TypeKeyword(String),
     ValueSymbol(String),
     TypeSymbol(String),
-    TypeForm(Box<TypeForm>),
+    TypesForm(Box<TypesForm>),
     AttrsForm(Box<AttrsForm>),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
@@ -50,7 +50,7 @@ impl ProdFormValue {
             ProdFormValue::TypeKeyword(keyword) => keyword.clone(),
             ProdFormValue::ValueSymbol(symbol) => symbol.clone(),
             ProdFormValue::TypeSymbol(symbol) => symbol.clone(),
-            ProdFormValue::TypeForm(form) => form.to_string(),
+            ProdFormValue::TypesForm(form) => form.to_string(),
             ProdFormValue::AttrsForm(form) => form.to_string(),
             ProdFormValue::ProdForm(form) => form.to_string(),
             ProdFormValue::FunForm(form) => form.to_string(),
@@ -144,8 +144,8 @@ impl ProdForm {
                     prod.values.push(ProdFormValue::TypeSymbol(symbol));
                 }
                 FormParam::Form(form) => {
-                    if let Ok(form) = TypeForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::TypeForm(Box::new(form)));
+                    if let Ok(form) = TypesForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::TypesForm(Box::new(form)));
                     } else if let Ok(form) = ProdForm::from_form(&form) {
                         prod.values.push(ProdFormValue::ProdForm(Box::new(form)));
                     } else if let Ok(form) = FunForm::from_form(&form) {

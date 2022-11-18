@@ -5,7 +5,7 @@ use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::ProdForm;
-use crate::form::type_form::TypeForm;
+use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_qualified;
@@ -20,7 +20,7 @@ pub enum DefFormValue {
     TypeKeyword(String),
     TypeSymbol(String),
     ValueSymbol(String),
-    TypeForm(Box<TypeForm>),
+    TypesForm(Box<TypesForm>),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
     LetForm(Box<LetForm>),
@@ -43,7 +43,7 @@ impl DefFormValue {
             DefFormValue::TypeKeyword(keyword) => keyword.clone(),
             DefFormValue::TypeSymbol(symbol) => symbol.clone(),
             DefFormValue::ValueSymbol(symbol) => symbol.clone(),
-            DefFormValue::TypeForm(form) => form.to_string(),
+            DefFormValue::TypesForm(form) => form.to_string(),
             DefFormValue::ProdForm(form) => form.to_string(),
             DefFormValue::FunForm(form) => form.to_string(),
             DefFormValue::LetForm(form) => form.to_string(),
@@ -142,9 +142,9 @@ impl DefForm {
         }
     }
 
-    pub fn is_type_form(&self) -> bool {
+    pub fn is_types_form(&self) -> bool {
         match self.value {
-            DefFormValue::TypeForm(_) => true,
+            DefFormValue::TypesForm(_) => true,
             _ => false,
         }
     }
@@ -170,7 +170,7 @@ impl DefForm {
     pub fn is_type(&self) -> bool {
         self.is_type_keyword()
             || self.is_type_symbol()
-            || self.is_type_form()
+            || self.is_types_form()
             || (self.is_let_form() && is_type_symbol(&self.name))
             || (self.is_application_form() && is_type_symbol(&self.name))
     }
@@ -256,8 +256,8 @@ impl DefForm {
                 }
                 x => {
                     if is_type_symbol(x) || is_type_keyword(x) {
-                        if let Ok(form) = TypeForm::from_form(&form) {
-                            def.value = DefFormValue::TypeForm(Box::new(form));
+                        if let Ok(form) = TypesForm::from_form(&form) {
+                            def.value = DefFormValue::TypesForm(Box::new(form));
                         } else {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
@@ -430,7 +430,7 @@ mod tests {
         assert_eq!(form.name, "Result".to_string());
         assert_eq!(form.value.to_string(), "(Sum T E)".to_string());
         assert_eq!(form.to_string(), s.to_string());
-        assert!(form.is_type_form());
+        assert!(form.is_types_form());
         assert!(form.is_type());
 
         s = "(def err (let (def StringError String) (unwrap \"error\")))";

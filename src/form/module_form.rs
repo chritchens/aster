@@ -4,7 +4,7 @@ use crate::form::export_form::ExportForm;
 use crate::form::form::{Form, FormParam};
 use crate::form::import_form::ImportForm;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
-use crate::form::type_form::TypeForm;
+use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_qualified, is_value_symbol};
@@ -17,7 +17,7 @@ pub enum ModuleFormTypeParam {
     Empty,
     Keyword(String),
     Symbol(String),
-    Form(Box<TypeForm>),
+    Form(Box<TypesForm>),
 }
 
 impl Default for ModuleFormTypeParam {
@@ -200,7 +200,7 @@ impl ModuleForm {
 
                                 self.type_params.push(ModuleFormTypeParam::Symbol(symbol));
                             }
-                            ProdFormValue::TypeForm(form) => {
+                            ProdFormValue::TypesForm(form) => {
                                 self.type_params.push(ModuleFormTypeParam::Form(form));
                             }
                             _ => {
@@ -411,7 +411,7 @@ mod tests {
         assert!(form.entry_as_export(0).is_none());
         assert!(form.entry_as_definition(0).is_some());
         assert!(form.entry_as_definition(0).unwrap().is_type());
-        assert!(form.entry_as_definition(0).unwrap().is_type_form());
+        assert!(form.entry_as_definition(0).unwrap().is_types_form());
         assert_eq!(
             form.entries[1].to_string(),
             "(def unwrap (Fun (Result T E) T))".to_string()
@@ -420,7 +420,7 @@ mod tests {
         assert!(form.entry_as_export(1).is_none());
         assert!(form.entry_as_definition(1).is_some());
         assert!(form.entry_as_definition(1).unwrap().is_type());
-        assert!(form.entry_as_definition(1).unwrap().is_type_form());
+        assert!(form.entry_as_definition(1).unwrap().is_types_form());
         assert_eq!(
             form.entries[2].to_string(),
             "(def unwrap (fun res (case res (match t id) (match e panic))))".to_string()

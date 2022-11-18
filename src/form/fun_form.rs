@@ -4,7 +4,7 @@ use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormParam};
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
-use crate::form::type_form::TypeForm;
+use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_qualified;
@@ -48,7 +48,7 @@ pub enum FunFormBody {
     TypeKeyword(String),
     ValueSymbol(String),
     TypeSymbol(String),
-    TypeForm(Box<TypeForm>),
+    TypesForm(Box<TypesForm>),
     ProdForm(Box<ProdForm>),
     AppForm(Box<AppForm>),
     LetForm(Box<LetForm>),
@@ -70,7 +70,7 @@ impl FunFormBody {
             FunFormBody::TypeKeyword(keyword) => keyword.clone(),
             FunFormBody::ValueSymbol(symbol) => symbol.clone(),
             FunFormBody::TypeSymbol(symbol) => symbol.clone(),
-            FunFormBody::TypeForm(form) => form.to_string(),
+            FunFormBody::TypesForm(form) => form.to_string(),
             FunFormBody::ProdForm(form) => form.to_string(),
             FunFormBody::AppForm(form) => form.to_string(),
             FunFormBody::LetForm(form) => form.to_string(),
@@ -224,8 +224,8 @@ impl FunForm {
                 fun.body = FunFormBody::TypeSymbol(symbol);
             }
             FormParam::Form(form) => {
-                if let Ok(form) = TypeForm::from_form(&form) {
-                    fun.body = FunFormBody::TypeForm(Box::new(form));
+                if let Ok(form) = TypesForm::from_form(&form) {
+                    fun.body = FunFormBody::TypesForm(Box::new(form));
                 } else if let Ok(form) = ProdForm::from_form(&form) {
                     fun.body = FunFormBody::ProdForm(Box::new(form));
                 } else if let Ok(form) = LetForm::from_form(&form) {

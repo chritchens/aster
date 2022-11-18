@@ -90,7 +90,7 @@ impl Form {
         true
     }
 
-    pub fn is_type_form(&self) -> bool {
+    pub fn is_types_form(&self) -> bool {
         if !is_type_symbol(&symbol_name(&self.name)) && !is_type_keyword(&self.name) {
             return false;
         }
@@ -104,7 +104,7 @@ impl Form {
                     return false;
                 }
                 FormParam::Form(form) => {
-                    if !form.is_type_form() {
+                    if !form.is_types_form() {
                         return false;
                     }
                 }
@@ -116,7 +116,7 @@ impl Form {
     }
 
     pub fn is_mixed_form(&self) -> bool {
-        !(self.is_value_form() || self.is_type_form())
+        !(self.is_value_form() || self.is_types_form())
     }
 
     pub fn from_tokens(tokens: &Tokens) -> Result<Form> {
@@ -333,7 +333,7 @@ mod tests {
             form.params_to_string(),
             "(Prod T Q) (Fun (Prod moduleA.A T Q) B)".to_string()
         );
-        assert!(form.is_type_form());
+        assert!(form.is_types_form());
 
         s = "(Sum A B c.C Char)";
 
@@ -352,7 +352,7 @@ mod tests {
             vec!["A".to_string(), "B".into(), "c.C".into(), "Char".into()]
         );
         assert_eq!(form.params_to_string(), "A B c.C Char".to_string());
-        assert!(form.is_type_form());
+        assert!(form.is_types_form());
         assert_eq!(form.to_string(), s.to_string());
     }
 }

@@ -8,47 +8,47 @@ use crate::token::Tokens;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum TypeFormParam {
+pub enum TypesFormParam {
     Empty,
     Keyword(String),
     Symbol(String),
     Form(Box<Form>),
 }
 
-impl Default for TypeFormParam {
-    fn default() -> TypeFormParam {
-        TypeFormParam::Empty
+impl Default for TypesFormParam {
+    fn default() -> TypesFormParam {
+        TypesFormParam::Empty
     }
 }
 
-impl TypeFormParam {
+impl TypesFormParam {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            TypeFormParam::Empty => "Empty".into(),
-            TypeFormParam::Keyword(keyword) => keyword.clone(),
-            TypeFormParam::Symbol(symbol) => symbol.clone(),
-            TypeFormParam::Form(form) => form.to_string(),
+            TypesFormParam::Empty => "Empty".into(),
+            TypesFormParam::Keyword(keyword) => keyword.clone(),
+            TypesFormParam::Symbol(symbol) => symbol.clone(),
+            TypesFormParam::Form(form) => form.to_string(),
         }
     }
 }
 
-impl fmt::Display for TypeFormParam {
+impl fmt::Display for TypesFormParam {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
-pub struct TypeForm {
+pub struct TypesForm {
     pub tokens: Box<Tokens>,
     pub name: String,
-    pub params: Vec<TypeFormParam>,
+    pub params: Vec<TypesFormParam>,
 }
 
-impl TypeForm {
-    pub fn new() -> TypeForm {
-        TypeForm::default()
+impl TypesForm {
+    pub fn new() -> TypesForm {
+        TypesForm::default()
     }
 
     pub fn file(&self) -> String {
@@ -74,17 +74,17 @@ impl TypeForm {
 
         for param in self.params.iter() {
             match param.clone() {
-                TypeFormParam::Empty => {
+                TypesFormParam::Empty => {
                     form.params.push(FormParam::Empty);
                 }
-                TypeFormParam::Keyword(keyword) => {
+                TypesFormParam::Keyword(keyword) => {
                     form.params.push(FormParam::TypeKeyword(keyword));
                 }
-                TypeFormParam::Symbol(symbol) => {
+                TypesFormParam::Symbol(symbol) => {
                     form.params.push(FormParam::TypeSymbol(symbol));
                 }
-                TypeFormParam::Form(type_form) => {
-                    form.params.push(FormParam::Form(type_form));
+                TypesFormParam::Form(types_form) => {
+                    form.params.push(FormParam::Form(types_form));
                 }
             }
         }
@@ -92,7 +92,7 @@ impl TypeForm {
         form
     }
 
-    pub fn from_form(form: &Form) -> Result<TypeForm> {
+    pub fn from_form(form: &Form) -> Result<TypesForm> {
         if !is_type_symbol(&symbol_name(&form.name)) && !is_type_keyword(&form.name) {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
@@ -100,25 +100,25 @@ impl TypeForm {
             }));
         }
 
-        let mut type_form = TypeForm::new();
-        type_form.tokens = form.tokens.clone();
-        type_form.name = form.name.clone();
+        let mut types_form = TypesForm::new();
+        types_form.tokens = form.tokens.clone();
+        types_form.name = form.name.clone();
 
         for param in form.params.iter() {
             match param.clone() {
                 FormParam::TypeKeyword(keyword) => {
                     if keyword == "Empty" {
-                        type_form.params.push(TypeFormParam::Empty);
+                        types_form.params.push(TypesFormParam::Empty);
                     } else {
-                        type_form.params.push(TypeFormParam::Keyword(keyword));
+                        types_form.params.push(TypesFormParam::Keyword(keyword));
                     }
                 }
                 FormParam::TypeSymbol(symbol) => {
-                    type_form.params.push(TypeFormParam::Symbol(symbol));
+                    types_form.params.push(TypesFormParam::Symbol(symbol));
                 }
                 FormParam::Form(form) => {
-                    if form.is_type_form() {
-                        type_form.params.push(TypeFormParam::Form(form));
+                    if form.is_types_form() {
+                        types_form.params.push(TypesFormParam::Form(form));
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
@@ -135,19 +135,19 @@ impl TypeForm {
             }
         }
 
-        Ok(type_form)
+        Ok(types_form)
     }
 
-    pub fn from_tokens(tokens: &Tokens) -> Result<TypeForm> {
+    pub fn from_tokens(tokens: &Tokens) -> Result<TypesForm> {
         let form = Form::from_tokens(tokens)?;
 
-        TypeForm::from_form(&form)
+        TypesForm::from_form(&form)
     }
 
-    pub fn from_str(s: &str) -> Result<TypeForm> {
+    pub fn from_str(s: &str) -> Result<TypesForm> {
         let tokens = Tokens::from_str(s)?;
 
-        TypeForm::from_tokens(&tokens)
+        TypesForm::from_tokens(&tokens)
     }
 
     #[allow(clippy::inherent_to_string_shadow_display)]
@@ -156,7 +156,7 @@ impl TypeForm {
     }
 }
 
-impl fmt::Display for TypeForm {
+impl fmt::Display for TypesForm {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
@@ -165,14 +165,14 @@ impl fmt::Display for TypeForm {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn type_form_from_str() {
-        use super::TypeForm;
+    fn types_form_from_str() {
+        use super::TypesForm;
 
         let mut s = "(Fun Empty Empty)";
 
-        let mut res = TypeForm::from_str(s);
+        let mut res = TypesForm::from_str(s);
 
-        //assert!(res.is_ok());
+        assert!(res.is_ok());
 
         let mut form = res.unwrap();
 
@@ -182,7 +182,7 @@ mod tests {
 
         s = "(Prod (Fun A B) Char C)";
 
-        res = TypeForm::from_str(s);
+        res = TypesForm::from_str(s);
 
         assert!(res.is_ok());
 
