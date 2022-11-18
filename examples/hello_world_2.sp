@@ -4,6 +4,6 @@
   (import std.io)
   (import std.string _ removeAll string)
 
-  (def main (Fun IO IO))
-  (def main (fun io (println io (string.removeAll '\'' "Hel'lo World!"))))
+  (sig main (Fun IO IO))
+  (val main (fun io (println io (string.removeAll '\'' "Hel'lo World!"))))
 ))

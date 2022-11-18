@@ -4,6 +4,6 @@
   (import std.io)
   (import std.string)
 
-  (def main (Fun IO IO))
-  (def main (fun io (println io "Hello World!")))
+  (sig main (Fun IO IO))
+  (val main (fun io (println io "Hello World!")))
 ))

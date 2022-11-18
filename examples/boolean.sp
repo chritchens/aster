@@ -3,34 +3,34 @@
 
   (import std.io _ printf)
 
-  (def True (attrs (prod asSize 1)))
-  (def True Prim)
+  (attrs True (prod asSize 1))
+  (type True Prim)
 
-  (def True (attrs (prod asSize 0)))
-  (def False Prim)
+  (attrs True (prod asSize 0))
+  (type False Prim)
 
-  (def Bool (Sum True False))
+  (type Bool (Sum True False))
 
-  (def true True)
-  (def true prim)
+  (sig true True)
+  (val true prim)
 
-  (def false False)
-  (def false prim)
+  (sig false False)
+  (val false prim)
 
-  (def boolToUInt (Fun Bool UInt))
-  (def boolToUInt (fun pred
+  (sig boolToUInt (Fun Bool UInt))
+  (val boolToUInt (fun pred
     (case pred 
       (match true (fun p 1))
       (match false (fun p 0)))))
 
-  (def printBoolAsUInt (Fun IO Bool IO))
-  (def printBoolAsUInt (fun io pred 
+  (sig printBoolAsUInt (Fun IO Bool IO))
+  (val printBoolAsUInt (fun io pred 
     (case pred
       (match true (fun t 
         (printf io "true as uint: {}\n" (boolToUInt t))))
       (match false (fun f 
         (printf io "false as uint: {}" (boolToUInt f)))))))
 
-  (def main (Fun IO IO))
-  (def main (fun io (printBoolAsUInt io false)))
+  (sig main (Fun IO IO))
+  (val main (fun io (printBoolAsUInt io false)))
 ))

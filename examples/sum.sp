@@ -4,7 +4,7 @@
   (import std.io _ _ io)
   (import std.math _ (prod +))
 
-  (def main (Fun IO IO))
-  (def main (fun io 
+  (sig main (Fun IO IO))
+  (val main (fun io 
     (io.println io (+ 1 2))))
 ))
