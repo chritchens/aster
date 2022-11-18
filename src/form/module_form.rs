@@ -302,8 +302,7 @@ impl ModuleForm {
                         _ => {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
-                                desc: "expected a product of import, export or value forms"
-                                    .into(),
+                                desc: "expected a product of import, export or value forms".into(),
                             }));
                         }
                     }
