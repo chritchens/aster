@@ -1,6 +1,5 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::app_form::AppForm;
-use crate::form::attrs_form::AttrsForm;
 use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
@@ -21,7 +20,6 @@ pub enum DefFormValue {
     TypeKeyword(String),
     TypeSymbol(String),
     ValueSymbol(String),
-    AttrsForm(Box<AttrsForm>),
     TypeForm(Box<TypeForm>),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
@@ -45,7 +43,6 @@ impl DefFormValue {
             DefFormValue::TypeKeyword(keyword) => keyword.clone(),
             DefFormValue::TypeSymbol(symbol) => symbol.clone(),
             DefFormValue::ValueSymbol(symbol) => symbol.clone(),
-            DefFormValue::AttrsForm(form) => form.to_string(),
             DefFormValue::TypeForm(form) => form.to_string(),
             DefFormValue::ProdForm(form) => form.to_string(),
             DefFormValue::FunForm(form) => form.to_string(),
@@ -117,20 +114,6 @@ impl DefForm {
         }
     }
 
-    pub fn is_value_attributes_form(&self) -> bool {
-        match self.value {
-            DefFormValue::AttrsForm(_) => is_value_symbol(&self.name),
-            _ => false,
-        }
-    }
-
-    pub fn is_type_attributes_form(&self) -> bool {
-        match self.value {
-            DefFormValue::AttrsForm(_) => is_type_symbol(&self.name),
-            _ => false,
-        }
-    }
-
     pub fn is_product_form(&self) -> bool {
         match self.value {
             DefFormValue::ProdForm(_) => true,
@@ -171,10 +154,6 @@ impl DefForm {
             DefFormValue::CaseForm(_) => true,
             _ => false,
         }
-    }
-
-    pub fn is_attributes(&self) -> bool {
-        self.is_type_attributes_form() || self.is_value_attributes_form()
     }
 
     pub fn is_value(&self) -> bool {
@@ -259,10 +238,6 @@ impl DefForm {
                 def.value = DefFormValue::ValueSymbol(symbol);
             }
             FormParam::Form(form) => match form.name.as_str() {
-                "attrs" => {
-                    let form = AttrsForm::from_form(&form)?;
-                    def.value = DefFormValue::AttrsForm(Box::new(form));
-                }
                 "prod" => {
                     let form = ProdForm::from_form(&form)?;
                     def.value = DefFormValue::ProdForm(Box::new(form));
@@ -448,7 +423,7 @@ mod tests {
 
         res = DefForm::from_str(s);
 
-        //assert!(res.is_ok());
+        assert!(res.is_ok());
 
         form = res.unwrap();
 

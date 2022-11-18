@@ -1,5 +1,6 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::app_form::AppForm;
+use crate::form::attrs_form::AttrsForm;
 use crate::form::def_form::DefForm;
 use crate::form::form::{Form, FormParam};
 use crate::form::import_form::ImportForm;
@@ -12,6 +13,7 @@ use std::fmt;
 pub enum LetFormEntry {
     Empty,
     ImportForm(Box<ImportForm>),
+    AttrsForm(Box<AttrsForm>),
     DefForm(Box<DefForm>),
 }
 
@@ -27,6 +29,7 @@ impl LetFormEntry {
         match self {
             LetFormEntry::Empty => "()".into(),
             LetFormEntry::ImportForm(form) => form.to_string(),
+            LetFormEntry::AttrsForm(form) => form.to_string(),
             LetFormEntry::DefForm(form) => form.to_string(),
         }
     }
@@ -65,6 +68,17 @@ impl LetForm {
 
         match self.entries[idx].clone() {
             LetFormEntry::ImportForm(form) => Some(form),
+            _ => None,
+        }
+    }
+
+    pub fn entry_as_attributes(&self, idx: usize) -> Option<Box<AttrsForm>> {
+        if idx > self.entries.len() - 1 {
+            return None;
+        }
+
+        match self.entries[idx].clone() {
+            LetFormEntry::AttrsForm(form) => Some(form),
             _ => None,
         }
     }
@@ -139,6 +153,10 @@ impl LetForm {
                             let_form
                                 .entries
                                 .push(LetFormEntry::ImportForm(Box::new(form)));
+                        } else if let Ok(form) = AttrsForm::from_form(&form) {
+                            let_form
+                                .entries
+                                .push(LetFormEntry::AttrsForm(Box::new(form)));
                         } else if let Ok(form) = DefForm::from_form(&form) {
                             let_form.entries.push(LetFormEntry::DefForm(Box::new(form)));
                         } else {
@@ -240,10 +258,10 @@ mod tests {
         (let
             (import res () Result)
 
-            (def Result (attrs union))
+            (attrs Result union)
             (def Result (Sum T E))
 
-            (def unwrap (attrs inline))
+            (attrs unwrap inline)
             (def unwrap (Fun (Result T E) T))
             (def unwrap (fun res (case res (match T id) (match E panic))))
 
@@ -274,22 +292,16 @@ mod tests {
         assert!(form.entry_as_import(0).is_some());
         assert_eq!(
             form.entries[1].to_string(),
-            "(def Result (attrs union))".to_string()
+            "(attrs Result union)".to_string()
         );
-        assert!(form
-            .entry_as_definition(1)
-            .unwrap()
-            .is_type_attributes_form());
-        assert!(form.entry_as_definition(1).unwrap().is_attributes());
+        assert!(form.entry_as_attributes(1).is_some());
+        assert!(form.entry_as_attributes(1).unwrap().is_type_attributes());
         assert_eq!(
             form.entries[3].to_string(),
-            "(def unwrap (attrs inline))".to_string()
+            "(attrs unwrap inline)".to_string()
         );
-        assert!(form
-            .entry_as_definition(3)
-            .unwrap()
-            .is_value_attributes_form());
-        assert!(form.entry_as_definition(3).unwrap().is_attributes());
+        assert!(form.entry_as_attributes(3).is_some());
+        assert!(form.entry_as_attributes(3).unwrap().is_value_attributes());
         assert_eq!(
             form.entries[5].to_string(),
             "(def unwrap (fun res (case res (match T id) (match E panic))))".to_string()

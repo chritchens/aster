@@ -3,6 +3,7 @@ use crate::form::form::{Form, FormParam};
 use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::loc::Loc;
 use crate::result::Result;
+use crate::syntax::{is_keyword, is_qualified, is_type_symbol, is_value_symbol};
 use crate::token::Tokens;
 use std::fmt;
 
@@ -43,6 +44,7 @@ impl fmt::Display for AttrsFormValue {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct AttrsForm {
     pub tokens: Box<Tokens>,
+    pub name: String,
     pub values: Vec<AttrsFormValue>,
 }
 
@@ -57,6 +59,14 @@ impl AttrsForm {
 
     pub fn loc(&self) -> Option<Loc> {
         self.tokens[0].loc()
+    }
+
+    pub fn is_type_attributes(&self) -> bool {
+        is_type_symbol(&self.name)
+    }
+
+    pub fn is_value_attributes(&self) -> bool {
+        is_value_symbol(&self.name)
     }
 
     pub fn values_to_string(&self) -> String {
@@ -82,17 +92,37 @@ impl AttrsForm {
             }));
         }
 
-        if form.params.len() != 1 {
+        if form.params.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a keyword or symbol or a product of keywords or products".into(),
+                desc:
+                    "expected a name and a keyword or symbol or a product of keywords or products"
+                        .into(),
             }));
         }
 
         let mut attrs = AttrsForm::new();
         attrs.tokens = form.tokens.clone();
 
-        match form.params[0].clone() {
+        let name = form.params[0].to_string();
+
+        if is_qualified(&name) {
+            return Err(Error::Syntactic(SyntacticError {
+                loc: form.loc(),
+                desc: "expected an unqualified name".into(),
+            }));
+        }
+
+        if is_keyword(&name) {
+            return Err(Error::Syntactic(SyntacticError {
+                loc: form.loc(),
+                desc: "expected a symbol".into(),
+            }));
+        }
+
+        attrs.name = name;
+
+        match form.params[1].clone() {
             FormParam::Empty => {}
             FormParam::ValueKeyword(keyword) => {
                 attrs.values.push(AttrsFormValue::ValueKeyword(keyword));
@@ -162,7 +192,7 @@ impl AttrsForm {
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        format!("(attrs {})", self.values_to_string(),)
+        format!("(attrs {} {})", self.name, self.values_to_string(),)
     }
 }
 
@@ -179,7 +209,7 @@ mod tests {
         use super::AttrsForm;
         use super::AttrsFormValue;
 
-        let mut s = "(attrs ())";
+        let mut s = "(attrs x ())";
 
         let mut res = AttrsForm::from_str(s);
 
@@ -187,11 +217,13 @@ mod tests {
 
         let mut form = res.unwrap();
 
+        assert_eq!(form.name, "x".to_string());
+        assert!(form.is_value_attributes());
         assert!(form.values.is_empty());
         assert_eq!(form.values_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(attrs x)";
+        s = "(attrs T x)";
 
         res = AttrsForm::from_str(s);
 
@@ -199,6 +231,8 @@ mod tests {
 
         form = res.unwrap();
 
+        assert_eq!(form.name, "T".to_string());
+        assert!(form.is_type_attributes());
         assert_eq!(
             form.values,
             vec![AttrsFormValue::ValueSymbol("x".to_string())]
@@ -206,7 +240,7 @@ mod tests {
         assert_eq!(form.values_to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(attrs moduleX.X)";
+        s = "(attrs T moduleX.X)";
 
         res = AttrsForm::from_str(s);
 
@@ -214,6 +248,8 @@ mod tests {
 
         form = res.unwrap();
 
+        assert_eq!(form.name, "T".to_string());
+        assert!(form.is_type_attributes());
         assert_eq!(
             form.values,
             vec![AttrsFormValue::TypeSymbol("moduleX.X".to_string())]
@@ -221,7 +257,7 @@ mod tests {
         assert_eq!(form.values_to_string(), "moduleX.X".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(attrs (prod union a moduleA.A Type))";
+        s = "(attrs x (prod union a moduleA.A Type))";
 
         res = AttrsForm::from_str(s);
 
@@ -229,6 +265,8 @@ mod tests {
 
         form = res.unwrap();
 
+        assert_eq!(form.name, "x".to_string());
+        assert!(form.is_value_attributes());
         assert_eq!(
             form.values_to_string(),
             "(prod union a moduleA.A Type)".to_string()
