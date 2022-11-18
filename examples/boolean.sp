@@ -3,8 +3,12 @@
 
   (import std.io _ printf)
 
+  (def True (attrs (prod asSize 1)))
   (def True Prim)
+
+  (def True (attrs (prod asSize 0)))
   (def False Prim)
+
   (def Bool (Sum True False))
 
   (def true True)
