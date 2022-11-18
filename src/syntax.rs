@@ -404,9 +404,10 @@ pub fn is_symbol(s: &str) -> bool {
 
     let only_punctuation = s.starts_with(is_symbol_punctuation);
     let is_path = s.contains(SYMBOL_PATH_SEPARATOR);
+    let len = s.len();
 
     if only_punctuation {
-        if s.len() > 3 {
+        if len > 3 {
             return false;
         }
 
@@ -423,8 +424,10 @@ pub fn is_symbol(s: &str) -> bool {
         is_path_symbol_start_char(chars_iter.next().unwrap())
             && chars_iter.all(|c| is_path_symbol_char(c) || c == SYMBOL_PATH_SEPARATOR)
             && !s.ends_with(SYMBOL_PATH_SEPARATOR)
+    } else if let Some(pos) = s.chars().position(is_symbol_punctuation) {
+        pos == len - 1
     } else {
-        s.chars().all(is_symbol_char_no_punctuation)
+        true
     }
 }
 

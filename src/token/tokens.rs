@@ -542,7 +542,28 @@ mod tests {
         assert_eq!(tokens.len(), 1);
         assert_eq!(tokens[0].kind, TokenKind::ValueSymbol);
 
+        s = "sum!";
+
+        tokens = Tokens::from_str(s).unwrap();
+
+        assert_eq!(tokens.len(), 1);
+        assert_eq!(tokens[0].kind, TokenKind::ValueSymbol);
+
+        s = "o328427_";
+
+        tokens = Tokens::from_str(s).unwrap();
+
+        assert_eq!(tokens.len(), 1);
+        assert_eq!(tokens[0].kind, TokenKind::ValueSymbol);
+
         s = "BigInt";
+
+        tokens = Tokens::from_str(s).unwrap();
+
+        assert_eq!(tokens.len(), 1);
+        assert_eq!(tokens[0].kind, TokenKind::TypeSymbol);
+
+        s = "BigInt2";
 
         tokens = Tokens::from_str(s).unwrap();
 
