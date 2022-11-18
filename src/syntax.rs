@@ -4,7 +4,7 @@ use std::convert;
 use std::fmt;
 
 pub const KEYWORDS: [&str; 49] = [
-    "module", "_", "builtin", "import", "export", "def", "type", "prim", "sum", "prod", "sig",
+    "module", "_", "builtin", "import", "export", "val", "type", "prim", "sum", "prod", "sig",
     "fun", "attrs", "app", "case", "id", "return", "match", "size", "load", "store", "ref",
     "deref", "cast", "dup", "drop", "panic", "Builtin", "Empty", "Prim", "UInt", "Int", "Float",
     "Size", "Pointer", "Ref", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod", "Sig",
@@ -36,7 +36,7 @@ pub enum Keyword {
     Builtin,
     Import,
     Export,
-    Def,
+    Val,
     Type,
     Prim,
     Sum,
@@ -90,7 +90,7 @@ impl fmt::Display for Keyword {
             Keyword::Builtin => write!(f, "builtin"),
             Keyword::Import => write!(f, "import"),
             Keyword::Export => write!(f, "export"),
-            Keyword::Def => write!(f, "def"),
+            Keyword::Val => write!(f, "val"),
             Keyword::Type => write!(f, "type"),
             Keyword::Prim => write!(f, "prim"),
             Keyword::Sum => write!(f, "sum"),
@@ -146,7 +146,7 @@ impl Keyword {
             "builtin" => Ok(Keyword::Builtin),
             "import" => Ok(Keyword::Import),
             "export" => Ok(Keyword::Export),
-            "def" => Ok(Keyword::Def),
+            "val" => Ok(Keyword::Val),
             "type" => Ok(Keyword::Type),
             "prim" => Ok(Keyword::Prim),
             "sum" => Ok(Keyword::Sum),

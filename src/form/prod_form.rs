@@ -2,13 +2,15 @@ use crate::error::{Error, SyntacticError};
 use crate::form::app_form::AppForm;
 use crate::form::attrs_form::AttrsForm;
 use crate::form::case_form::CaseForm;
-use crate::form::def_form::DefForm;
 use crate::form::export_form::ExportForm;
 use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
 use crate::form::import_form::ImportForm;
 use crate::form::let_form::LetForm;
+use crate::form::sig_form::SigForm;
+use crate::form::type_form::TypeForm;
 use crate::form::types_form::TypesForm;
+use crate::form::val_form::ValForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -29,7 +31,9 @@ pub enum ProdFormValue {
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
     AppForm(Box<AppForm>),
-    DefForm(Box<DefForm>),
+    TypeForm(Box<TypeForm>),
+    SigForm(Box<SigForm>),
+    ValForm(Box<ValForm>),
     ImportForm(Box<ImportForm>),
     ExportForm(Box<ExportForm>),
 }
@@ -57,7 +61,9 @@ impl ProdFormValue {
             ProdFormValue::CaseForm(form) => form.to_string(),
             ProdFormValue::LetForm(form) => form.to_string(),
             ProdFormValue::AppForm(form) => form.to_string(),
-            ProdFormValue::DefForm(form) => form.to_string(),
+            ProdFormValue::TypeForm(form) => form.to_string(),
+            ProdFormValue::SigForm(form) => form.to_string(),
+            ProdFormValue::ValForm(form) => form.to_string(),
             ProdFormValue::ImportForm(form) => form.to_string(),
             ProdFormValue::ExportForm(form) => form.to_string(),
         }
@@ -156,8 +162,12 @@ impl ProdForm {
                         prod.values.push(ProdFormValue::LetForm(Box::new(form)));
                     } else if let Ok(form) = AppForm::from_form(&form) {
                         prod.values.push(ProdFormValue::AppForm(Box::new(form)))
-                    } else if let Ok(form) = DefForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::DefForm(Box::new(form)))
+                    } else if let Ok(form) = TypeForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::TypeForm(Box::new(form)))
+                    } else if let Ok(form) = SigForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::SigForm(Box::new(form)))
+                    } else if let Ok(form) = ValForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::ValForm(Box::new(form)))
                     } else if let Ok(form) = ImportForm::from_form(&form) {
                         prod.values.push(ProdFormValue::ImportForm(Box::new(form)))
                     } else if let Ok(form) = ExportForm::from_form(&form) {

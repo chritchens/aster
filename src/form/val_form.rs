@@ -5,22 +5,17 @@ use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::ProdForm;
-use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::is_qualified;
-use crate::syntax::{is_type_keyword, is_type_symbol, is_value_symbol};
+use crate::syntax::{is_qualified, is_value_symbol};
 use crate::token::Tokens;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum DefFormValue {
+pub enum ValFormValue {
     Empty,
     Prim(String),
-    TypeKeyword(String),
-    TypeSymbol(String),
     ValueSymbol(String),
-    TypesForm(Box<TypesForm>),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
     LetForm(Box<LetForm>),
@@ -28,47 +23,44 @@ pub enum DefFormValue {
     CaseForm(Box<CaseForm>),
 }
 
-impl Default for DefFormValue {
-    fn default() -> DefFormValue {
-        DefFormValue::Empty
+impl Default for ValFormValue {
+    fn default() -> ValFormValue {
+        ValFormValue::Empty
     }
 }
 
-impl DefFormValue {
+impl ValFormValue {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            DefFormValue::Empty => "()".into(),
-            DefFormValue::Prim(prim) => prim.clone(),
-            DefFormValue::TypeKeyword(keyword) => keyword.clone(),
-            DefFormValue::TypeSymbol(symbol) => symbol.clone(),
-            DefFormValue::ValueSymbol(symbol) => symbol.clone(),
-            DefFormValue::TypesForm(form) => form.to_string(),
-            DefFormValue::ProdForm(form) => form.to_string(),
-            DefFormValue::FunForm(form) => form.to_string(),
-            DefFormValue::LetForm(form) => form.to_string(),
-            DefFormValue::AppForm(form) => form.to_string(),
-            DefFormValue::CaseForm(form) => form.to_string(),
+            ValFormValue::Empty => "()".into(),
+            ValFormValue::Prim(prim) => prim.clone(),
+            ValFormValue::ValueSymbol(symbol) => symbol.clone(),
+            ValFormValue::ProdForm(form) => form.to_string(),
+            ValFormValue::FunForm(form) => form.to_string(),
+            ValFormValue::LetForm(form) => form.to_string(),
+            ValFormValue::AppForm(form) => form.to_string(),
+            ValFormValue::CaseForm(form) => form.to_string(),
         }
     }
 }
 
-impl fmt::Display for DefFormValue {
+impl fmt::Display for ValFormValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
-pub struct DefForm {
+pub struct ValForm {
     pub tokens: Box<Tokens>,
     pub name: String,
-    pub value: DefFormValue,
+    pub value: ValFormValue,
 }
 
-impl DefForm {
-    pub fn new() -> DefForm {
-        DefForm::default()
+impl ValForm {
+    pub fn new() -> ValForm {
+        ValForm::default()
     }
 
     pub fn file(&self) -> String {
@@ -81,77 +73,56 @@ impl DefForm {
 
     pub fn is_empty_literal(&self) -> bool {
         match self.value {
-            DefFormValue::Empty => true,
+            ValFormValue::Empty => true,
             _ => false,
         }
     }
 
     pub fn is_primitive(&self) -> bool {
         match self.value {
-            DefFormValue::Prim(_) => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_type_keyword(&self) -> bool {
-        match self.value {
-            DefFormValue::TypeKeyword(_) => true,
+            ValFormValue::Prim(_) => true,
             _ => false,
         }
     }
 
     pub fn is_value_symbol(&self) -> bool {
         match self.value {
-            DefFormValue::ValueSymbol(_) => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_type_symbol(&self) -> bool {
-        match self.value {
-            DefFormValue::TypeSymbol(_) => true,
+            ValFormValue::ValueSymbol(_) => true,
             _ => false,
         }
     }
 
     pub fn is_product_form(&self) -> bool {
         match self.value {
-            DefFormValue::ProdForm(_) => true,
+            ValFormValue::ProdForm(_) => true,
             _ => false,
         }
     }
 
     pub fn is_function_form(&self) -> bool {
         match self.value {
-            DefFormValue::FunForm(_) => true,
+            ValFormValue::FunForm(_) => true,
             _ => false,
         }
     }
 
     pub fn is_application_form(&self) -> bool {
         match self.value {
-            DefFormValue::AppForm(_) => true,
+            ValFormValue::AppForm(_) => true,
             _ => false,
         }
     }
 
     pub fn is_let_form(&self) -> bool {
         match self.value {
-            DefFormValue::LetForm(_) => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_types_form(&self) -> bool {
-        match self.value {
-            DefFormValue::TypesForm(_) => true,
+            ValFormValue::LetForm(_) => true,
             _ => false,
         }
     }
 
     pub fn is_case_form(&self) -> bool {
         match self.value {
-            DefFormValue::CaseForm(_) => true,
+            ValFormValue::CaseForm(_) => true,
             _ => false,
         }
     }
@@ -167,19 +138,11 @@ impl DefForm {
             || (self.is_application_form() && is_value_symbol(&self.name))
     }
 
-    pub fn is_type(&self) -> bool {
-        self.is_type_keyword()
-            || self.is_type_symbol()
-            || self.is_types_form()
-            || (self.is_let_form() && is_type_symbol(&self.name))
-            || (self.is_application_form() && is_type_symbol(&self.name))
-    }
-
-    pub fn from_form(form: &Form) -> Result<DefForm> {
-        if form.name != "def" {
+    pub fn from_form(form: &Form) -> Result<ValForm> {
+        if form.name != "val" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a def keyword".into(),
+                desc: "expected a val keyword".into(),
             }));
         }
 
@@ -191,8 +154,8 @@ impl DefForm {
             }));
         }
 
-        let mut def = DefForm::new();
-        def.tokens = form.tokens.clone();
+        let mut val = ValForm::new();
+        val.tokens = form.tokens.clone();
 
         match form.params[0].clone() {
             FormParam::ValueSymbol(symbol) => {
@@ -203,22 +166,12 @@ impl DefForm {
                     }));
                 }
 
-                def.name = symbol;
-            }
-            FormParam::TypeSymbol(symbol) => {
-                if is_qualified(&symbol) {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected an unqualified symbol".into(),
-                    }));
-                }
-
-                def.name = symbol;
+                val.name = symbol;
             }
             _ => {
                 return Err(Error::Syntactic(SyntacticError {
                     loc: form.loc(),
-                    desc: "expected a value symbol or a type symbol".into(),
+                    desc: "expected a value symbol".into(),
                 }));
             }
         }
@@ -226,50 +179,35 @@ impl DefForm {
         match form.params[1].clone() {
             FormParam::Empty => {}
             FormParam::Prim(prim) => {
-                def.value = DefFormValue::Prim(prim);
-            }
-            FormParam::TypeKeyword(keyword) => {
-                def.value = DefFormValue::TypeKeyword(keyword);
-            }
-            FormParam::TypeSymbol(symbol) => {
-                def.value = DefFormValue::TypeSymbol(symbol);
+                val.value = ValFormValue::Prim(prim);
             }
             FormParam::ValueSymbol(symbol) => {
-                def.value = DefFormValue::ValueSymbol(symbol);
+                val.value = ValFormValue::ValueSymbol(symbol);
             }
             FormParam::Form(form) => match form.name.as_str() {
                 "prod" => {
                     let form = ProdForm::from_form(&form)?;
-                    def.value = DefFormValue::ProdForm(Box::new(form));
+                    val.value = ValFormValue::ProdForm(Box::new(form));
                 }
                 "fun" => {
                     let form = FunForm::from_form(&form)?;
-                    def.value = DefFormValue::FunForm(Box::new(form));
+                    val.value = ValFormValue::FunForm(Box::new(form));
                 }
                 "let" => {
                     let form = LetForm::from_form(&form)?;
-                    def.value = DefFormValue::LetForm(Box::new(form));
+                    val.value = ValFormValue::LetForm(Box::new(form));
                 }
                 "case" => {
                     let form = CaseForm::from_form(&form)?;
-                    def.value = DefFormValue::CaseForm(Box::new(form));
+                    val.value = ValFormValue::CaseForm(Box::new(form));
                 }
-                x => {
-                    if is_type_symbol(x) || is_type_keyword(x) {
-                        if let Ok(form) = TypesForm::from_form(&form) {
-                            def.value = DefFormValue::TypesForm(Box::new(form));
-                        } else {
-                            return Err(Error::Syntactic(SyntacticError {
-                                loc: form.loc(),
-                                desc: "unexpected mixed form".to_string(),
-                            }));
-                        }
-                    } else if let Ok(form) = AppForm::from_form(&form) {
-                        def.value = DefFormValue::AppForm(Box::new(form));
+                _ => {
+                    if let Ok(form) = AppForm::from_form(&form) {
+                        val.value = ValFormValue::AppForm(Box::new(form));
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
-                            desc: "unexpected mixed form".to_string(),
+                            desc: "unexpected form with types".to_string(),
                         }));
                     }
                 }
@@ -282,28 +220,28 @@ impl DefForm {
             }
         }
 
-        Ok(def)
+        Ok(val)
     }
 
-    pub fn from_tokens(tokens: &Tokens) -> Result<DefForm> {
+    pub fn from_tokens(tokens: &Tokens) -> Result<ValForm> {
         let form = Form::from_tokens(tokens)?;
 
-        DefForm::from_form(&form)
+        ValForm::from_form(&form)
     }
 
-    pub fn from_str(s: &str) -> Result<DefForm> {
+    pub fn from_str(s: &str) -> Result<ValForm> {
         let tokens = Tokens::from_str(s)?;
 
-        DefForm::from_tokens(&tokens)
+        ValForm::from_tokens(&tokens)
     }
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        format!("(def {} {})", self.name, self.value.to_string())
+        format!("(val {} {})", self.name, self.value.to_string())
     }
 }
 
-impl fmt::Display for DefForm {
+impl fmt::Display for ValForm {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
@@ -312,12 +250,12 @@ impl fmt::Display for DefForm {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn def_form_from_str() {
-        use super::DefForm;
+    fn val_form_from_str() {
+        use super::ValForm;
 
-        let mut s = "(def empty ())";
+        let mut s = "(val empty ())";
 
-        let mut res = DefForm::from_str(s);
+        let mut res = ValForm::from_str(s);
 
         assert!(res.is_ok());
 
@@ -329,9 +267,9 @@ mod tests {
         assert!(form.is_empty_literal());
         assert!(form.is_value());
 
-        s = "(def x 10)";
+        s = "(val x 10)";
 
-        res = DefForm::from_str(s);
+        res = ValForm::from_str(s);
 
         assert!(res.is_ok());
 
@@ -343,9 +281,9 @@ mod tests {
         assert!(form.is_primitive());
         assert!(form.is_value());
 
-        s = "(def w x)";
+        s = "(val w x)";
 
-        res = DefForm::from_str(s);
+        res = ValForm::from_str(s);
 
         assert!(res.is_ok());
 
@@ -357,9 +295,9 @@ mod tests {
         assert!(form.is_value_symbol());
         assert!(form.is_value());
 
-        s = "(def s (math.+ (prod 10.323 1)))";
+        s = "(val s (math.+ (prod 10.323 1)))";
 
-        res = DefForm::from_str(s);
+        res = ValForm::from_str(s);
 
         assert!(res.is_ok());
 
@@ -374,9 +312,9 @@ mod tests {
         assert!(form.is_application_form());
         assert!(form.is_value());
 
-        s = "(def p (prod a b c d))";
+        s = "(val p (prod a b c d))";
 
-        res = DefForm::from_str(s);
+        res = ValForm::from_str(s);
 
         assert!(res.is_ok());
 
@@ -388,9 +326,9 @@ mod tests {
         assert!(form.is_product_form());
         assert!(form.is_value());
 
-        s = "(def p (prod a b (f (prod x y 10)) 11))";
+        s = "(val p (prod a b (f (prod x y 10)) 11))";
 
-        res = DefForm::from_str(s);
+        res = ValForm::from_str(s);
 
         assert!(res.is_ok());
 
@@ -405,37 +343,9 @@ mod tests {
         assert!(form.is_product_form());
         assert!(form.is_value());
 
-        s = "(def C Char)";
+        s = "(val err (let (type StringError String) (unwrap \"error\")))";
 
-        res = DefForm::from_str(s);
-
-        assert!(res.is_ok());
-
-        form = res.unwrap();
-
-        assert_eq!(form.name, "C".to_string());
-        assert_eq!(form.value.to_string(), "Char".to_string());
-        assert_eq!(form.to_string(), s.to_string());
-        assert!(form.is_type_keyword());
-        assert!(form.is_type());
-
-        s = "(def Result (Sum T E))";
-
-        res = DefForm::from_str(s);
-
-        assert!(res.is_ok());
-
-        form = res.unwrap();
-
-        assert_eq!(form.name, "Result".to_string());
-        assert_eq!(form.value.to_string(), "(Sum T E)".to_string());
-        assert_eq!(form.to_string(), s.to_string());
-        assert!(form.is_types_form());
-        assert!(form.is_type());
-
-        s = "(def err (let (def StringError String) (unwrap \"error\")))";
-
-        res = DefForm::from_str(s);
+        res = ValForm::from_str(s);
 
         assert!(res.is_ok());
 
@@ -444,15 +354,15 @@ mod tests {
         assert_eq!(form.name, "err".to_string());
         assert_eq!(
             form.value.to_string(),
-            "(let (def StringError String) (unwrap \"error\"))".to_string()
+            "(let (type StringError String) (unwrap \"error\"))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_let_form());
         assert!(form.is_value());
 
-        s = "(def unwrap (fun res (case res (match T id) (match E panic))))";
+        s = "(val unwrap (fun res (case res (match T id) (match E panic))))";
 
-        res = DefForm::from_str(s);
+        res = ValForm::from_str(s);
 
         assert!(res.is_ok());
 

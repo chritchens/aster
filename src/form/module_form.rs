@@ -1,10 +1,13 @@
 use crate::error::{Error, SyntacticError};
-use crate::form::def_form::DefForm;
+use crate::form::attrs_form::AttrsForm;
 use crate::form::export_form::ExportForm;
 use crate::form::form::{Form, FormParam};
 use crate::form::import_form::ImportForm;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
+use crate::form::sig_form::SigForm;
+use crate::form::type_form::TypeForm;
 use crate::form::types_form::TypesForm;
+use crate::form::val_form::ValForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_qualified, is_value_symbol};
@@ -50,7 +53,10 @@ pub enum ModuleFormEntry {
     Empty,
     ImportForm(Box<ImportForm>),
     ExportForm(Box<ExportForm>),
-    DefForm(Box<DefForm>),
+    AttrsForm(Box<AttrsForm>),
+    TypeForm(Box<TypeForm>),
+    SigForm(Box<SigForm>),
+    ValForm(Box<ValForm>),
 }
 
 impl Default for ModuleFormEntry {
@@ -66,7 +72,10 @@ impl ModuleFormEntry {
             ModuleFormEntry::Empty => "()".into(),
             ModuleFormEntry::ImportForm(form) => form.to_string(),
             ModuleFormEntry::ExportForm(form) => form.to_string(),
-            ModuleFormEntry::DefForm(form) => form.to_string(),
+            ModuleFormEntry::AttrsForm(form) => form.to_string(),
+            ModuleFormEntry::TypeForm(form) => form.to_string(),
+            ModuleFormEntry::SigForm(form) => form.to_string(),
+            ModuleFormEntry::ValForm(form) => form.to_string(),
         }
     }
 }
@@ -120,13 +129,46 @@ impl ModuleForm {
         }
     }
 
-    pub fn entry_as_definition(&self, idx: usize) -> Option<Box<DefForm>> {
+    pub fn entry_as_type(&self, idx: usize) -> Option<Box<TypeForm>> {
         if idx > self.entries.len() - 1 {
             return None;
         }
 
         match self.entries[idx].clone() {
-            ModuleFormEntry::DefForm(form) => Some(form),
+            ModuleFormEntry::TypeForm(form) => Some(form),
+            _ => None,
+        }
+    }
+
+    pub fn entry_as_attributes(&self, idx: usize) -> Option<Box<AttrsForm>> {
+        if idx > self.entries.len() - 1 {
+            return None;
+        }
+
+        match self.entries[idx].clone() {
+            ModuleFormEntry::AttrsForm(form) => Some(form),
+            _ => None,
+        }
+    }
+
+    pub fn entry_as_signature(&self, idx: usize) -> Option<Box<SigForm>> {
+        if idx > self.entries.len() - 1 {
+            return None;
+        }
+
+        match self.entries[idx].clone() {
+            ModuleFormEntry::SigForm(form) => Some(form),
+            _ => None,
+        }
+    }
+
+    pub fn entry_as_valinition(&self, idx: usize) -> Option<Box<ValForm>> {
+        if idx > self.entries.len() - 1 {
+            return None;
+        }
+
+        match self.entries[idx].clone() {
+            ModuleFormEntry::ValForm(form) => Some(form),
             _ => None,
         }
     }
@@ -245,13 +287,22 @@ impl ModuleForm {
                         ProdFormValue::ExportForm(form) => {
                             self.entries.push(ModuleFormEntry::ExportForm(form));
                         }
-                        ProdFormValue::DefForm(form) => {
-                            self.entries.push(ModuleFormEntry::DefForm(form));
+                        ProdFormValue::AttrsForm(form) => {
+                            self.entries.push(ModuleFormEntry::AttrsForm(form));
+                        }
+                        ProdFormValue::TypeForm(form) => {
+                            self.entries.push(ModuleFormEntry::TypeForm(form));
+                        }
+                        ProdFormValue::SigForm(form) => {
+                            self.entries.push(ModuleFormEntry::SigForm(form));
+                        }
+                        ProdFormValue::ValForm(form) => {
+                            self.entries.push(ModuleFormEntry::ValForm(form));
                         }
                         _ => {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
-                                desc: "expected a product of import, export or definition forms"
+                                desc: "expected a product of import, export or valinition forms"
                                     .into(),
                             }));
                         }
@@ -261,7 +312,7 @@ impl ModuleForm {
             _ => {
                 return Err(Error::Syntactic(SyntacticError {
                     loc: form.loc(),
-                    desc: "expected an empty literal or a product of definition forms".into(),
+                    desc: "expected an empty literal or a product of valinition forms".into(),
                 }));
             }
         }
@@ -282,7 +333,7 @@ impl ModuleForm {
         if len < 2 || len > 3 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a name, an optional product of type parameters and a product of definitions".into(),
+                desc: "expected a name, an optional product of type parameters and a product of valinitions".into(),
             }));
         }
 
@@ -385,10 +436,10 @@ mod tests {
 
         s = "
         (module x (prod T E) (prod
-            (def Result (Sum T E))
+            (type Result (Sum T E))
             
-            (def unwrap (Fun (Result T E) T))
-            (def unwrap (fun res 
+            (sig unwrap (Fun (Result T E) T))
+            (val unwrap (fun res 
                 (case res 
                     (match t id)
                     (match e panic))))
@@ -405,42 +456,43 @@ mod tests {
         assert_eq!(form.entries.len(), 3);
         assert_eq!(
             form.entries[0].to_string(),
-            "(def Result (Sum T E))".to_string()
+            "(type Result (Sum T E))".to_string()
         );
         assert!(form.entry_as_import(0).is_none());
         assert!(form.entry_as_export(0).is_none());
-        assert!(form.entry_as_definition(0).is_some());
-        assert!(form.entry_as_definition(0).unwrap().is_type());
-        assert!(form.entry_as_definition(0).unwrap().is_types_form());
+        assert!(form.entry_as_type(0).is_some());
+        assert!(form.entry_as_type(0).unwrap().is_types_form());
+        assert!(form.entry_as_valinition(0).is_none());
         assert_eq!(
             form.entries[1].to_string(),
-            "(def unwrap (Fun (Result T E) T))".to_string()
+            "(sig unwrap (Fun (Result T E) T))".to_string()
         );
         assert!(form.entry_as_import(1).is_none());
         assert!(form.entry_as_export(1).is_none());
-        assert!(form.entry_as_definition(1).is_some());
-        assert!(form.entry_as_definition(1).unwrap().is_type());
-        assert!(form.entry_as_definition(1).unwrap().is_types_form());
+        assert!(form.entry_as_type(1).is_none());
+        assert!(form.entry_as_signature(1).is_some());
+        assert!(form.entry_as_signature(1).is_some());
+        assert!(form.entry_as_valinition(1).is_none());
         assert_eq!(
             form.entries[2].to_string(),
-            "(def unwrap (fun res (case res (match t id) (match e panic))))".to_string()
+            "(val unwrap (fun res (case res (match t id) (match e panic))))".to_string()
         );
         assert!(form.entry_as_import(2).is_none());
         assert!(form.entry_as_export(2).is_none());
-        assert!(form.entry_as_definition(2).is_some());
-        assert!(form.entry_as_definition(2).unwrap().is_value());
-        assert!(form.entry_as_definition(2).unwrap().is_function_form());
+        assert!(form.entry_as_valinition(2).is_some());
+        assert!(form.entry_as_valinition(2).unwrap().is_value());
+        assert!(form.entry_as_valinition(2).unwrap().is_function_form());
 
         s = "
         (module main () (prod
-            (def StringErr String)
+            (type StringErr String)
             (import x (prod String StringErr) (prod Result unwrap))
             (import std.io _ println)
 
-            (def main (Fun IO IO))
-            (def main (fun io (let 
-                (def text String)
-                (def text \"Hello, World!\")
+            (sig main (Fun IO IO))
+            (val main (fun io (let 
+                (sig text String)
+                (val text \"Hello, World!\")
                 (println (prod io (unwrap text))))))
         ))";
 
@@ -456,38 +508,38 @@ mod tests {
         assert_eq!(form.entries.len(), 5);
         assert_eq!(
             form.entries[0].to_string(),
-            "(def StringErr String)".to_string()
+            "(type StringErr String)".to_string()
         );
         assert!(form.entry_as_import(0).is_none());
         assert!(form.entry_as_export(0).is_none());
-        assert!(form.entry_as_definition(0).is_some());
-        assert!(form.entry_as_definition(0).unwrap().is_type());
-        assert!(form.entry_as_definition(0).unwrap().is_type_keyword());
+        assert!(form.entry_as_type(0).is_some());
+        assert!(form.entry_as_type(0).unwrap().is_type_keyword());
+        assert!(form.entry_as_valinition(0).is_none());
         assert_eq!(
             form.entries[1].to_string(),
             "(import x (prod String StringErr) (prod Result unwrap))".to_string()
         );
         assert!(form.entry_as_import(1).is_some());
         assert!(form.entry_as_export(1).is_none());
-        assert!(form.entry_as_definition(1).is_none());
+        assert!(form.entry_as_valinition(1).is_none());
         assert_eq!(
             form.entries[2].to_string(),
             "(import std.io _ println)".to_string()
         );
         assert!(form.entry_as_import(2).is_some());
         assert!(form.entry_as_export(2).is_none());
-        assert!(form.entry_as_definition(2).is_none());
+        assert!(form.entry_as_valinition(2).is_none());
 
         s = "
         (module main (prod
-            (def StringErr String)
+            (type StringErr String)
             (import x (prod String StringErr) (prod Result unwrap))
             (import std.io _ println)
 
-            (def main (Fun IO IO))
-            (def main (fun io (let
-                (def text String)
-                (def text \"Hello, World!\")
+            (sig main (Fun IO IO))
+            (val main (fun io (let
+                (sig text String)
+                (val text \"Hello, World!\")
                 (println (prod io (unwrap text))))))
         ))";
 
@@ -502,7 +554,7 @@ mod tests {
         assert_eq!(form.entries.len(), 5);
         assert_eq!(
             form.entries[0].to_string(),
-            "(def StringErr String)".to_string()
+            "(type StringErr String)".to_string()
         );
         assert_eq!(
             form.entries[1].to_string(),

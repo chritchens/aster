@@ -1,9 +1,11 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::app_form::AppForm;
 use crate::form::attrs_form::AttrsForm;
-use crate::form::def_form::DefForm;
 use crate::form::form::{Form, FormParam};
 use crate::form::import_form::ImportForm;
+use crate::form::sig_form::SigForm;
+use crate::form::type_form::TypeForm;
+use crate::form::val_form::ValForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -14,7 +16,9 @@ pub enum LetFormEntry {
     Empty,
     ImportForm(Box<ImportForm>),
     AttrsForm(Box<AttrsForm>),
-    DefForm(Box<DefForm>),
+    TypeForm(Box<TypeForm>),
+    SigForm(Box<SigForm>),
+    ValForm(Box<ValForm>),
 }
 
 impl Default for LetFormEntry {
@@ -30,7 +34,9 @@ impl LetFormEntry {
             LetFormEntry::Empty => "()".into(),
             LetFormEntry::ImportForm(form) => form.to_string(),
             LetFormEntry::AttrsForm(form) => form.to_string(),
-            LetFormEntry::DefForm(form) => form.to_string(),
+            LetFormEntry::TypeForm(form) => form.to_string(),
+            LetFormEntry::SigForm(form) => form.to_string(),
+            LetFormEntry::ValForm(form) => form.to_string(),
         }
     }
 }
@@ -72,6 +78,28 @@ impl LetForm {
         }
     }
 
+    pub fn entry_as_type(&self, idx: usize) -> Option<Box<TypeForm>> {
+        if idx > self.entries.len() - 1 {
+            return None;
+        }
+
+        match self.entries[idx].clone() {
+            LetFormEntry::TypeForm(form) => Some(form),
+            _ => None,
+        }
+    }
+
+    pub fn entry_as_signature(&self, idx: usize) -> Option<Box<SigForm>> {
+        if idx > self.entries.len() - 1 {
+            return None;
+        }
+
+        match self.entries[idx].clone() {
+            LetFormEntry::SigForm(form) => Some(form),
+            _ => None,
+        }
+    }
+
     pub fn entry_as_attributes(&self, idx: usize) -> Option<Box<AttrsForm>> {
         if idx > self.entries.len() - 1 {
             return None;
@@ -83,13 +111,13 @@ impl LetForm {
         }
     }
 
-    pub fn entry_as_definition(&self, idx: usize) -> Option<Box<DefForm>> {
+    pub fn entry_as_valinition(&self, idx: usize) -> Option<Box<ValForm>> {
         if idx > self.entries.len() - 1 {
             return None;
         }
 
         match self.entries[idx].clone() {
-            LetFormEntry::DefForm(form) => Some(form),
+            LetFormEntry::ValForm(form) => Some(form),
             _ => None,
         }
     }
@@ -157,12 +185,18 @@ impl LetForm {
                             let_form
                                 .entries
                                 .push(LetFormEntry::AttrsForm(Box::new(form)));
-                        } else if let Ok(form) = DefForm::from_form(&form) {
-                            let_form.entries.push(LetFormEntry::DefForm(Box::new(form)));
+                        } else if let Ok(form) = TypeForm::from_form(&form) {
+                            let_form
+                                .entries
+                                .push(LetFormEntry::TypeForm(Box::new(form)));
+                        } else if let Ok(form) = SigForm::from_form(&form) {
+                            let_form.entries.push(LetFormEntry::SigForm(Box::new(form)));
+                        } else if let Ok(form) = ValForm::from_form(&form) {
+                            let_form.entries.push(LetFormEntry::ValForm(Box::new(form)));
                         } else {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
-                                desc: "expected a definition form".into(),
+                                desc: "expected a valinition form".into(),
                             }));
                         }
                     }
@@ -259,21 +293,21 @@ mod tests {
             (import res () Result)
 
             (attrs Result union)
-            (def Result (Sum T E))
+            (type Result (Sum T E))
 
             (attrs unwrap inline)
-            (def unwrap (Fun (Result T E) T))
-            (def unwrap (fun res (case res (match T id) (match E panic))))
+            (sig unwrap (Fun (Result T E) T))
+            (val unwrap (fun res (case res (match T id) (match E panic))))
 
-            (def StringError String)
-            (def StringResult (Result String StringResult))
+            (type StringError String)
+            (type StringResult (Result String StringResult))
 
-            (def res String)
-            (def res (unwrap \"res\"))
-            (def x StringError)
-            (def x \"res2\")
-            (def res2 String)
-            (def res2 (unwrap x)) # will panic
+            (sig res String)
+            (val res (unwrap \"res\"))
+            (sig x StringError)
+            (val x \"res2\")
+            (sig res2 String)
+            (val res2 (unwrap x)) # will panic
 
             # return as a synonym of `id`
             (return (prod res res2)))";
@@ -304,16 +338,16 @@ mod tests {
         assert!(form.entry_as_attributes(3).unwrap().is_value_attributes());
         assert_eq!(
             form.entries[5].to_string(),
-            "(def unwrap (fun res (case res (match T id) (match E panic))))".to_string()
+            "(val unwrap (fun res (case res (match T id) (match E panic))))".to_string()
         );
-        assert!(form.entry_as_definition(5).unwrap().is_function_form());
-        assert!(form.entry_as_definition(5).unwrap().is_value());
+        assert!(form.entry_as_valinition(5).unwrap().is_function_form());
+        assert!(form.entry_as_valinition(5).unwrap().is_value());
         assert_eq!(
             form.entries[9].to_string(),
-            "(def res (unwrap \"res\"))".to_string()
+            "(val res (unwrap \"res\"))".to_string()
         );
-        assert!(form.entry_as_definition(9).unwrap().is_application_form());
-        assert!(form.entry_as_definition(9).unwrap().is_value());
+        assert!(form.entry_as_valinition(9).unwrap().is_application_form());
+        assert!(form.entry_as_valinition(9).unwrap().is_value());
         assert_eq!(
             form.value.to_string(),
             "(return (prod res res2))".to_string()

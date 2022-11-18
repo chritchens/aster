@@ -616,7 +616,7 @@ mod tests {
             _ => panic!("invalid branch"),
         }
 
-        s = "(def fun f b c \n\t\t(g a -b1\n\t\t\t\t(h 3 b +5.8E+36) # this is a comment\n\t\t\t\t(k 6 7 c)))\n(f 1 4 8)\n";
+        s = "(val fun f b c \n\t\t(g a -b1\n\t\t\t\t(h 3 b +5.8E+36) # this is a comment\n\t\t\t\t(k 6 7 c)))\n(f 1 4 8)\n";
 
         res = Tokens::from_str(s);
 
