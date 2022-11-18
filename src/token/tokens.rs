@@ -650,17 +650,14 @@ mod tests {
 
         let tokens = res.unwrap();
 
-        assert_eq!(tokens.len(), 43);
-        assert_eq!(tokens[0].kind, TokenKind::DocComment);
-        assert_eq!(tokens[1].kind, TokenKind::FormStart);
-        assert_eq!(tokens[2].kind, TokenKind::Keyword);
-        assert_eq!(tokens[3].kind, TokenKind::PathSymbol);
-        assert_eq!(tokens[15].kind, TokenKind::Keyword);
-        assert_eq!(tokens[17].kind, TokenKind::ValueSymbol);
-        assert_eq!(tokens[20].kind, TokenKind::Keyword);
-        assert_eq!(tokens[33].kind, TokenKind::PathSymbol);
-        assert_eq!(tokens[34].kind, TokenKind::CharLiteral);
-        assert_eq!(tokens[34].chunks[0].content, "'''".to_string());
-        assert_eq!(tokens[35].kind, TokenKind::StringLiteral);
+        assert_eq!(tokens.len(), 45);
+        assert_eq!(tokens[0].kind, TokenKind::FormStart);
+        assert_eq!(tokens[1].kind, TokenKind::Keyword);
+        assert_eq!(tokens[5].kind, TokenKind::DocComment);
+        assert_eq!(tokens[8].kind, TokenKind::PathSymbol);
+        assert_eq!(tokens[14].kind, TokenKind::ValueSymbol);
+        assert_eq!(tokens[37].kind, TokenKind::CharLiteral);
+        assert_eq!(tokens[37].chunks[0].content, "'''".to_string());
+        assert_eq!(tokens[38].kind, TokenKind::StringLiteral);
     }
 }

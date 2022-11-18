@@ -1,9 +1,9 @@
-#! Hello World example
+(module main (prod
+  #! Hello World example
 
-(import std.io)
-(import std.string)
+  (import std.io)
+  (import std.string)
 
-(def sig main (Fun IO IO))
-(def fun main io (println io "Hello World!"))
-
-(main stdIO)
+  (def main (Fun IO IO))
+  (def main (fun io (println io "Hello World!")))
+))

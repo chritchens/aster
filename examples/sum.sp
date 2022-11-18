@@ -1,9 +1,10 @@
-#! Sum example
+(module main (prod
+  #! Sum example
 
-(import std.io () io)
-(import std.math (prod sum))
+  (import std.io _ _ io)
+  (import std.math _ (prod +))
 
-(def sig main (Fun IO IO))
-(def fun main io (io.println io (sum 1 2)))
-
-(main io.stdIO)
+  (def main (Fun IO IO))
+  (def main (fun io 
+    (io.println io (+ 1 2))))
+))
