@@ -2,7 +2,7 @@
   #! Sum example
 
   (import std.io _ _ io)
-  (import std.math _ (prod +))
+  (import std.math _ +)
 
   (sig main (Fun IO IO))
   (val main (fun io 
