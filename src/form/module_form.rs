@@ -162,7 +162,7 @@ impl ModuleForm {
         }
     }
 
-    pub fn entry_as_valinition(&self, idx: usize) -> Option<Box<ValForm>> {
+    pub fn entry_as_value(&self, idx: usize) -> Option<Box<ValForm>> {
         if idx > self.entries.len() - 1 {
             return None;
         }
@@ -302,7 +302,7 @@ impl ModuleForm {
                         _ => {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
-                                desc: "expected a product of import, export or valinition forms"
+                                desc: "expected a product of import, export or value forms"
                                     .into(),
                             }));
                         }
@@ -312,7 +312,7 @@ impl ModuleForm {
             _ => {
                 return Err(Error::Syntactic(SyntacticError {
                     loc: form.loc(),
-                    desc: "expected an empty literal or a product of valinition forms".into(),
+                    desc: "expected an empty literal or a product of value forms".into(),
                 }));
             }
         }
@@ -333,7 +333,7 @@ impl ModuleForm {
         if len < 2 || len > 3 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a name, an optional product of type parameters and a product of valinitions".into(),
+                desc: "expected a name, an optional product of type parameters and a product of values".into(),
             }));
         }
 
@@ -462,7 +462,7 @@ mod tests {
         assert!(form.entry_as_export(0).is_none());
         assert!(form.entry_as_type(0).is_some());
         assert!(form.entry_as_type(0).unwrap().is_types_form());
-        assert!(form.entry_as_valinition(0).is_none());
+        assert!(form.entry_as_value(0).is_none());
         assert_eq!(
             form.entries[1].to_string(),
             "(sig unwrap (Fun (Result T E) T))".to_string()
@@ -472,16 +472,16 @@ mod tests {
         assert!(form.entry_as_type(1).is_none());
         assert!(form.entry_as_signature(1).is_some());
         assert!(form.entry_as_signature(1).is_some());
-        assert!(form.entry_as_valinition(1).is_none());
+        assert!(form.entry_as_value(1).is_none());
         assert_eq!(
             form.entries[2].to_string(),
             "(val unwrap (fun res (case res (match t id) (match e panic))))".to_string()
         );
         assert!(form.entry_as_import(2).is_none());
         assert!(form.entry_as_export(2).is_none());
-        assert!(form.entry_as_valinition(2).is_some());
-        assert!(form.entry_as_valinition(2).unwrap().is_value());
-        assert!(form.entry_as_valinition(2).unwrap().is_function_form());
+        assert!(form.entry_as_value(2).is_some());
+        assert!(form.entry_as_value(2).unwrap().is_value());
+        assert!(form.entry_as_value(2).unwrap().is_function_form());
 
         s = "
         (module main () (prod
@@ -514,21 +514,21 @@ mod tests {
         assert!(form.entry_as_export(0).is_none());
         assert!(form.entry_as_type(0).is_some());
         assert!(form.entry_as_type(0).unwrap().is_type_keyword());
-        assert!(form.entry_as_valinition(0).is_none());
+        assert!(form.entry_as_value(0).is_none());
         assert_eq!(
             form.entries[1].to_string(),
             "(import x (prod String StringErr) (prod Result unwrap))".to_string()
         );
         assert!(form.entry_as_import(1).is_some());
         assert!(form.entry_as_export(1).is_none());
-        assert!(form.entry_as_valinition(1).is_none());
+        assert!(form.entry_as_value(1).is_none());
         assert_eq!(
             form.entries[2].to_string(),
             "(import std.io _ println)".to_string()
         );
         assert!(form.entry_as_import(2).is_some());
         assert!(form.entry_as_export(2).is_none());
-        assert!(form.entry_as_valinition(2).is_none());
+        assert!(form.entry_as_value(2).is_none());
 
         s = "
         (module main (prod
