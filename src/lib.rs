@@ -1,9 +1,8 @@
 pub mod chunk;
 pub mod error;
+pub mod form;
 pub mod loc;
 pub mod result;
-//pub mod symbol_table;
-pub mod form;
 pub mod syntax;
 pub mod token;
 pub mod typing;
