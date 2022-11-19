@@ -258,6 +258,7 @@ impl FunForm {
         FunForm::from_form(&form)
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<FunForm> {
         let tokens = Tokens::from_str(s)?;
 

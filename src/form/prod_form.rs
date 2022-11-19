@@ -199,6 +199,7 @@ impl ProdForm {
         ProdForm::from_form(&form)
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<ProdForm> {
         let tokens = Tokens::from_str(s)?;
 

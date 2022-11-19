@@ -238,6 +238,7 @@ impl LetForm {
         LetForm::from_form(&form)
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<LetForm> {
         let tokens = Tokens::from_str(s)?;
 

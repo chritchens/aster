@@ -60,6 +60,7 @@ impl CharChunks {
         }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Self {
         let mut line = 0;
         let mut pos = 0;
@@ -256,6 +257,7 @@ impl StringChunks {
         scs
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Self {
         StringChunks::from_char_chunks(CharChunks::from_str(s))
     }

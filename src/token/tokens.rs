@@ -37,6 +37,7 @@ impl Tokens {
         self.0.push(token)
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<Self> {
         let chunks = StringChunks::from_str(s);
         let len = chunks.len();
