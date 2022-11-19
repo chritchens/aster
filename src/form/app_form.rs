@@ -252,7 +252,7 @@ mod tests {
 
         res = AppForm::from_str(s);
 
-        //assert!(res.is_ok());
+        assert!(res.is_ok());
 
         form = res.unwrap();
 

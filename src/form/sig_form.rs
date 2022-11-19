@@ -203,7 +203,7 @@ mod tests {
 
         let mut res = SigForm::from_str(s);
 
-        //assert!(res.is_ok());
+        assert!(res.is_ok());
 
         let mut form = res.unwrap();
 
