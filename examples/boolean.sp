@@ -24,7 +24,7 @@
       (match false (fun p 0)))))
 
   (sig printBoolAsUInt (Fun (Prod IO Bool) IO))
-  (val printBoolAsUInt (fun (prod io pred)
+  (val printBoolAsUInt (fun (prod pred io)
     (case pred
       (match true (fun t 
         (printf io "true as uint: {}\n" (boolToUInt t))))
@@ -32,5 +32,5 @@
         (printf io "false as uint: {}\n" (boolToUInt f)))))))
 
   (sig main (Fun IO IO))
-  (val main (fun io (printBoolAsUInt (prod io false))))
+  (val main (fun io (printBoolAsUInt (prod false io))))
 ))
