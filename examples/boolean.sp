@@ -29,8 +29,8 @@
       (match true (fun t 
         (printf io "true as uint: {}\n" (boolToUInt t))))
       (match false (fun f 
-        (printf io "false as uint: {}" (boolToUInt f)))))))
+        (printf io "false as uint: {}\n" (boolToUInt f)))))))
 
   (sig main (Fun IO IO))
-  (val main (fun io (printBoolAsUInt io false)))
+  (val main (fun io (printBoolAsUInt (prod io false))))
 ))
