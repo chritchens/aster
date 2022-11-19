@@ -183,6 +183,14 @@ impl fmt::Display for ExportForm {
     }
 }
 
+impl std::str::FromStr for ExportForm {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

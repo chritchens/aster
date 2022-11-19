@@ -265,6 +265,14 @@ impl fmt::Display for LetForm {
     }
 }
 
+impl std::str::FromStr for LetForm {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

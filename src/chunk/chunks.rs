@@ -1,5 +1,7 @@
 use crate::chunk::{CharChunk, StringChunk};
+use crate::error::Error;
 use crate::loc::Loc;
+use crate::result::Result;
 use crate::syntax::is_separator_char;
 use crate::syntax::{COMMENT_MARK, COMMENT_MARK_POSTFIX};
 use std::convert;
@@ -111,6 +113,14 @@ impl CharChunks {
 impl fmt::Display for CharChunks {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
+    }
+}
+
+impl std::str::FromStr for CharChunks {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Ok(Self::from_str(s))
     }
 }
 
@@ -279,6 +289,14 @@ impl StringChunks {
 impl fmt::Display for StringChunks {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
+    }
+}
+
+impl std::str::FromStr for StringChunks {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Ok(Self::from_str(s))
     }
 }
 

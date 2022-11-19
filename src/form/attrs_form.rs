@@ -203,6 +203,14 @@ impl fmt::Display for AttrsForm {
     }
 }
 
+impl std::str::FromStr for AttrsForm {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

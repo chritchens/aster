@@ -193,6 +193,14 @@ impl fmt::Display for TypeForm {
     }
 }
 
+impl std::str::FromStr for TypeForm {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

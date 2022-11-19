@@ -217,6 +217,14 @@ impl fmt::Display for AppForm {
     }
 }
 
+impl std::str::FromStr for AppForm {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

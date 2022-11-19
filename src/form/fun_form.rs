@@ -281,6 +281,14 @@ impl fmt::Display for FunForm {
     }
 }
 
+impl std::str::FromStr for FunForm {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

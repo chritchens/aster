@@ -163,6 +163,14 @@ impl fmt::Display for TypesForm {
     }
 }
 
+impl std::str::FromStr for TypesForm {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

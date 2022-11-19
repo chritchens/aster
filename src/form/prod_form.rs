@@ -218,6 +218,14 @@ impl fmt::Display for ProdForm {
     }
 }
 
+impl std::str::FromStr for ProdForm {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

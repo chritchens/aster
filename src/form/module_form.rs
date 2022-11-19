@@ -398,6 +398,14 @@ impl fmt::Display for ModuleForm {
     }
 }
 
+impl std::str::FromStr for ModuleForm {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]

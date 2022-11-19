@@ -416,6 +416,14 @@ impl fmt::Display for ImportForm {
     }
 }
 
+impl std::str::FromStr for ImportForm {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
