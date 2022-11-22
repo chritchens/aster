@@ -145,6 +145,13 @@ impl ValForm {
             }
             ValFormValue::FunForm(form) => {
                 form.check_params_use()?;
+                params.extend(
+                    form.params
+                        .iter()
+                        .map(|p| p.to_string())
+                        .collect::<Vec<String>>()
+                        .clone(),
+                );
                 form.check_linearly_ordered_on_params(params)?;
             }
             ValFormValue::LetForm(form) => {

@@ -53,6 +53,7 @@ pub enum FunFormBody {
     AppForm(Box<AppForm>),
     LetForm(Box<LetForm>),
     CaseForm(Box<CaseForm>),
+    FunForm(Box<FunForm>),
 }
 
 impl Default for FunFormBody {
@@ -75,6 +76,7 @@ impl FunFormBody {
             FunFormBody::AppForm(form) => form.to_string(),
             FunFormBody::LetForm(form) => form.to_string(),
             FunFormBody::CaseForm(form) => form.to_string(),
+            FunFormBody::FunForm(form) => form.to_string(),
         }
     }
 }
@@ -170,6 +172,17 @@ impl FunForm {
                 form.check_params_use()?;
                 form.check_linearly_ordered_on_params(params)?;
             }
+            FunFormBody::FunForm(form) => {
+                form.check_params_use()?;
+                params.extend(
+                    form.params
+                        .iter()
+                        .map(|p| p.to_string())
+                        .collect::<Vec<String>>()
+                        .clone(),
+                );
+                form.check_linearly_ordered_on_params(params)?;
+            }
         }
 
         params.clear();
@@ -180,10 +193,10 @@ impl FunForm {
     pub fn check_params_use(&self) -> Result<()> {
         let mut params = self
             .params
-            .clone()
             .iter()
             .map(|p| p.to_string())
-            .collect::<Vec<String>>();
+            .collect::<Vec<String>>()
+            .clone();
 
         self.check_linearly_ordered_on_params(&mut params)
     }
@@ -300,6 +313,8 @@ impl FunForm {
                     fun.body = FunFormBody::LetForm(Box::new(form));
                 } else if let Ok(form) = CaseForm::from_form(&form) {
                     fun.body = FunFormBody::CaseForm(Box::new(form));
+                } else if let Ok(form) = FunForm::from_form(&form) {
+                    fun.body = FunFormBody::FunForm(Box::new(form));
                 } else if let Ok(form) = AppForm::from_form(&form) {
                     fun.body = FunFormBody::AppForm(Box::new(form));
                 } else {
@@ -421,6 +436,21 @@ mod tests {
         assert_eq!(
             form.body.to_string(),
             "(math.+ (prod a b 10 (math.* (prod c d 10))))".to_string()
+        );
+        assert_eq!(form.to_string(), s.to_string());
+
+        s = "(fun (prod a b c d) (fun e (math.+ (prod a b 10 (math.* (prod c d e))))))";
+
+        res = FunForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.params_to_string(), "(prod a b c d)".to_string());
+        assert_eq!(
+            form.body.to_string(),
+            "(fun e (math.+ (prod a b 10 (math.* (prod c d e)))))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
     }
