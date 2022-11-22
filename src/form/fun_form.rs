@@ -180,8 +180,7 @@ impl FunForm {
                     form.params
                         .iter()
                         .map(|p| p.to_string())
-                        .collect::<Vec<String>>()
-                        .clone(),
+                        .collect::<Vec<String>>(),
                 );
                 form.check_linearly_ordered_on_params(params)?;
             }
@@ -197,8 +196,7 @@ impl FunForm {
             .params
             .iter()
             .map(|p| p.to_string())
-            .collect::<Vec<String>>()
-            .clone();
+            .collect::<Vec<String>>();
 
         self.check_linearly_ordered_on_params(&mut params)
     }

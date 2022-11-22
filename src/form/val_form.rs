@@ -149,8 +149,7 @@ impl ValForm {
                     form.params
                         .iter()
                         .map(|p| p.to_string())
-                        .collect::<Vec<String>>()
-                        .clone(),
+                        .collect::<Vec<String>>(),
                 );
                 form.check_linearly_ordered_on_params(params)?;
             }
