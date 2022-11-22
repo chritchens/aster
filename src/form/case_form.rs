@@ -91,6 +91,7 @@ pub enum CaseFormMatchAction {
     ValueSymbol(String),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
+    LetForm(Box<LetForm>),
 }
 
 impl CaseFormMatchAction {
@@ -105,6 +106,7 @@ impl CaseFormMatchAction {
             CaseFormMatchAction::ValueSymbol(symbol) => symbol.clone(),
             CaseFormMatchAction::ProdForm(form) => form.to_string(),
             CaseFormMatchAction::FunForm(form) => form.to_string(),
+            CaseFormMatchAction::LetForm(form) => form.to_string(),
         }
     }
 }
@@ -208,10 +210,12 @@ impl CaseFormMatch {
                     case_match.action = CaseFormMatchAction::ProdForm(Box::new(form));
                 } else if let Ok(form) = FunForm::from_form(&form) {
                     case_match.action = CaseFormMatchAction::FunForm(Box::new(form));
+                } else if let Ok(form) = LetForm::from_form(&form) {
+                    case_match.action = CaseFormMatchAction::LetForm(Box::new(form));
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a function form".into(),
+                        desc: "expected a product, case, let or function form".into(),
                     }));
                 }
             }
@@ -329,6 +333,10 @@ impl CaseForm {
                             .collect::<Vec<String>>()
                             .clone(),
                     );
+                    form.check_linearly_ordered_on_params(params)?;
+                }
+                CaseFormMatchAction::LetForm(form) => {
+                    form.check_params_use()?;
                     form.check_linearly_ordered_on_params(params)?;
                 }
                 _ => {}
@@ -583,6 +591,21 @@ mod tests {
 
         assert_eq!(case_match.case.to_string(), "E".to_string());
         assert_eq!(case_match.action.to_string(), "panic".to_string());
+        assert_eq!(case_match.to_string(), s.to_string());
+
+        s = "(match E (let (val f (fun () panic)) (f ())))";
+
+        res = CaseFormMatch::from_str(s);
+
+        assert!(res.is_ok());
+
+        case_match = res.unwrap();
+
+        assert_eq!(case_match.case.to_string(), "E".to_string());
+        assert_eq!(
+            case_match.action.to_string(),
+            "(let (val f (fun () panic)) (f ()))".to_string()
+        );
         assert_eq!(case_match.to_string(), s.to_string());
     }
 

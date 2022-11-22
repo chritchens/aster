@@ -44,6 +44,7 @@ impl fmt::Display for FunFormParam {
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FunFormBody {
     Empty,
+    Panic,
     Prim(String),
     TypeKeyword(String),
     ValueSymbol(String),
@@ -67,6 +68,7 @@ impl FunFormBody {
     pub fn to_string(&self) -> String {
         match self {
             FunFormBody::Empty => "()".into(),
+            FunFormBody::Panic => "panic".into(),
             FunFormBody::Prim(prim) => prim.clone(),
             FunFormBody::TypeKeyword(keyword) => keyword.clone(),
             FunFormBody::ValueSymbol(symbol) => symbol.clone(),
@@ -124,7 +126,7 @@ impl FunForm {
 
     pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
         match self.body.clone() {
-            FunFormBody::Empty | FunFormBody::Prim(_) => {}
+            FunFormBody::Empty | FunFormBody::Panic | FunFormBody::Prim(_) => {}
             FunFormBody::TypeKeyword(symbol) => {
                 if params.len() != 1 {
                     return Err(Error::Semantic(SemanticError {
@@ -294,6 +296,11 @@ impl FunForm {
             }
             FormParam::Prim(prim) => {
                 fun.body = FunFormBody::Prim(prim);
+            }
+            FormParam::ValueKeyword(keyword) => {
+                if keyword == "panic" {
+                    fun.body = FunFormBody::Panic;
+                }
             }
             FormParam::TypeKeyword(keyword) => {
                 fun.body = FunFormBody::TypeKeyword(keyword);
