@@ -289,7 +289,7 @@ impl CaseForm {
                 if params[0] != symbol {
                     return Err(Error::Semantic(SemanticError {
                         loc: self.loc(),
-                        desc: format!("non-linear use of params {}: {}", params.join(" "), symbol),
+                        desc: format!("non-linear use of params {}: {}", params.join(", "), symbol),
                     }));
                 }
 
@@ -299,7 +299,7 @@ impl CaseForm {
                 if params[0] != symbol {
                     return Err(Error::Semantic(SemanticError {
                         loc: self.loc(),
-                        desc: format!("non-linear use of params {}: {}", params.join(" "), symbol),
+                        desc: format!("non-linear use of params {}: {}", params.join(", "), symbol),
                     }));
                 }
 

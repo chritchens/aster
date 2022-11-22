@@ -81,7 +81,7 @@ impl TypesForm {
                     loc: self.loc(),
                     desc: format!(
                         "non-linear use of params {}: {}",
-                        params.join(" "),
+                        params.join(", "),
                         bound_variables.join(" ")
                     ),
                 }));
@@ -90,7 +90,7 @@ impl TypesForm {
                     loc: self.loc(),
                     desc: format!(
                         "non-ordered use of params {}: {}",
-                        params.join(" "),
+                        params.join(", "),
                         bound_variables.join(" ")
                     ),
                 }));

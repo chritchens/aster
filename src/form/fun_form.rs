@@ -127,7 +127,7 @@ impl FunForm {
                 if params.len() != 1 {
                     return Err(Error::Semantic(SemanticError {
                         loc: self.loc(),
-                        desc: format!("non-linear use of params {}: {}", params.join(" "), symbol),
+                        desc: format!("non-linear use of params {}: {}", params.join(", "), symbol),
                     }));
                 }
 
@@ -137,7 +137,7 @@ impl FunForm {
                 if params.len() != 1 {
                     return Err(Error::Semantic(SemanticError {
                         loc: self.loc(),
-                        desc: format!("non-linear use of params {}: {}", params.join(" "), symbol),
+                        desc: format!("non-linear use of params {}: {}", params.join(", "), symbol),
                     }));
                 }
 
@@ -147,7 +147,7 @@ impl FunForm {
                 if params.len() != 1 {
                     return Err(Error::Semantic(SemanticError {
                         loc: self.loc(),
-                        desc: format!("non-linear use of params {}: {}", params.join(" "), symbol),
+                        desc: format!("non-linear use of params {}: {}", params.join(", "), symbol),
                     }));
                 }
 
