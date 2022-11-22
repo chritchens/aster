@@ -138,6 +138,51 @@ impl ValForm {
             || (self.is_application_form() && is_value_symbol(&self.name))
     }
 
+    pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
+        match self.value.clone() {
+            ValFormValue::ProdForm(form) => {
+                form.check_linearly_ordered_on_params(params)?;
+            }
+            ValFormValue::FunForm(form) => {
+                form.check_params_use()?;
+                form.check_linearly_ordered_on_params(params)?;
+            }
+            ValFormValue::LetForm(form) => {
+                form.check_params_use()?;
+                form.check_linearly_ordered_on_params(params)?;
+            }
+            ValFormValue::AppForm(form) => {
+                form.check_linearly_ordered_on_params(params)?;
+            }
+            ValFormValue::CaseForm(form) => {
+                form.check_params_use()?;
+                form.check_linearly_ordered_on_params(params)?;
+            }
+            _ => {}
+        }
+
+        params.clear();
+
+        Ok(())
+    }
+
+    pub fn check_params_use(&self) -> Result<()> {
+        match self.value.clone() {
+            ValFormValue::FunForm(form) => {
+                form.check_params_use()?;
+            }
+            ValFormValue::LetForm(form) => {
+                form.check_params_use()?;
+            }
+            ValFormValue::CaseForm(form) => {
+                form.check_params_use()?;
+            }
+            _ => {}
+        }
+
+        Ok(())
+    }
+
     pub fn from_form(form: &Form) -> Result<ValForm> {
         if form.name != "val" {
             return Err(Error::Syntactic(SyntacticError {

@@ -1,4 +1,4 @@
-use crate::error::{Error, SyntacticError};
+use crate::error::{Error, SemanticError, SyntacticError};
 use crate::form::app_form::AppForm;
 use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
@@ -281,6 +281,66 @@ impl CaseForm {
             .map(|b| b.to_string())
             .collect::<Vec<String>>()
             .join(" ")
+    }
+
+    pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
+        match self.param.clone() {
+            CaseFormParam::TypeSymbol(symbol) => {
+                if params[0] != symbol {
+                    return Err(Error::Semantic(SemanticError {
+                        loc: self.loc(),
+                        desc: format!("non-linear use of params {}: {}", params.join(" "), symbol),
+                    }));
+                }
+
+                params.remove(0);
+            }
+            CaseFormParam::ValueSymbol(symbol) => {
+                if params[0] != symbol {
+                    return Err(Error::Semantic(SemanticError {
+                        loc: self.loc(),
+                        desc: format!("non-linear use of params {}: {}", params.join(" "), symbol),
+                    }));
+                }
+
+                params.remove(0);
+            }
+            CaseFormParam::AppForm(form) => {
+                form.check_linearly_ordered_on_params(params)?;
+            }
+            CaseFormParam::LetForm(form) => {
+                form.check_params_use()?;
+                form.check_linearly_ordered_on_params(params)?;
+            }
+            _ => {}
+        }
+
+        for form in self.matches.iter() {
+            match form.action.clone() {
+                CaseFormMatchAction::ProdForm(form) => {
+                    form.check_linearly_ordered_on_params(params)?;
+                }
+                CaseFormMatchAction::FunForm(form) => {
+                    form.check_params_use()?;
+                    form.check_linearly_ordered_on_params(params)?;
+                }
+                _ => {}
+            }
+        }
+
+        params.clear();
+
+        Ok(())
+    }
+
+    pub fn check_params_use(&self) -> Result<()> {
+        for form in self.matches.iter() {
+            if let CaseFormMatchAction::FunForm(form) = form.action.clone() {
+                form.check_params_use()?;
+            }
+        }
+
+        Ok(())
     }
 
     pub fn from_form(form: &Form) -> Result<CaseForm> {

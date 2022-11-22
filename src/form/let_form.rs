@@ -138,6 +138,40 @@ impl LetForm {
         }
     }
 
+    pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
+        for entry in self.entries.iter() {
+            if let LetFormEntry::ValForm(form) = entry {
+                form.check_params_use()?;
+                form.check_linearly_ordered_on_params(params)?;
+                params.push(form.name.clone());
+            }
+        }
+
+        self.value.check_linearly_ordered_on_params(params)?;
+
+        params.clear();
+
+        Ok(())
+    }
+
+    pub fn check_params_use(&self) -> Result<()> {
+        let mut params = vec![];
+
+        for entry in self.entries.iter() {
+            match entry {
+                LetFormEntry::TypeForm(form) => {
+                    params.push(form.name.clone());
+                }
+                LetFormEntry::ValForm(form) => {
+                    params.push(form.name.clone());
+                }
+                _ => {}
+            }
+        }
+
+        self.value.check_linearly_ordered_on_params(&mut params)
+    }
+
     pub fn from_form(form: &Form) -> Result<LetForm> {
         if form.name != "let" {
             return Err(Error::Syntactic(SyntacticError {

@@ -1,4 +1,4 @@
-use crate::error::{Error, SyntacticError};
+use crate::error::{Error, SemanticError, SyntacticError};
 use crate::form::app_form::AppForm;
 use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormParam};
@@ -118,6 +118,74 @@ impl FunForm {
             ),
             _ => "()".to_string(),
         }
+    }
+
+    pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
+        match self.body.clone() {
+            FunFormBody::Empty | FunFormBody::Prim(_) => {}
+            FunFormBody::TypeKeyword(symbol) => {
+                if params.len() != 1 {
+                    return Err(Error::Semantic(SemanticError {
+                        loc: self.loc(),
+                        desc: format!("non-linear use of params {}: {}", params.join(" "), symbol),
+                    }));
+                }
+
+                params.remove(0);
+            }
+            FunFormBody::ValueSymbol(symbol) => {
+                if params.len() != 1 {
+                    return Err(Error::Semantic(SemanticError {
+                        loc: self.loc(),
+                        desc: format!("non-linear use of params {}: {}", params.join(" "), symbol),
+                    }));
+                }
+
+                params.remove(0);
+            }
+            FunFormBody::TypeSymbol(symbol) => {
+                if params.len() != 1 {
+                    return Err(Error::Semantic(SemanticError {
+                        loc: self.loc(),
+                        desc: format!("non-linear use of params {}: {}", params.join(" "), symbol),
+                    }));
+                }
+
+                params.remove(0);
+            }
+            FunFormBody::TypesForm(form) => {
+                form.check_linearly_ordered_on_params(params)?;
+            }
+            FunFormBody::ProdForm(form) => {
+                form.check_linearly_ordered_on_params(params)?;
+            }
+            FunFormBody::AppForm(form) => {
+                form.check_linearly_ordered_on_params(params)?;
+            }
+            FunFormBody::LetForm(form) => {
+                form.check_params_use()?;
+                form.check_linearly_ordered_on_params(params)?;
+            }
+            FunFormBody::CaseForm(form) => {
+                form.check_params_use()?;
+                form.check_linearly_ordered_on_params(params)?;
+            }
+        }
+
+        params.clear();
+
+        Ok(())
+    }
+
+    pub fn check_params_use(&self) -> Result<()> {
+        let mut params = self
+            .params
+            .clone()
+            .iter()
+            .map(|p| p.to_string())
+            .collect::<Vec<String>>();
+
+        self.check_linearly_ordered_on_params(&mut params)
     }
 
     pub fn from_form(form: &Form) -> Result<FunForm> {
@@ -355,5 +423,116 @@ mod tests {
             "(math.+ (prod a b 10 (math.* (prod c d 10))))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
+    }
+
+    #[test]
+    fn fun_form_check_params_use() {
+        use super::FunForm;
+
+        let mut s = "(fun () ())";
+
+        let mut form = FunForm::from_str(s).unwrap();
+
+        assert!(form.check_params_use().is_ok());
+
+        s = "(fun a ())";
+
+        form = FunForm::from_str(s).unwrap();
+
+        form.check_params_use().unwrap();
+        assert!(form.check_params_use().is_ok());
+
+        s = "(fun a 'a')";
+
+        form = FunForm::from_str(s).unwrap();
+
+        assert!(form.check_params_use().is_ok());
+
+        s = "(fun a a)";
+
+        form = FunForm::from_str(s).unwrap();
+
+        assert!(form.check_params_use().is_ok());
+
+        s = "(fun a b)";
+
+        form = FunForm::from_str(s).unwrap();
+
+        assert!(form.check_params_use().is_ok());
+
+        s = "(fun a (+ (prod a 1)))";
+
+        form = FunForm::from_str(s).unwrap();
+
+        assert!(form.check_params_use().is_ok());
+
+        s = "(fun (prod a b c d) (+ (prod a b c d 1)))";
+
+        form = FunForm::from_str(s).unwrap();
+
+        assert!(form.check_params_use().is_ok());
+
+        s = "(fun (prod a b d c) (+ (prod a b c d 1)))";
+
+        form = FunForm::from_str(s).unwrap();
+
+        assert!(form.check_params_use().is_err());
+
+        s = "(fun (prod a b c d e) (+ (prod a b c d 1)))";
+
+        form = FunForm::from_str(s).unwrap();
+
+        assert!(form.check_params_use().is_err());
+
+        s = "(fun (prod a b c d e) (+ (prod a b c d e f)))";
+
+        form = FunForm::from_str(s).unwrap();
+
+        assert!(form.check_params_use().is_ok());
+
+        s = "(fun a (case a (match T 'T') (match F 'F')))";
+
+        form = FunForm::from_str(s).unwrap();
+
+        assert!(form.check_params_use().is_ok());
+
+        s = "(fun a (case a (match T id) (match F (fun bool (printBool bool)))))";
+
+        form = FunForm::from_str(s).unwrap();
+
+        form.check_params_use().unwrap();
+        assert!(form.check_params_use().is_ok());
+
+        s = "
+            (fun a (case a 
+                (match T id) 
+                (match F (fun bool (let 
+                    (val f (fun () (printBool bool))) 
+                    (f ()))))))";
+
+        form = FunForm::from_str(s).unwrap();
+
+        form.check_params_use().unwrap();
+        assert!(form.check_params_use().is_ok());
+
+        s = "(fun (prod a b) (case a
+                (match T id) 
+                (match F (fun bool (let 
+                    (val f (fun () (printBool bool))) 
+                    (f ()))))))";
+
+        form = FunForm::from_str(s).unwrap();
+
+        assert!(form.check_params_use().is_err());
+
+        s = "(fun (prod b a) (case a
+                (match T id) 
+                (match F (fun bool (let 
+                    (val f (fun () (printBool bool))) 
+                    (f ()))))))";
+
+        form = FunForm::from_str(s).unwrap();
+
+        assert!(form.check_params_use().is_err());
     }
 }
