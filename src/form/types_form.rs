@@ -12,7 +12,7 @@ pub enum TypesFormParam {
     Empty,
     Keyword(String),
     Symbol(String),
-    Form(Box<Form>),
+    Form(Box<TypesForm>),
 }
 
 impl Default for TypesFormParam {
@@ -84,7 +84,8 @@ impl TypesForm {
                     form.params.push(FormParam::TypeSymbol(symbol));
                 }
                 TypesFormParam::Form(types_form) => {
-                    form.params.push(FormParam::Form(types_form));
+                    form.params
+                        .push(FormParam::Form(Box::new(types_form.as_form())));
                 }
             }
         }
@@ -118,7 +119,10 @@ impl TypesForm {
                 }
                 FormParam::Form(form) => {
                     if form.is_types_form() {
-                        types_form.params.push(TypesFormParam::Form(form));
+                        let inner_types_form = TypesForm::from_form(&form)?;
+                        types_form
+                            .params
+                            .push(TypesFormParam::Form(Box::new(inner_types_form)));
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
