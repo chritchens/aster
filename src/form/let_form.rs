@@ -111,7 +111,7 @@ impl LetForm {
         }
     }
 
-    pub fn entry_as_valinition(&self, idx: usize) -> Option<Box<ValForm>> {
+    pub fn entry_as_definition(&self, idx: usize) -> Option<Box<ValForm>> {
         if idx > self.entries.len() - 1 {
             return None;
         }
@@ -230,7 +230,7 @@ impl LetForm {
                         } else {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
-                                desc: "expected a valinition form".into(),
+                                desc: "expected a definition form".into(),
                             }));
                         }
                     }
@@ -383,14 +383,14 @@ mod tests {
             form.entries[5].to_string(),
             "(val unwrap (fun res (case res (match T id) (match E panic))))".to_string()
         );
-        assert!(form.entry_as_valinition(5).unwrap().is_function_form());
-        assert!(form.entry_as_valinition(5).unwrap().is_value());
+        assert!(form.entry_as_definition(5).unwrap().is_function_form());
+        assert!(form.entry_as_definition(5).unwrap().is_value());
         assert_eq!(
             form.entries[9].to_string(),
             "(val res (unwrap \"res\"))".to_string()
         );
-        assert!(form.entry_as_valinition(9).unwrap().is_application_form());
-        assert!(form.entry_as_valinition(9).unwrap().is_value());
+        assert!(form.entry_as_definition(9).unwrap().is_application_form());
+        assert!(form.entry_as_definition(9).unwrap().is_value());
         assert_eq!(
             form.value.to_string(),
             "(return (prod res res2))".to_string()
