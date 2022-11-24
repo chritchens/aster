@@ -4,6 +4,7 @@ use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::ProdForm;
+use crate::form::simple_value::SimpleValue;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -11,18 +12,18 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum CaseFormVariable {
-    Empty,
-    Prim(String),
-    TypeKeyword(String),
-    TypeSymbol(String),
-    ValueSymbol(String),
+    Empty(SimpleValue),
+    Prim(SimpleValue),
+    TypeKeyword(SimpleValue),
+    TypeSymbol(SimpleValue),
+    ValueSymbol(SimpleValue),
     AppForm(Box<AppForm>),
     LetForm(Box<LetForm>),
 }
 
 impl Default for CaseFormVariable {
     fn default() -> CaseFormVariable {
-        CaseFormVariable::Empty
+        CaseFormVariable::Empty(SimpleValue::new())
     }
 }
 
@@ -30,11 +31,11 @@ impl CaseFormVariable {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            CaseFormVariable::Empty => "()".into(),
-            CaseFormVariable::Prim(prim) => prim.clone(),
-            CaseFormVariable::TypeKeyword(keyword) => keyword.clone(),
-            CaseFormVariable::TypeSymbol(symbol) => symbol.clone(),
-            CaseFormVariable::ValueSymbol(symbol) => symbol.clone(),
+            CaseFormVariable::Empty(_) => "()".into(),
+            CaseFormVariable::Prim(prim) => prim.to_string(),
+            CaseFormVariable::TypeKeyword(keyword) => keyword.to_string(),
+            CaseFormVariable::TypeSymbol(symbol) => symbol.to_string(),
+            CaseFormVariable::ValueSymbol(symbol) => symbol.to_string(),
             CaseFormVariable::AppForm(form) => form.to_string(),
             CaseFormVariable::LetForm(form) => form.to_string(),
         }
@@ -49,22 +50,26 @@ impl fmt::Display for CaseFormVariable {
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum CaseFormMatchCase {
-    Empty,
-    Prim(String),
-    TypeKeyword(String),
-    TypeSymbol(String),
-    ValueSymbol(String),
+    Empty(SimpleValue),
+    Prim(SimpleValue),
+    TypeKeyword(SimpleValue),
+    TypeSymbol(SimpleValue),
+    ValueSymbol(SimpleValue),
+    TypePathSymbol(SimpleValue),
+    ValuePathSymbol(SimpleValue),
 }
 
 impl CaseFormMatchCase {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            CaseFormMatchCase::Empty => "()".into(),
-            CaseFormMatchCase::Prim(prim) => prim.clone(),
-            CaseFormMatchCase::TypeKeyword(keyword) => keyword.clone(),
-            CaseFormMatchCase::TypeSymbol(symbol) => symbol.clone(),
-            CaseFormMatchCase::ValueSymbol(symbol) => symbol.clone(),
+            CaseFormMatchCase::Empty(_) => "()".into(),
+            CaseFormMatchCase::Prim(prim) => prim.to_string(),
+            CaseFormMatchCase::TypeKeyword(keyword) => keyword.to_string(),
+            CaseFormMatchCase::TypeSymbol(symbol) => symbol.to_string(),
+            CaseFormMatchCase::ValueSymbol(symbol) => symbol.to_string(),
+            CaseFormMatchCase::TypePathSymbol(symbol) => symbol.to_string(),
+            CaseFormMatchCase::ValuePathSymbol(symbol) => symbol.to_string(),
         }
     }
 }
@@ -77,18 +82,22 @@ impl fmt::Display for CaseFormMatchCase {
 
 impl Default for CaseFormMatchCase {
     fn default() -> CaseFormMatchCase {
-        CaseFormMatchCase::Empty
+        CaseFormMatchCase::Empty(SimpleValue::new())
     }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum CaseFormMatchAction {
-    Ignore,
-    Prim(String),
-    ValueKeyword(String),
-    TypeKeyword(String),
-    TypeSymbol(String),
-    ValueSymbol(String),
+    Ignore(SimpleValue),
+    Empty(SimpleValue),
+    Panic(SimpleValue),
+    Prim(SimpleValue),
+    ValueKeyword(SimpleValue),
+    TypeKeyword(SimpleValue),
+    TypeSymbol(SimpleValue),
+    ValueSymbol(SimpleValue),
+    TypePathSymbol(SimpleValue),
+    ValuePathSymbol(SimpleValue),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
     LetForm(Box<LetForm>),
@@ -98,12 +107,16 @@ impl CaseFormMatchAction {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            CaseFormMatchAction::Ignore => "_".into(),
-            CaseFormMatchAction::Prim(prim) => prim.clone(),
-            CaseFormMatchAction::ValueKeyword(keyword) => keyword.clone(),
-            CaseFormMatchAction::TypeKeyword(keyword) => keyword.clone(),
-            CaseFormMatchAction::TypeSymbol(symbol) => symbol.clone(),
-            CaseFormMatchAction::ValueSymbol(symbol) => symbol.clone(),
+            CaseFormMatchAction::Ignore(_) => "_".into(),
+            CaseFormMatchAction::Empty(_) => "_".into(),
+            CaseFormMatchAction::Panic(_) => "panic".into(),
+            CaseFormMatchAction::Prim(prim) => prim.to_string(),
+            CaseFormMatchAction::ValueKeyword(keyword) => keyword.to_string(),
+            CaseFormMatchAction::TypeKeyword(keyword) => keyword.to_string(),
+            CaseFormMatchAction::TypeSymbol(symbol) => symbol.to_string(),
+            CaseFormMatchAction::ValueSymbol(symbol) => symbol.to_string(),
+            CaseFormMatchAction::TypePathSymbol(symbol) => symbol.to_string(),
+            CaseFormMatchAction::ValuePathSymbol(symbol) => symbol.to_string(),
             CaseFormMatchAction::ProdForm(form) => form.to_string(),
             CaseFormMatchAction::FunForm(form) => form.to_string(),
             CaseFormMatchAction::LetForm(form) => form.to_string(),
@@ -113,7 +126,7 @@ impl CaseFormMatchAction {
 
 impl Default for CaseFormMatchAction {
     fn default() -> CaseFormMatchAction {
-        CaseFormMatchAction::Ignore
+        CaseFormMatchAction::Empty(SimpleValue::new())
     }
 }
 
@@ -144,7 +157,7 @@ impl CaseFormMatch {
     }
 
     pub fn from_form(form: &Form) -> Result<CaseFormMatch> {
-        if form.name != "match" {
+        if form.name.to_string() != "match" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a match keyword".into(),
@@ -162,49 +175,76 @@ impl CaseFormMatch {
         case_match.tokens = form.tokens.clone();
 
         match form.params[0].clone() {
-            FormParam::Empty => {
-                case_match.case = CaseFormMatchCase::Empty;
-            }
-            FormParam::Prim(prim) => {
-                case_match.case = CaseFormMatchCase::Prim(prim);
-            }
-            FormParam::TypeKeyword(keyword) => {
-                case_match.case = CaseFormMatchCase::TypeKeyword(keyword);
-            }
-            FormParam::TypeSymbol(symbol) => {
-                case_match.case = CaseFormMatchCase::TypeSymbol(symbol);
-            }
-            FormParam::ValueSymbol(symbol) => {
-                case_match.case = CaseFormMatchCase::ValueSymbol(symbol);
-            }
+            FormParam::Simple(value) => match value {
+                SimpleValue::Empty(_) => {
+                    case_match.case = CaseFormMatchCase::Empty(value);
+                }
+                SimpleValue::Prim(_) => {
+                    case_match.case = CaseFormMatchCase::Prim(value);
+                }
+                SimpleValue::TypeKeyword(_) => {
+                    case_match.case = CaseFormMatchCase::TypeKeyword(value);
+                }
+                SimpleValue::TypeSymbol(_) => {
+                    case_match.case = CaseFormMatchCase::TypeSymbol(value);
+                }
+                SimpleValue::ValueSymbol(_) => {
+                    case_match.case = CaseFormMatchCase::ValueSymbol(value);
+                }
+                SimpleValue::TypePathSymbol(_) => {
+                    case_match.case = CaseFormMatchCase::TypePathSymbol(value);
+                }
+                SimpleValue::ValuePathSymbol(_) => {
+                    case_match.case = CaseFormMatchCase::ValuePathSymbol(value);
+                }
+                x => {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: format!("unexpected value: {}", x),
+                    }));
+                }
+            },
             _ => {
                 return Err(Error::Syntactic(SyntacticError {
                     loc: form.loc(),
-                    desc: "expected an empty literal or a primitive or a type keyword or a symbol"
-                        .into(),
+                    desc: "unexpected form".into(),
                 }));
             }
         }
 
         match form.params[1].clone() {
-            FormParam::Ignore => {
-                case_match.action = CaseFormMatchAction::Ignore;
-            }
-            FormParam::Prim(prim) => {
-                case_match.action = CaseFormMatchAction::Prim(prim);
-            }
-            FormParam::ValueKeyword(keyword) => {
-                case_match.action = CaseFormMatchAction::ValueKeyword(keyword);
-            }
-            FormParam::TypeKeyword(keyword) => {
-                case_match.action = CaseFormMatchAction::TypeKeyword(keyword);
-            }
-            FormParam::TypeSymbol(symbol) => {
-                case_match.action = CaseFormMatchAction::TypeSymbol(symbol);
-            }
-            FormParam::ValueSymbol(symbol) => {
-                case_match.action = CaseFormMatchAction::ValueSymbol(symbol);
-            }
+            FormParam::Simple(value) => match value {
+                SimpleValue::Ignore(_) => {
+                    case_match.action = CaseFormMatchAction::Ignore(value);
+                }
+                SimpleValue::Empty(_) => {
+                    case_match.action = CaseFormMatchAction::Empty(value);
+                }
+                SimpleValue::Panic(_) => {
+                    case_match.action = CaseFormMatchAction::Panic(value);
+                }
+                SimpleValue::Prim(_) => {
+                    case_match.action = CaseFormMatchAction::Prim(value);
+                }
+                SimpleValue::ValueKeyword(_) => {
+                    case_match.action = CaseFormMatchAction::ValueKeyword(value);
+                }
+                SimpleValue::TypeKeyword(_) => {
+                    case_match.action = CaseFormMatchAction::TypeKeyword(value);
+                }
+                SimpleValue::TypeSymbol(_) => {
+                    case_match.action = CaseFormMatchAction::TypeSymbol(value);
+                }
+                SimpleValue::ValueSymbol(_) => {
+                    case_match.action = CaseFormMatchAction::ValueSymbol(value);
+                }
+                SimpleValue::TypePathSymbol(_) => {
+                    case_match.action = CaseFormMatchAction::TypePathSymbol(value);
+                }
+                SimpleValue::ValuePathSymbol(_) => {
+                    case_match.action = CaseFormMatchAction::ValuePathSymbol(value);
+                }
+            },
             FormParam::Form(form) => {
                 if let Ok(form) = ProdForm::from_form(&form) {
                     case_match.action = CaseFormMatchAction::ProdForm(Box::new(form));
@@ -218,12 +258,6 @@ impl CaseFormMatch {
                         desc: "expected a product, case, let or function form".into(),
                     }));
                 }
-            }
-            _ => {
-                return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: "expected an ignore keyword or a function form".into(),
-                }));
             }
         }
 
@@ -290,7 +324,7 @@ impl CaseForm {
     pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
         match self.variable.clone() {
             CaseFormVariable::TypeSymbol(symbol) => {
-                if params[0] != symbol {
+                if params[0] != symbol.to_string() {
                     return Err(Error::Semantic(SemanticError {
                         loc: self.loc(),
                         desc: format!("non-linear use of params {}: {}", params.join(", "), symbol),
@@ -300,7 +334,7 @@ impl CaseForm {
                 params.remove(0);
             }
             CaseFormVariable::ValueSymbol(symbol) => {
-                if params[0] != symbol {
+                if params[0] != symbol.to_string() {
                     return Err(Error::Semantic(SemanticError {
                         loc: self.loc(),
                         desc: format!("non-linear use of params {}: {}", params.join(", "), symbol),
@@ -359,7 +393,7 @@ impl CaseForm {
     }
 
     pub fn from_form(form: &Form) -> Result<CaseForm> {
-        if form.name != "case" {
+        if form.name.to_string() != "case" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a case keyword".into(),
@@ -377,21 +411,29 @@ impl CaseForm {
         case.tokens = form.tokens.clone();
 
         match form.params[0].clone() {
-            FormParam::Empty => {
-                case.variable = CaseFormVariable::Empty;
-            }
-            FormParam::Prim(prim) => {
-                case.variable = CaseFormVariable::Prim(prim);
-            }
-            FormParam::TypeKeyword(keyword) => {
-                case.variable = CaseFormVariable::TypeKeyword(keyword);
-            }
-            FormParam::TypeSymbol(symbol) => {
-                case.variable = CaseFormVariable::TypeSymbol(symbol);
-            }
-            FormParam::ValueSymbol(symbol) => {
-                case.variable = CaseFormVariable::ValueSymbol(symbol);
-            }
+            FormParam::Simple(value) => match value {
+                SimpleValue::Empty(_) => {
+                    case.variable = CaseFormVariable::Empty(value);
+                }
+                SimpleValue::Prim(_) => {
+                    case.variable = CaseFormVariable::Prim(value);
+                }
+                SimpleValue::TypeKeyword(_) => {
+                    case.variable = CaseFormVariable::TypeKeyword(value);
+                }
+                SimpleValue::TypeSymbol(_) => {
+                    case.variable = CaseFormVariable::TypeSymbol(value);
+                }
+                SimpleValue::ValueSymbol(_) => {
+                    case.variable = CaseFormVariable::ValueSymbol(value);
+                }
+                x => {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: format!("unexpected value: {}", x),
+                    }));
+                }
+            },
             FormParam::Form(form) => {
                 if let Ok(form) = LetForm::from_form(&form) {
                     case.variable = CaseFormVariable::LetForm(Box::new(form));
@@ -403,12 +445,6 @@ impl CaseForm {
                         desc: "expected a let form or an application form".into(),
                     }));
                 }
-            }
-            _ => {
-                return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: "expected an empty literal or a primitive or a type keyword or a symbol or an application".into(),
-                }));
             }
         }
 

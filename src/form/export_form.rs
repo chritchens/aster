@@ -1,22 +1,22 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormParam};
 use crate::form::prod_form::{ProdForm, ProdFormValue};
+use crate::form::simple_value::SimpleValue;
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::is_qualified;
 use crate::token::Tokens;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ExportFormDef {
-    Empty,
-    ValueSymbol(String),
-    TypeSymbol(String),
+    Empty(SimpleValue),
+    ValueSymbol(SimpleValue),
+    TypeSymbol(SimpleValue),
 }
 
 impl Default for ExportFormDef {
     fn default() -> ExportFormDef {
-        ExportFormDef::Empty
+        ExportFormDef::Empty(SimpleValue::new())
     }
 }
 
@@ -24,9 +24,9 @@ impl ExportFormDef {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            ExportFormDef::Empty => "()".into(),
-            ExportFormDef::ValueSymbol(symbol) => symbol.clone(),
-            ExportFormDef::TypeSymbol(symbol) => symbol.clone(),
+            ExportFormDef::Empty(_) => "()".into(),
+            ExportFormDef::ValueSymbol(symbol) => symbol.to_string(),
+            ExportFormDef::TypeSymbol(symbol) => symbol.to_string(),
         }
     }
 }
@@ -72,7 +72,7 @@ impl ExportForm {
     }
 
     pub fn from_form(form: &Form) -> Result<ExportForm> {
-        if form.name != "export" {
+        if form.name.to_string() != "export" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected an export keyword".into(),
@@ -91,50 +91,32 @@ impl ExportForm {
 
         for param in form.params.clone() {
             match param {
-                FormParam::Empty => {}
-                FormParam::TypeSymbol(symbol) => {
-                    if is_qualified(&symbol) {
+                FormParam::Simple(value) => match value {
+                    SimpleValue::Empty(_) => {
+                        export.defs.push(ExportFormDef::Empty(value));
+                    }
+                    SimpleValue::TypeSymbol(_) => {
+                        export.defs.push(ExportFormDef::TypeSymbol(value));
+                    }
+                    SimpleValue::ValueSymbol(_) => {
+                        export.defs.push(ExportFormDef::ValueSymbol(value));
+                    }
+                    _ => {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
-                            desc: "expected an unqualified symbol".into(),
+                            desc: "expected a product of symbols or an empty literal".into(),
                         }));
                     }
-
-                    export.defs.push(ExportFormDef::TypeSymbol(symbol));
-                }
-                FormParam::ValueSymbol(symbol) => {
-                    if is_qualified(&symbol) {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: "expected an unqualified symbol".into(),
-                        }));
-                    }
-
-                    export.defs.push(ExportFormDef::ValueSymbol(symbol));
-                }
+                },
                 FormParam::Form(form) => {
                     let prod = ProdForm::from_form(&form)?;
 
                     for value in prod.values {
                         match value {
                             ProdFormValue::ValueSymbol(symbol) => {
-                                if is_qualified(&symbol) {
-                                    return Err(Error::Syntactic(SyntacticError {
-                                        loc: form.loc(),
-                                        desc: "expected an unqualified symbol".into(),
-                                    }));
-                                }
-
                                 export.defs.push(ExportFormDef::ValueSymbol(symbol));
                             }
                             ProdFormValue::TypeSymbol(symbol) => {
-                                if is_qualified(&symbol) {
-                                    return Err(Error::Syntactic(SyntacticError {
-                                        loc: form.loc(),
-                                        desc: "expected an unqualified symbol".into(),
-                                    }));
-                                }
-
                                 export.defs.push(ExportFormDef::TypeSymbol(symbol));
                             }
                             _ => {
@@ -145,12 +127,6 @@ impl ExportForm {
                             }
                         }
                     }
-                }
-                _ => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a product of symbols or an empty literal".into(),
-                    }));
                 }
             }
         }
@@ -227,7 +203,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert!(form.defs.is_empty());
+        assert_eq!(form.defs_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
     }
 }

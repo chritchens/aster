@@ -4,6 +4,7 @@ use crate::form::attrs_form::AttrsForm;
 use crate::form::form::{Form, FormParam};
 use crate::form::import_form::ImportForm;
 use crate::form::sig_form::SigForm;
+use crate::form::simple_value::SimpleValue;
 use crate::form::type_form::TypeForm;
 use crate::form::val_form::ValForm;
 use crate::loc::Loc;
@@ -13,7 +14,7 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum LetFormEntry {
-    Empty,
+    Empty(SimpleValue),
     ImportForm(Box<ImportForm>),
     AttrsForm(Box<AttrsForm>),
     TypeForm(Box<TypeForm>),
@@ -23,7 +24,7 @@ pub enum LetFormEntry {
 
 impl Default for LetFormEntry {
     fn default() -> LetFormEntry {
-        LetFormEntry::Empty
+        LetFormEntry::Empty(SimpleValue::default())
     }
 }
 
@@ -31,7 +32,7 @@ impl LetFormEntry {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            LetFormEntry::Empty => "()".into(),
+            LetFormEntry::Empty(_) => "()".into(),
             LetFormEntry::ImportForm(form) => form.to_string(),
             LetFormEntry::AttrsForm(form) => form.to_string(),
             LetFormEntry::TypeForm(form) => form.to_string(),
@@ -143,7 +144,7 @@ impl LetForm {
             if let LetFormEntry::ValForm(form) = entry {
                 form.check_params_use()?;
                 form.check_linearly_ordered_on_params(params)?;
-                params.push(form.name.clone());
+                params.push(form.name.to_string());
             }
         }
 
@@ -160,10 +161,10 @@ impl LetForm {
         for entry in self.entries.iter() {
             match entry {
                 LetFormEntry::TypeForm(form) => {
-                    params.push(form.name.clone());
+                    params.push(form.name.to_string());
                 }
                 LetFormEntry::ValForm(form) => {
-                    params.push(form.name.clone());
+                    params.push(form.name.to_string());
                 }
                 _ => {}
             }
@@ -173,7 +174,7 @@ impl LetForm {
     }
 
     pub fn from_form(form: &Form) -> Result<LetForm> {
-        if form.name != "let" {
+        if form.name.to_string() != "let" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a let keyword".into(),

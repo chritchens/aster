@@ -8,6 +8,7 @@ use crate::form::fun_form::FunForm;
 use crate::form::import_form::ImportForm;
 use crate::form::let_form::LetForm;
 use crate::form::sig_form::SigForm;
+use crate::form::simple_value::SimpleValue;
 use crate::form::type_form::TypeForm;
 use crate::form::types_form::TypesForm;
 use crate::form::val_form::ValForm;
@@ -18,12 +19,16 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ProdFormValue {
-    Empty,
-    Prim(String),
-    ValueKeyword(String),
-    TypeKeyword(String),
-    ValueSymbol(String),
-    TypeSymbol(String),
+    Ignore(SimpleValue),
+    Empty(SimpleValue),
+    Panic(SimpleValue),
+    Prim(SimpleValue),
+    ValueKeyword(SimpleValue),
+    TypeKeyword(SimpleValue),
+    ValueSymbol(SimpleValue),
+    TypeSymbol(SimpleValue),
+    ValuePathSymbol(SimpleValue),
+    TypePathSymbol(SimpleValue),
     TypesForm(Box<TypesForm>),
     AttrsForm(Box<AttrsForm>),
     ProdForm(Box<ProdForm>),
@@ -40,7 +45,7 @@ pub enum ProdFormValue {
 
 impl Default for ProdFormValue {
     fn default() -> ProdFormValue {
-        ProdFormValue::Empty
+        ProdFormValue::Empty(SimpleValue::new())
     }
 }
 
@@ -48,12 +53,16 @@ impl ProdFormValue {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            ProdFormValue::Empty => "()".into(),
-            ProdFormValue::Prim(prim) => prim.clone(),
-            ProdFormValue::ValueKeyword(keyword) => keyword.clone(),
-            ProdFormValue::TypeKeyword(keyword) => keyword.clone(),
-            ProdFormValue::ValueSymbol(symbol) => symbol.clone(),
-            ProdFormValue::TypeSymbol(symbol) => symbol.clone(),
+            ProdFormValue::Ignore(_) => "_".into(),
+            ProdFormValue::Empty(_) => "()".into(),
+            ProdFormValue::Panic(_) => "panic".into(),
+            ProdFormValue::Prim(prim) => prim.to_string(),
+            ProdFormValue::ValueKeyword(keyword) => keyword.to_string(),
+            ProdFormValue::TypeKeyword(keyword) => keyword.to_string(),
+            ProdFormValue::ValueSymbol(symbol) => symbol.to_string(),
+            ProdFormValue::TypeSymbol(symbol) => symbol.to_string(),
+            ProdFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
+            ProdFormValue::TypePathSymbol(symbol) => symbol.to_string(),
             ProdFormValue::TypesForm(form) => form.to_string(),
             ProdFormValue::AttrsForm(form) => form.to_string(),
             ProdFormValue::ProdForm(form) => form.to_string(),
@@ -147,7 +156,7 @@ impl ProdForm {
     }
 
     pub fn from_form(form: &Form) -> Result<ProdForm> {
-        if form.name != "prod" {
+        if form.name.to_string() != "prod" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a prod keyword".into(),
@@ -166,24 +175,38 @@ impl ProdForm {
 
         for param in form.params.iter() {
             match param.clone() {
-                FormParam::Empty => {
-                    prod.values.push(ProdFormValue::Empty);
-                }
-                FormParam::Prim(prim) => {
-                    prod.values.push(ProdFormValue::Prim(prim));
-                }
-                FormParam::ValueKeyword(keyword) => {
-                    prod.values.push(ProdFormValue::ValueKeyword(keyword));
-                }
-                FormParam::TypeKeyword(keyword) => {
-                    prod.values.push(ProdFormValue::TypeKeyword(keyword));
-                }
-                FormParam::ValueSymbol(symbol) => {
-                    prod.values.push(ProdFormValue::ValueSymbol(symbol));
-                }
-                FormParam::TypeSymbol(symbol) => {
-                    prod.values.push(ProdFormValue::TypeSymbol(symbol));
-                }
+                FormParam::Simple(value) => match value {
+                    SimpleValue::Empty(_) => {
+                        prod.values.push(ProdFormValue::Empty(value));
+                    }
+                    SimpleValue::Prim(_) => {
+                        prod.values.push(ProdFormValue::Prim(value));
+                    }
+                    SimpleValue::ValueKeyword(_) => {
+                        prod.values.push(ProdFormValue::ValueKeyword(value));
+                    }
+                    SimpleValue::TypeKeyword(_) => {
+                        prod.values.push(ProdFormValue::TypeKeyword(value));
+                    }
+                    SimpleValue::ValueSymbol(_) => {
+                        prod.values.push(ProdFormValue::ValueSymbol(value));
+                    }
+                    SimpleValue::TypeSymbol(_) => {
+                        prod.values.push(ProdFormValue::TypeSymbol(value));
+                    }
+                    SimpleValue::ValuePathSymbol(_) => {
+                        prod.values.push(ProdFormValue::ValuePathSymbol(value));
+                    }
+                    SimpleValue::TypePathSymbol(_) => {
+                        prod.values.push(ProdFormValue::TypePathSymbol(value));
+                    }
+                    x => {
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: form.loc(),
+                            desc: format!("unxexpected value: {}", x.to_string()),
+                        }));
+                    }
+                },
                 FormParam::Form(form) => {
                     if let Ok(form) = TypesForm::from_form(&form) {
                         prod.values.push(ProdFormValue::TypesForm(Box::new(form)));
@@ -210,17 +233,13 @@ impl ProdForm {
                     } else if let Ok(form) = AttrsForm::from_form(&form) {
                         prod.values.push(ProdFormValue::AttrsForm(Box::new(form)))
                     } else {
+                        println!("prod_form.rs form: {}", form.to_string());
+                        TypeForm::from_form(&form)?;
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
                             desc: "unexpected form".into(),
                         }));
                     }
-                }
-                _ => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected ignore".into(),
-                    }));
                 }
             }
         }

@@ -1,6 +1,7 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormParam};
 use crate::form::prod_form::{ProdForm, ProdFormValue};
+use crate::form::simple_value::SimpleValue;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_keyword, is_qualified, is_type_symbol, is_value_symbol};
@@ -9,16 +10,18 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum AttrsFormValue {
-    Empty,
-    ValueKeyword(String),
-    TypeKeyword(String),
-    ValueSymbol(String),
-    TypeSymbol(String),
+    Empty(SimpleValue),
+    ValueKeyword(SimpleValue),
+    TypeKeyword(SimpleValue),
+    ValueSymbol(SimpleValue),
+    TypeSymbol(SimpleValue),
+    ValuePathSymbol(SimpleValue),
+    TypePathSymbol(SimpleValue),
 }
 
 impl Default for AttrsFormValue {
     fn default() -> AttrsFormValue {
-        AttrsFormValue::Empty
+        AttrsFormValue::Empty(SimpleValue::new())
     }
 }
 
@@ -26,11 +29,13 @@ impl AttrsFormValue {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            AttrsFormValue::Empty => "()".into(),
-            AttrsFormValue::ValueKeyword(keyword) => keyword.clone(),
-            AttrsFormValue::TypeKeyword(keyword) => keyword.clone(),
-            AttrsFormValue::ValueSymbol(symbol) => symbol.clone(),
-            AttrsFormValue::TypeSymbol(symbol) => symbol.clone(),
+            AttrsFormValue::Empty(_) => "()".into(),
+            AttrsFormValue::ValueKeyword(keyword) => keyword.to_string(),
+            AttrsFormValue::TypeKeyword(keyword) => keyword.to_string(),
+            AttrsFormValue::ValueSymbol(symbol) => symbol.to_string(),
+            AttrsFormValue::TypeSymbol(symbol) => symbol.to_string(),
+            AttrsFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
+            AttrsFormValue::TypePathSymbol(symbol) => symbol.to_string(),
         }
     }
 }
@@ -85,7 +90,7 @@ impl AttrsForm {
     }
 
     pub fn from_form(form: &Form) -> Result<AttrsForm> {
-        if form.name != "attrs" {
+        if form.name.to_string() != "attrs" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a attrs keyword".into(),
@@ -123,19 +128,35 @@ impl AttrsForm {
         attrs.name = name;
 
         match form.params[1].clone() {
-            FormParam::Empty => {}
-            FormParam::ValueKeyword(keyword) => {
-                attrs.values.push(AttrsFormValue::ValueKeyword(keyword));
-            }
-            FormParam::TypeKeyword(keyword) => {
-                attrs.values.push(AttrsFormValue::TypeKeyword(keyword));
-            }
-            FormParam::ValueSymbol(symbol) => {
-                attrs.values.push(AttrsFormValue::ValueSymbol(symbol));
-            }
-            FormParam::TypeSymbol(symbol) => {
-                attrs.values.push(AttrsFormValue::TypeSymbol(symbol));
-            }
+            FormParam::Simple(value) => match value {
+                SimpleValue::Empty(_) => {
+                    attrs.values.push(AttrsFormValue::Empty(value));
+                }
+                SimpleValue::ValueKeyword(_) => {
+                    attrs.values.push(AttrsFormValue::ValueKeyword(value));
+                }
+                SimpleValue::TypeKeyword(_) => {
+                    attrs.values.push(AttrsFormValue::TypeKeyword(value));
+                }
+                SimpleValue::ValueSymbol(_) => {
+                    attrs.values.push(AttrsFormValue::ValueSymbol(value));
+                }
+                SimpleValue::TypeSymbol(_) => {
+                    attrs.values.push(AttrsFormValue::TypeSymbol(value));
+                }
+                SimpleValue::ValuePathSymbol(_) => {
+                    attrs.values.push(AttrsFormValue::ValuePathSymbol(value));
+                }
+                SimpleValue::TypePathSymbol(_) => {
+                    attrs.values.push(AttrsFormValue::TypePathSymbol(value));
+                }
+                x => {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: format!("unexpected value: {}", x.to_string()),
+                    }));
+                }
+            },
             FormParam::Form(form) => {
                 if let Ok(prod) = ProdForm::from_form(&form) {
                     for value in prod.values.iter() {
@@ -152,6 +173,12 @@ impl AttrsForm {
                             ProdFormValue::ValueSymbol(symbol) => {
                                 attrs.values.push(AttrsFormValue::ValueSymbol(symbol));
                             }
+                            ProdFormValue::TypePathSymbol(symbol) => {
+                                attrs.values.push(AttrsFormValue::TypePathSymbol(symbol));
+                            }
+                            ProdFormValue::ValuePathSymbol(symbol) => {
+                                attrs.values.push(AttrsFormValue::ValuePathSymbol(symbol));
+                            }
                             _ => {
                                 return Err(Error::Syntactic(SyntacticError {
                                     loc: form.loc(),
@@ -166,12 +193,6 @@ impl AttrsForm {
                         desc: "expected a product of symbols".into(),
                     }));
                 }
-            }
-            x => {
-                return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: format!("unexpected value: {}", x.to_string()),
-                }));
             }
         }
 
@@ -216,7 +237,6 @@ mod tests {
     #[test]
     fn attrs_form_from_str() {
         use super::AttrsForm;
-        use super::AttrsFormValue;
 
         let mut s = "(attrs x ())";
 
@@ -228,7 +248,6 @@ mod tests {
 
         assert_eq!(form.name, "x".to_string());
         assert!(form.is_value_attributes());
-        assert!(form.values.is_empty());
         assert_eq!(form.values_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -242,10 +261,6 @@ mod tests {
 
         assert_eq!(form.name, "T".to_string());
         assert!(form.is_type_attributes());
-        assert_eq!(
-            form.values,
-            vec![AttrsFormValue::ValueSymbol("x".to_string())]
-        );
         assert_eq!(form.values_to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -259,10 +274,6 @@ mod tests {
 
         assert_eq!(form.name, "T".to_string());
         assert!(form.is_type_attributes());
-        assert_eq!(
-            form.values,
-            vec![AttrsFormValue::TypeSymbol("moduleX.X".to_string())]
-        );
         assert_eq!(form.values_to_string(), "moduleX.X".to_string());
         assert_eq!(form.to_string(), s.to_string());
 

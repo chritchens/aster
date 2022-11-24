@@ -5,17 +5,18 @@ use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::ProdForm;
+use crate::form::simple_value::SimpleValue;
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::{is_qualified, is_value_symbol};
+use crate::syntax::is_value_symbol;
 use crate::token::Tokens;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ValFormValue {
-    Empty,
-    Prim(String),
-    ValueSymbol(String),
+    Empty(SimpleValue),
+    Prim(SimpleValue),
+    ValueSymbol(SimpleValue),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
     LetForm(Box<LetForm>),
@@ -25,7 +26,7 @@ pub enum ValFormValue {
 
 impl Default for ValFormValue {
     fn default() -> ValFormValue {
-        ValFormValue::Empty
+        ValFormValue::Empty(SimpleValue::new())
     }
 }
 
@@ -33,9 +34,9 @@ impl ValFormValue {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            ValFormValue::Empty => "()".into(),
-            ValFormValue::Prim(prim) => prim.clone(),
-            ValFormValue::ValueSymbol(symbol) => symbol.clone(),
+            ValFormValue::Empty(_) => "()".into(),
+            ValFormValue::Prim(prim) => prim.to_string(),
+            ValFormValue::ValueSymbol(symbol) => symbol.to_string(),
             ValFormValue::ProdForm(form) => form.to_string(),
             ValFormValue::FunForm(form) => form.to_string(),
             ValFormValue::LetForm(form) => form.to_string(),
@@ -54,7 +55,7 @@ impl fmt::Display for ValFormValue {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct ValForm {
     pub tokens: Box<Tokens>,
-    pub name: String,
+    pub name: SimpleValue,
     pub value: ValFormValue,
 }
 
@@ -73,7 +74,7 @@ impl ValForm {
 
     pub fn is_empty_literal(&self) -> bool {
         match self.value {
-            ValFormValue::Empty => true,
+            ValFormValue::Empty(_) => true,
             _ => false,
         }
     }
@@ -134,8 +135,8 @@ impl ValForm {
             || self.is_product_form()
             || self.is_function_form()
             || self.is_case_form()
-            || (self.is_let_form() && is_value_symbol(&self.name))
-            || (self.is_application_form() && is_value_symbol(&self.name))
+            || (self.is_let_form() && is_value_symbol(&self.name.to_string()))
+            || (self.is_application_form() && is_value_symbol(&self.name.to_string()))
     }
 
     pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
@@ -190,7 +191,7 @@ impl ValForm {
     }
 
     pub fn from_form(form: &Form) -> Result<ValForm> {
-        if form.name != "val" {
+        if form.name.to_string() != "val" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a val keyword".into(),
@@ -209,33 +210,48 @@ impl ValForm {
         val.tokens = form.tokens.clone();
 
         match form.params[0].clone() {
-            FormParam::ValueSymbol(symbol) => {
-                if is_qualified(&symbol) {
+            FormParam::Simple(value) => match value {
+                SimpleValue::ValueSymbol(_) => {
+                    val.name = value;
+                }
+                SimpleValue::TypeSymbol(_) => {
+                    val.name = value;
+                }
+                _ => {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected an unqualified symbol".into(),
+                        desc: "expected a type or value symbol".into(),
                     }));
                 }
-
-                val.name = symbol;
-            }
+            },
             _ => {
                 return Err(Error::Syntactic(SyntacticError {
                     loc: form.loc(),
-                    desc: "expected a value symbol".into(),
+                    desc: "expected a type or value symbol".into(),
                 }));
             }
         }
 
         match form.params[1].clone() {
-            FormParam::Empty => {}
-            FormParam::Prim(prim) => {
-                val.value = ValFormValue::Prim(prim);
-            }
-            FormParam::ValueSymbol(symbol) => {
-                val.value = ValFormValue::ValueSymbol(symbol);
-            }
-            FormParam::Form(form) => match form.name.as_str() {
+            FormParam::Simple(value) => match value {
+                SimpleValue::Empty(empty) => {
+                    val.value = ValFormValue::Empty(SimpleValue::Empty(empty));
+                }
+                SimpleValue::Prim(prim) => {
+                    val.value = ValFormValue::Prim(SimpleValue::Prim(prim));
+                }
+                SimpleValue::ValueSymbol(symbol) => {
+                    val.value = ValFormValue::ValueSymbol(SimpleValue::ValueSymbol(symbol));
+                }
+                x => {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: format!("unexpected value: {}", x.to_string()),
+                    }));
+                }
+            },
+
+            FormParam::Form(form) => match form.name.to_string().as_str() {
                 "prod" => {
                     let form = ProdForm::from_form(&form)?;
                     val.value = ValFormValue::ProdForm(Box::new(form));
@@ -263,12 +279,6 @@ impl ValForm {
                     }
                 }
             },
-            x => {
-                return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: format!("unexpected value: {}", x.to_string()),
-                }));
-            }
         }
 
         Ok(val)
@@ -321,7 +331,7 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name, "empty".to_string());
+        assert_eq!(form.name.to_string(), "empty".to_string());
         assert_eq!(form.value.to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_empty_literal());
@@ -335,7 +345,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "x".to_string());
+        assert_eq!(form.name.to_string(), "x".to_string());
         assert_eq!(form.value.to_string(), "10".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_primitive());
@@ -349,7 +359,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "w".to_string());
+        assert_eq!(form.name.to_string(), "w".to_string());
         assert_eq!(form.value.to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_value_symbol());
@@ -363,7 +373,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "s".to_string());
+        assert_eq!(form.name.to_string(), "s".to_string());
         assert_eq!(
             form.value.to_string(),
             "(math.+ (prod 10.323 1))".to_string()
@@ -380,7 +390,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "p".to_string());
+        assert_eq!(form.name.to_string(), "p".to_string());
         assert_eq!(form.value.to_string(), "(prod a b c d)".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_product_form());
@@ -394,7 +404,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "p".to_string());
+        assert_eq!(form.name.to_string(), "p".to_string());
         assert_eq!(
             form.value.to_string(),
             "(prod a b (f (prod x y 10)) 11)".to_string()
@@ -411,7 +421,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "err".to_string());
+        assert_eq!(form.name.to_string(), "err".to_string());
         assert_eq!(
             form.value.to_string(),
             "(let (type StringError String) (unwrap \"error\"))".to_string()
@@ -428,7 +438,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "unwrap".to_string());
+        assert_eq!(form.name.to_string(), "unwrap".to_string());
         assert_eq!(
             form.value.to_string(),
             "(fun res (case res (match T id) (match E panic)))".to_string()

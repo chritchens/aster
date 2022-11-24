@@ -1,50 +1,18 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormParam};
-use crate::form::types_form::TypesForm;
+use crate::form::simple_value::SimpleValue;
+use crate::form::types_form::{TypesForm, TypesFormParam};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::{is_qualified, is_type_symbol};
 use crate::token::Tokens;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub enum TypeFormValue {
-    Empty,
-    Prim,
-    Keyword(String),
-    Symbol(String),
-    Form(Box<TypesForm>),
-}
-
-impl Default for TypeFormValue {
-    fn default() -> TypeFormValue {
-        TypeFormValue::Empty
-    }
-}
-
-impl TypeFormValue {
-    #[allow(clippy::inherent_to_string_shadow_display)]
-    pub fn to_string(&self) -> String {
-        match self {
-            TypeFormValue::Empty => "Empty".into(),
-            TypeFormValue::Prim => "Prim".into(),
-            TypeFormValue::Keyword(keyword) => keyword.clone(),
-            TypeFormValue::Symbol(symbol) => symbol.clone(),
-            TypeFormValue::Form(form) => form.to_string(),
-        }
-    }
-}
-
-impl fmt::Display for TypeFormValue {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
-}
+pub type TypeFormValue = TypesFormParam;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct TypeForm {
     pub tokens: Box<Tokens>,
-    pub name: String,
+    pub name: SimpleValue,
     pub value: TypeFormValue,
 }
 
@@ -63,14 +31,14 @@ impl TypeForm {
 
     pub fn is_empty_type(&self) -> bool {
         match self.value {
-            TypeFormValue::Empty => true,
+            TypeFormValue::Empty(_) => true,
             _ => false,
         }
     }
 
     pub fn is_primitive_type(&self) -> bool {
         match self.value {
-            TypeFormValue::Prim => true,
+            TypeFormValue::Prim(_) => true,
             _ => false,
         }
     }
@@ -97,7 +65,7 @@ impl TypeForm {
     }
 
     pub fn from_form(form: &Form) -> Result<TypeForm> {
-        if form.name != "type" {
+        if form.name.to_string() != "type" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a type keyword".into(),
@@ -114,39 +82,52 @@ impl TypeForm {
         let mut type_form = TypeForm::new();
         type_form.tokens = form.tokens.clone();
 
-        let name = form.params[0].to_string();
-
-        if is_qualified(&name) {
-            return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
-                desc: "expected an unqualified name".into(),
-            }));
-        }
-
-        if !is_type_symbol(&name) {
-            return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
-                desc: "expected a type symbol".into(),
-            }));
-        }
-
-        type_form.name = name;
-
-        match form.params[1].clone() {
-            FormParam::TypeKeyword(keyword) => match keyword.as_str() {
-                "Empty" => {
-                    type_form.value = TypeFormValue::Empty;
-                }
-                "Prim" => {
-                    type_form.value = TypeFormValue::Prim;
+        match form.params[0].clone() {
+            FormParam::Simple(value) => match value {
+                SimpleValue::TypeSymbol(_) => {
+                    type_form.name = value;
                 }
                 _ => {
-                    type_form.value = TypeFormValue::Keyword(keyword);
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "expected a type symbol".into(),
+                    }));
                 }
             },
-            FormParam::TypeSymbol(symbol) => {
-                type_form.value = TypeFormValue::Symbol(symbol);
+            _ => {
+                return Err(Error::Syntactic(SyntacticError {
+                    loc: form.loc(),
+                    desc: "expected a type symbol".into(),
+                }));
             }
+        }
+
+        match form.params[1].clone() {
+            FormParam::Simple(value) => match value.clone() {
+                SimpleValue::TypeKeyword(keyword) => match keyword.to_string().as_str() {
+                    "Empty" => {
+                        type_form.value = TypeFormValue::Empty(value);
+                    }
+                    "Prim" => {
+                        type_form.value = TypeFormValue::Prim(value);
+                    }
+                    _ => {
+                        type_form.value = TypeFormValue::Keyword(value);
+                    }
+                },
+                SimpleValue::TypeSymbol(_) => {
+                    type_form.value = TypeFormValue::Symbol(value);
+                }
+                SimpleValue::TypePathSymbol(_) => {
+                    type_form.value = TypeFormValue::PathSymbol(value);
+                }
+                x => {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: format!("unexpected value: {}", x.to_string()),
+                    }));
+                }
+            },
             FormParam::Form(form) => {
                 if let Ok(form) = TypesForm::from_form(&form) {
                     type_form.value = TypeFormValue::Form(Box::new(form));
@@ -156,12 +137,6 @@ impl TypeForm {
                         desc: "expected a form of types".into(),
                     }));
                 }
-            }
-            x => {
-                return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: format!("unexpected value: {}", x.to_string()),
-                }));
             }
         }
 
@@ -206,7 +181,6 @@ mod tests {
     #[test]
     fn type_form_from_str() {
         use super::TypeForm;
-        use super::TypeFormValue;
 
         let mut s = "(type T Empty)";
 
@@ -216,9 +190,8 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name, "T".to_string());
+        assert_eq!(form.name.to_string(), "T".to_string());
         assert!(form.is_empty_type());
-        assert_eq!(form.value, TypeFormValue::Empty);
         assert_eq!(form.value.to_string(), "Empty".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -230,9 +203,8 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "T".to_string());
+        assert_eq!(form.name.to_string(), "T".to_string());
         assert!(form.is_primitive_type());
-        assert_eq!(form.value, TypeFormValue::Prim);
         assert_eq!(form.value.to_string(), "Prim".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -244,7 +216,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "T".to_string());
+        assert_eq!(form.name.to_string(), "T".to_string());
         assert!(form.is_type_keyword());
         assert_eq!(form.value.to_string(), "Char".to_string());
         assert_eq!(form.to_string(), s.to_string());
@@ -257,7 +229,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "T".to_string());
+        assert_eq!(form.name.to_string(), "T".to_string());
         assert!(form.is_type_symbol());
         assert_eq!(form.value.to_string(), "X".to_string());
         assert_eq!(form.to_string(), s.to_string());
@@ -270,7 +242,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "T".to_string());
+        assert_eq!(form.name.to_string(), "T".to_string());
         assert!(form.is_types_form());
         assert_eq!(
             form.value.to_string(),

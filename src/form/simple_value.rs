@@ -1,7 +1,7 @@
 use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::{is_type_keyword, is_value_keyword};
+use crate::syntax::is_value_keyword;
 use crate::token::{Token, TokenKind};
 use std::fmt;
 
@@ -17,12 +17,11 @@ pub enum SimpleValue {
     TypeSymbol(Token),
     ValuePathSymbol(Token),
     TypePathSymbol(Token),
-    Unknown(Token),
 }
 
 impl Default for SimpleValue {
     fn default() -> SimpleValue {
-        SimpleValue::Unknown(Token::new())
+        SimpleValue::Empty(Token::new())
     }
 }
 
@@ -43,7 +42,6 @@ impl SimpleValue {
             SimpleValue::TypeSymbol(token) => token.clone(),
             SimpleValue::ValuePathSymbol(token) => token.clone(),
             SimpleValue::TypePathSymbol(token) => token.clone(),
-            SimpleValue::Unknown(token) => token.clone(),
         }
     }
 
@@ -59,7 +57,6 @@ impl SimpleValue {
             SimpleValue::TypeSymbol(token) => token.file(),
             SimpleValue::ValuePathSymbol(token) => token.file(),
             SimpleValue::TypePathSymbol(token) => token.file(),
-            SimpleValue::Unknown(token) => token.file(),
         }
     }
 
@@ -75,7 +72,6 @@ impl SimpleValue {
             SimpleValue::TypeSymbol(token) => token.loc(),
             SimpleValue::ValuePathSymbol(token) => token.loc(),
             SimpleValue::TypePathSymbol(token) => token.loc(),
-            SimpleValue::Unknown(token) => token.loc(),
         }
     }
 
@@ -101,8 +97,7 @@ impl SimpleValue {
                 "_" => Ok(SimpleValue::Ignore(token)),
                 "panic" => Ok(SimpleValue::Panic(token)),
                 x if is_value_keyword(x) => Ok(SimpleValue::ValueKeyword(token)),
-                x if is_type_keyword(x) => Ok(SimpleValue::TypeKeyword(token)),
-                _ => unreachable!(),
+                _ => Ok(SimpleValue::TypeKeyword(token)),
             },
             TokenKind::ValueSymbol => Ok(SimpleValue::ValueSymbol(token)),
             TokenKind::TypeSymbol => Ok(SimpleValue::TypeSymbol(token)),
@@ -124,7 +119,6 @@ impl SimpleValue {
             SimpleValue::TypeSymbol(token) => token.to_string(),
             SimpleValue::ValuePathSymbol(token) => token.to_string(),
             SimpleValue::TypePathSymbol(token) => token.to_string(),
-            SimpleValue::Unknown(token) => token.to_string(),
         }
     }
 }

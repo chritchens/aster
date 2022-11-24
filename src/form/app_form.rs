@@ -4,20 +4,24 @@ use crate::form::form::{Form, FormParam};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
+use crate::form::simple_value::SimpleValue;
 use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::{is_value_keyword, is_value_symbol, symbol_name};
 use crate::token::Tokens;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum AppFormParam {
-    Empty,
-    Prim(String),
-    TypeKeyword(String),
-    TypeSymbol(String),
-    ValueSymbol(String),
+    Ignore(SimpleValue),
+    Empty(SimpleValue),
+    Panic(SimpleValue),
+    Prim(SimpleValue),
+    TypeKeyword(SimpleValue),
+    TypeSymbol(SimpleValue),
+    ValueSymbol(SimpleValue),
+    TypePathSymbol(SimpleValue),
+    ValuePathSymbol(SimpleValue),
     TypesForm(Box<TypesForm>),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
@@ -28,7 +32,7 @@ pub enum AppFormParam {
 
 impl Default for AppFormParam {
     fn default() -> AppFormParam {
-        AppFormParam::Empty
+        AppFormParam::Empty(SimpleValue::new())
     }
 }
 
@@ -36,11 +40,15 @@ impl AppFormParam {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            AppFormParam::Empty => "()".into(),
-            AppFormParam::Prim(prim) => prim.clone(),
-            AppFormParam::TypeKeyword(keyword) => keyword.clone(),
-            AppFormParam::TypeSymbol(symbol) => symbol.clone(),
-            AppFormParam::ValueSymbol(symbol) => symbol.clone(),
+            AppFormParam::Ignore(_) => "_".into(),
+            AppFormParam::Empty(_) => "()".into(),
+            AppFormParam::Panic(_) => "panic".into(),
+            AppFormParam::Prim(prim) => prim.to_string(),
+            AppFormParam::TypeKeyword(keyword) => keyword.to_string(),
+            AppFormParam::TypeSymbol(symbol) => symbol.to_string(),
+            AppFormParam::ValueSymbol(symbol) => symbol.to_string(),
+            AppFormParam::TypePathSymbol(symbol) => symbol.to_string(),
+            AppFormParam::ValuePathSymbol(symbol) => symbol.to_string(),
             AppFormParam::TypesForm(form) => form.to_string(),
             AppFormParam::ProdForm(form) => form.to_string(),
             AppFormParam::FunForm(form) => form.to_string(),
@@ -60,7 +68,7 @@ impl fmt::Display for AppFormParam {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct AppForm {
     pub tokens: Box<Tokens>,
-    pub name: String,
+    pub name: SimpleValue,
     pub params: Vec<AppFormParam>,
 }
 
@@ -93,7 +101,7 @@ impl AppForm {
     }
 
     pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
-        let mut variables: Vec<String> = vec![self.name.clone()];
+        let mut variables: Vec<String> = vec![self.name.to_string()];
         variables.extend(
             self.params
                 .iter()
@@ -135,13 +143,6 @@ impl AppForm {
     }
 
     pub fn from_form(form: &Form) -> Result<AppForm> {
-        if !is_value_symbol(&symbol_name(&form.name)) && !is_value_keyword(&form.name) {
-            return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
-                desc: "expected a value symbol".into(),
-            }));
-        }
-
         if form.params.len() != 1 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
@@ -151,26 +152,76 @@ impl AppForm {
 
         let mut app = AppForm::new();
         app.tokens = form.tokens.clone();
-        app.name = form.name.clone();
+
+        let name = form.name.clone();
+
+        match name {
+            SimpleValue::Panic(_) => {
+                app.name = name;
+            }
+            SimpleValue::ValueKeyword(_) => {
+                app.name = name;
+            }
+            SimpleValue::ValueSymbol(_) => {
+                app.name = name;
+            }
+            SimpleValue::ValuePathSymbol(_) => {
+                app.name = name;
+            }
+            _ => {
+                return Err(Error::Syntactic(SyntacticError {
+                    loc: form.loc(),
+                    desc: "expected a value keyword, a value symbol or a value path symbol".into(),
+                }));
+            }
+        }
 
         match form.params[0].clone() {
-            FormParam::Empty => {}
-            FormParam::Prim(prim) => {
-                app.params.push(AppFormParam::Prim(prim));
-            }
-            FormParam::TypeKeyword(keyword) => {
-                app.params.push(AppFormParam::TypeKeyword(keyword));
-            }
-            FormParam::ValueSymbol(symbol) => {
-                app.params.push(AppFormParam::ValueSymbol(symbol));
-            }
-            FormParam::TypeSymbol(symbol) => {
-                app.params.push(AppFormParam::TypeSymbol(symbol));
-            }
+            FormParam::Simple(value) => match value {
+                SimpleValue::Ignore(_) => {
+                    app.params.push(AppFormParam::Ignore(value));
+                }
+                SimpleValue::Empty(_) => {
+                    app.params.push(AppFormParam::Empty(value));
+                }
+                SimpleValue::Panic(_) => {
+                    app.params.push(AppFormParam::Panic(value));
+                }
+                SimpleValue::Prim(_) => {
+                    app.params.push(AppFormParam::Prim(value));
+                }
+                SimpleValue::TypeKeyword(_) => {
+                    app.params.push(AppFormParam::TypeKeyword(value));
+                }
+                SimpleValue::ValueSymbol(_) => {
+                    app.params.push(AppFormParam::ValueSymbol(value));
+                }
+                SimpleValue::TypeSymbol(_) => {
+                    app.params.push(AppFormParam::TypeSymbol(value));
+                }
+                SimpleValue::ValuePathSymbol(_) => {
+                    app.params.push(AppFormParam::ValuePathSymbol(value));
+                }
+                SimpleValue::TypePathSymbol(_) => {
+                    app.params.push(AppFormParam::TypePathSymbol(value));
+                }
+                x => {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: format!("unexpected parameter: {}", x.to_string()),
+                    }));
+                }
+            },
             FormParam::Form(form) => {
                 if let Ok(prod) = ProdForm::from_form(&form) {
                     for value in prod.values.iter() {
                         match value.clone() {
+                            ProdFormValue::Ignore(prim) => {
+                                app.params.push(AppFormParam::Ignore(prim));
+                            }
+                            ProdFormValue::Panic(prim) => {
+                                app.params.push(AppFormParam::Panic(prim));
+                            }
                             ProdFormValue::Prim(prim) => {
                                 app.params.push(AppFormParam::Prim(prim));
                             }
@@ -182,6 +233,12 @@ impl AppForm {
                             }
                             ProdFormValue::ValueSymbol(symbol) => {
                                 app.params.push(AppFormParam::ValueSymbol(symbol));
+                            }
+                            ProdFormValue::TypePathSymbol(symbol) => {
+                                app.params.push(AppFormParam::TypePathSymbol(symbol));
+                            }
+                            ProdFormValue::ValuePathSymbol(symbol) => {
+                                app.params.push(AppFormParam::ValuePathSymbol(symbol));
                             }
                             ProdFormValue::TypesForm(form) => {
                                 app.params.push(AppFormParam::TypesForm(form));
@@ -222,12 +279,6 @@ impl AppForm {
                         desc: "expected a product of keywords or symbols".into(),
                     }));
                 }
-            }
-            x => {
-                return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: format!("unexpected parameter: {}", x.to_string()),
-                }));
             }
         }
 
@@ -272,7 +323,6 @@ mod tests {
     #[test]
     fn app_form_from_str() {
         use super::AppForm;
-        use super::AppFormParam;
 
         let mut s = "(math.+ (prod 0 1 2 3))";
 
@@ -282,7 +332,7 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name, "math.+".to_string());
+        assert_eq!(form.name.to_string(), "math.+".to_string());
         assert_eq!(form.params_to_string(), "(prod 0 1 2 3)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -294,8 +344,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "unwrap".to_string());
-        assert!(form.params.is_empty());
+        assert_eq!(form.name.to_string(), "unwrap".to_string());
         assert_eq!(form.params_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -307,8 +356,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "panic".to_string());
-        assert_eq!(form.params, vec![AppFormParam::TypeSymbol("E".into())]);
+        assert_eq!(form.name.to_string(), "panic".to_string());
         assert_eq!(form.params_to_string(), "E".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -320,7 +368,6 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.params, vec![AppFormParam::ValueSymbol("stdIO".into())]);
         assert_eq!(form.params_to_string(), "stdIO".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -332,7 +379,6 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.params, vec![AppFormParam::Prim("\"io error\"".into())]);
         assert_eq!(form.params_to_string(), "\"io error\"".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
