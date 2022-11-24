@@ -10,7 +10,7 @@ use crate::token::Tokens;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum CaseFormParam {
+pub enum CaseFormVariable {
     Empty,
     Prim(String),
     TypeKeyword(String),
@@ -20,28 +20,28 @@ pub enum CaseFormParam {
     LetForm(Box<LetForm>),
 }
 
-impl Default for CaseFormParam {
-    fn default() -> CaseFormParam {
-        CaseFormParam::Empty
+impl Default for CaseFormVariable {
+    fn default() -> CaseFormVariable {
+        CaseFormVariable::Empty
     }
 }
 
-impl CaseFormParam {
+impl CaseFormVariable {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            CaseFormParam::Empty => "()".into(),
-            CaseFormParam::Prim(prim) => prim.clone(),
-            CaseFormParam::TypeKeyword(keyword) => keyword.clone(),
-            CaseFormParam::TypeSymbol(symbol) => symbol.clone(),
-            CaseFormParam::ValueSymbol(symbol) => symbol.clone(),
-            CaseFormParam::AppForm(form) => form.to_string(),
-            CaseFormParam::LetForm(form) => form.to_string(),
+            CaseFormVariable::Empty => "()".into(),
+            CaseFormVariable::Prim(prim) => prim.clone(),
+            CaseFormVariable::TypeKeyword(keyword) => keyword.clone(),
+            CaseFormVariable::TypeSymbol(symbol) => symbol.clone(),
+            CaseFormVariable::ValueSymbol(symbol) => symbol.clone(),
+            CaseFormVariable::AppForm(form) => form.to_string(),
+            CaseFormVariable::LetForm(form) => form.to_string(),
         }
     }
 }
 
-impl fmt::Display for CaseFormParam {
+impl fmt::Display for CaseFormVariable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
@@ -262,7 +262,7 @@ impl fmt::Display for CaseFormMatch {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct CaseForm {
     pub tokens: Box<Tokens>,
-    pub param: CaseFormParam,
+    pub variable: CaseFormVariable,
     pub matches: Vec<CaseFormMatch>,
 }
 
@@ -288,8 +288,8 @@ impl CaseForm {
     }
 
     pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
-        match self.param.clone() {
-            CaseFormParam::TypeSymbol(symbol) => {
+        match self.variable.clone() {
+            CaseFormVariable::TypeSymbol(symbol) => {
                 if params[0] != symbol {
                     return Err(Error::Semantic(SemanticError {
                         loc: self.loc(),
@@ -299,7 +299,7 @@ impl CaseForm {
 
                 params.remove(0);
             }
-            CaseFormParam::ValueSymbol(symbol) => {
+            CaseFormVariable::ValueSymbol(symbol) => {
                 if params[0] != symbol {
                     return Err(Error::Semantic(SemanticError {
                         loc: self.loc(),
@@ -309,10 +309,10 @@ impl CaseForm {
 
                 params.remove(0);
             }
-            CaseFormParam::AppForm(form) => {
+            CaseFormVariable::AppForm(form) => {
                 form.check_linearly_ordered_on_params(params)?;
             }
-            CaseFormParam::LetForm(form) => {
+            CaseFormVariable::LetForm(form) => {
                 form.check_params_use()?;
                 form.check_linearly_ordered_on_params(params)?;
             }
@@ -378,25 +378,25 @@ impl CaseForm {
 
         match form.params[0].clone() {
             FormParam::Empty => {
-                case.param = CaseFormParam::Empty;
+                case.variable = CaseFormVariable::Empty;
             }
             FormParam::Prim(prim) => {
-                case.param = CaseFormParam::Prim(prim);
+                case.variable = CaseFormVariable::Prim(prim);
             }
             FormParam::TypeKeyword(keyword) => {
-                case.param = CaseFormParam::TypeKeyword(keyword);
+                case.variable = CaseFormVariable::TypeKeyword(keyword);
             }
             FormParam::TypeSymbol(symbol) => {
-                case.param = CaseFormParam::TypeSymbol(symbol);
+                case.variable = CaseFormVariable::TypeSymbol(symbol);
             }
             FormParam::ValueSymbol(symbol) => {
-                case.param = CaseFormParam::ValueSymbol(symbol);
+                case.variable = CaseFormVariable::ValueSymbol(symbol);
             }
             FormParam::Form(form) => {
                 if let Ok(form) = LetForm::from_form(&form) {
-                    case.param = CaseFormParam::LetForm(Box::new(form));
+                    case.variable = CaseFormVariable::LetForm(Box::new(form));
                 } else if let Ok(form) = AppForm::from_form(&form) {
-                    case.param = CaseFormParam::AppForm(Box::new(form));
+                    case.variable = CaseFormVariable::AppForm(Box::new(form));
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
@@ -453,7 +453,7 @@ impl CaseForm {
     pub fn to_string(&self) -> String {
         format!(
             "(case {} {})",
-            self.param.to_string(),
+            self.variable.to_string(),
             self.matches_to_string(),
         )
     }
@@ -621,7 +621,7 @@ mod tests {
 
         let mut case = res.unwrap();
 
-        assert_eq!(case.param.to_string(), "t".to_string());
+        assert_eq!(case.variable.to_string(), "t".to_string());
         assert_eq!(
             case.matches_to_string(),
             "(match True (fun t \"True\")) (match False (fun f \"False\"))".to_string()
@@ -636,7 +636,7 @@ mod tests {
 
         case = res.unwrap();
 
-        assert_eq!(case.param.to_string(), "(id True)".to_string());
+        assert_eq!(case.variable.to_string(), "(id True)".to_string());
         assert_eq!(case.to_string(), s.to_string());
 
         s = "(case (let (id True)) (match True (fun t \"True\")) (match False (fun f \"False\")))";
@@ -647,7 +647,7 @@ mod tests {
 
         case = res.unwrap();
 
-        assert_eq!(case.param.to_string(), "(let (id True))".to_string());
+        assert_eq!(case.variable.to_string(), "(let (id True))".to_string());
         assert_eq!(case.to_string(), s.to_string());
 
         s = "(case True (match True (fun t \"True\")) (match False _))";
@@ -658,7 +658,7 @@ mod tests {
 
         case = res.unwrap();
 
-        assert_eq!(case.param.to_string(), "True".to_string());
+        assert_eq!(case.variable.to_string(), "True".to_string());
         assert_eq!(case.to_string(), s.to_string());
 
         s = "(case res (match T id) (match E panic))";
@@ -669,7 +669,7 @@ mod tests {
 
         case = res.unwrap();
 
-        assert_eq!(case.param.to_string(), "res".to_string());
+        assert_eq!(case.variable.to_string(), "res".to_string());
         assert_eq!(
             case.matches_to_string(),
             "(match T id) (match E panic)".to_string()
