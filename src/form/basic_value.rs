@@ -2,7 +2,6 @@ use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_type_keyword, is_value_keyword};
-use crate::syntax::{is_type_symbol, is_value_symbol, symbol_name};
 use crate::token::{Token, TokenKind};
 use std::fmt;
 
@@ -84,18 +83,14 @@ impl BasicValue {
         let token = token.to_owned();
 
         match token.kind {
-            TokenKind::Comment | TokenKind::DocComment => {
-                Err(Error::Syntactic(SyntacticError {
-                    loc: token.loc(),
-                    desc: "unexpected comment marker".into(),
-                }))
-            }
-            TokenKind::FormStart | TokenKind::FormEnd => {
-                Err(Error::Syntactic(SyntacticError {
-                    loc: token.loc(),
-                    desc: "unexpected form punctuation".into(),
-                }))
-            }
+            TokenKind::Comment | TokenKind::DocComment => Err(Error::Syntactic(SyntacticError {
+                loc: token.loc(),
+                desc: "unexpected comment marker".into(),
+            })),
+            TokenKind::FormStart | TokenKind::FormEnd => Err(Error::Syntactic(SyntacticError {
+                loc: token.loc(),
+                desc: "unexpected form punctuation".into(),
+            })),
             TokenKind::EmptyLiteral => Ok(BasicValue::Empty(token)),
             TokenKind::UIntLiteral
             | TokenKind::IntLiteral
@@ -111,21 +106,8 @@ impl BasicValue {
             },
             TokenKind::ValueSymbol => Ok(BasicValue::ValueSymbol(token)),
             TokenKind::TypeSymbol => Ok(BasicValue::TypeSymbol(token)),
-            TokenKind::PathSymbol => {
-                let name = token.to_string();
-                let unqualified = symbol_name(&name);
-
-                if is_type_symbol(&unqualified) {
-                    Ok(BasicValue::TypePathSymbol(token))
-                } else if is_value_symbol(&unqualified) {
-                    Ok(BasicValue::ValuePathSymbol(token))
-                } else {
-                    Err(Error::Syntactic(SyntacticError {
-                        loc: token.loc(),
-                        desc: "expected a qualified type symbol or a qualified value symbol".into(),
-                    }))
-                }
-            }
+            TokenKind::ValuePathSymbol => Ok(BasicValue::ValuePathSymbol(token)),
+            TokenKind::TypePathSymbol => Ok(BasicValue::TypePathSymbol(token)),
         }
     }
 

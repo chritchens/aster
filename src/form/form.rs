@@ -187,22 +187,12 @@ impl Form {
                     params.push(FormParam::TypeSymbol(tokens[idx].to_string()));
                     idx += 1;
                 }
-                TokenKind::PathSymbol => {
-                    let name = tokens[idx].to_string();
-                    let unqualified = symbol_name(&name);
-
-                    if is_type_symbol(&unqualified) {
-                        params.push(FormParam::TypeSymbol(tokens[idx].to_string()));
-                    } else if is_value_symbol(&unqualified) {
-                        params.push(FormParam::ValueSymbol(tokens[idx].to_string()));
-                    } else {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: tokens[idx].loc(),
-                            desc: "expected a qualified type symbol or a qualified value symbol"
-                                .into(),
-                        }));
-                    }
-
+                TokenKind::ValuePathSymbol => {
+                    params.push(FormParam::ValueSymbol(tokens[idx].to_string()));
+                    idx += 1;
+                }
+                TokenKind::TypePathSymbol => {
+                    params.push(FormParam::TypeSymbol(tokens[idx].to_string()));
                     idx += 1;
                 }
                 TokenKind::FormStart => {

@@ -16,7 +16,8 @@ pub enum TokenKind {
     StringLiteral,
     ValueSymbol,
     TypeSymbol,
-    PathSymbol,
+    ValuePathSymbol,
+    TypePathSymbol,
     FormStart,
     FormEnd,
 }
@@ -89,8 +90,12 @@ impl Token {
         Token::new_from_kind(TokenKind::TypeSymbol)
     }
 
-    pub fn new_path_symbol() -> Self {
-        Token::new_from_kind(TokenKind::PathSymbol)
+    pub fn new_value_path_symbol() -> Self {
+        Token::new_from_kind(TokenKind::ValuePathSymbol)
+    }
+
+    pub fn new_type_path_symbol() -> Self {
+        Token::new_from_kind(TokenKind::TypePathSymbol)
     }
 
     pub fn new_form_start() -> Self {

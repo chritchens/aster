@@ -474,6 +474,18 @@ pub fn symbol_with_qualifier(s: &str, qualifier: &str) -> String {
     vec![qualifier, s].join(".")
 }
 
+pub fn is_type_path_symbol(s: &str) -> bool {
+    let unqualified = symbol_name(&s);
+
+    is_type_symbol(&unqualified)
+}
+
+pub fn is_value_path_symbol(s: &str) -> bool {
+    let unqualified = symbol_name(&s);
+
+    is_value_symbol(&unqualified)
+}
+
 pub const FORM_START: char = '(';
 
 pub fn is_form_start(s: &str) -> bool {
