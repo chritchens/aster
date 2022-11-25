@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError, SyntacticError};
+use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormTailElement};
 use crate::form::simple_value::SimpleValue;
 use crate::loc::Loc;
@@ -78,41 +78,6 @@ impl TypesForm {
 
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         vec![]
-    }
-
-    pub fn check_linearly_ordered_on_parameters(&self, parameters: &mut Vec<String>) -> Result<()> {
-        let bound_variables = self
-            .tail
-            .iter()
-            .map(|p| p.to_string())
-            .filter(|v| parameters.iter().any(|p| p == v))
-            .collect::<Vec<String>>();
-
-        if parameters != &bound_variables {
-            if bound_variables.len() != parameters.len() {
-                return Err(Error::Semantic(SemanticError {
-                    loc: self.loc(),
-                    desc: format!(
-                        "non-linear use of parameters {}: {}",
-                        parameters.join(", "),
-                        bound_variables.join(" ")
-                    ),
-                }));
-            } else {
-                return Err(Error::Semantic(SemanticError {
-                    loc: self.loc(),
-                    desc: format!(
-                        "non-ordered use of parameters {}: {}",
-                        parameters.join(", "),
-                        bound_variables.join(" ")
-                    ),
-                }));
-            }
-        }
-
-        parameters.clear();
-
-        Ok(())
     }
 
     pub fn as_form(&self) -> Form {

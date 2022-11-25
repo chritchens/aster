@@ -202,57 +202,6 @@ impl ValForm {
         vars
     }
 
-    pub fn check_linearly_ordered_on_parameters(&self, parameters: &mut Vec<String>) -> Result<()> {
-        match self.value.clone() {
-            ValFormValue::ProdForm(form) => {
-                form.check_linearly_ordered_on_parameters(parameters)?;
-            }
-            ValFormValue::FunForm(form) => {
-                form.check_parameters_use()?;
-                parameters.extend(
-                    form.parameters
-                        .iter()
-                        .map(|p| p.to_string())
-                        .collect::<Vec<String>>(),
-                );
-                form.check_linearly_ordered_on_parameters(parameters)?;
-            }
-            ValFormValue::LetForm(form) => {
-                form.check_parameters_use()?;
-                form.check_linearly_ordered_on_parameters(parameters)?;
-            }
-            ValFormValue::AppForm(form) => {
-                form.check_linearly_ordered_on_parameters(parameters)?;
-            }
-            ValFormValue::CaseForm(form) => {
-                form.check_parameters_use()?;
-                form.check_linearly_ordered_on_parameters(parameters)?;
-            }
-            _ => {}
-        }
-
-        parameters.clear();
-
-        Ok(())
-    }
-
-    pub fn check_parameters_use(&self) -> Result<()> {
-        match self.value.clone() {
-            ValFormValue::FunForm(form) => {
-                form.check_parameters_use()?;
-            }
-            ValFormValue::LetForm(form) => {
-                form.check_parameters_use()?;
-            }
-            ValFormValue::CaseForm(form) => {
-                form.check_parameters_use()?;
-            }
-            _ => {}
-        }
-
-        Ok(())
-    }
-
     pub fn from_form(form: &Form) -> Result<ValForm> {
         if form.head.to_string() != "val" {
             return Err(Error::Syntactic(SyntacticError {

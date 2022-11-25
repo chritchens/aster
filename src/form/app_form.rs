@@ -1,4 +1,4 @@
-use crate::error::{Error, SemanticError, SyntacticError};
+use crate::error::{Error, SyntacticError};
 use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
@@ -171,48 +171,6 @@ impl AppForm {
         }
 
         vars
-    }
-
-    pub fn check_linearly_ordered_on_parameters(&self, parameters: &mut Vec<String>) -> Result<()> {
-        let mut variables: Vec<String> = vec![self.name.to_string()];
-        variables.extend(
-            self.variables
-                .iter()
-                .map(|p| p.to_string())
-                .collect::<Vec<String>>(),
-        );
-
-        let bound_variables = variables
-            .iter()
-            .filter(|v| parameters.iter().any(|p| v == &p))
-            .map(|v| v.to_owned())
-            .collect::<Vec<String>>();
-
-        if parameters != &bound_variables {
-            if bound_variables.len() != parameters.len() {
-                return Err(Error::Semantic(SemanticError {
-                    loc: self.loc(),
-                    desc: format!(
-                        "non-linear use of parameters {}: {}",
-                        parameters.join(", "),
-                        bound_variables.join(" ")
-                    ),
-                }));
-            } else {
-                return Err(Error::Semantic(SemanticError {
-                    loc: self.loc(),
-                    desc: format!(
-                        "non-ordered use of parameters {}: {}",
-                        parameters.join(", "),
-                        bound_variables.join(" ")
-                    ),
-                }));
-            }
-        }
-
-        parameters.clear();
-
-        Ok(())
     }
 
     pub fn from_form(form: &Form) -> Result<AppForm> {
