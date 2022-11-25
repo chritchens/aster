@@ -94,6 +94,10 @@ impl ImportForm {
         }
     }
 
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        vec![]
+    }
+
     fn parse_qualifier(&mut self, form: &Form, idx: usize) -> Result<()> {
         match form.tail[idx].clone() {
             FormTailElement::Simple(value) => match value {

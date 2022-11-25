@@ -139,6 +139,37 @@ impl LetForm {
         }
     }
 
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+
+        for entry in self.entries.iter() {
+            match entry.clone() {
+                LetFormEntry::Empty(value) => {
+                    vars.push(value);
+                }
+                LetFormEntry::ImportForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                LetFormEntry::AttrsForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                LetFormEntry::TypeForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                LetFormEntry::SigForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                LetFormEntry::ValForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+            }
+        }
+
+        vars.extend(self.value.all_variables());
+
+        vars
+    }
+
     pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
         for entry in self.entries.iter() {
             if let LetFormEntry::ValForm(form) = entry {

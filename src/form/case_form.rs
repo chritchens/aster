@@ -28,6 +28,36 @@ impl Default for CaseFormVariable {
 }
 
 impl CaseFormVariable {
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+
+        match self.clone() {
+            CaseFormVariable::Empty(value) => {
+                vars.push(value);
+            }
+            CaseFormVariable::Prim(value) => {
+                vars.push(value);
+            }
+            CaseFormVariable::TypeKeyword(value) => {
+                vars.push(value);
+            }
+            CaseFormVariable::TypeSymbol(value) => {
+                vars.push(value);
+            }
+            CaseFormVariable::ValueSymbol(value) => {
+                vars.push(value);
+            }
+            CaseFormVariable::AppForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            CaseFormVariable::LetForm(form) => {
+                vars.extend(form.all_variables());
+            }
+        }
+
+        vars
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
@@ -154,6 +184,54 @@ impl CaseFormMatch {
 
     pub fn loc(&self) -> Option<Loc> {
         self.tokens[0].loc()
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+
+        match self.action.clone() {
+            CaseFormMatchAction::Ignore(value) => {
+                vars.push(value);
+            }
+            CaseFormMatchAction::Empty(value) => {
+                vars.push(value);
+            }
+            CaseFormMatchAction::Panic(value) => {
+                vars.push(value);
+            }
+            CaseFormMatchAction::Prim(value) => {
+                vars.push(value);
+            }
+            CaseFormMatchAction::ValueKeyword(value) => {
+                vars.push(value);
+            }
+            CaseFormMatchAction::TypeKeyword(value) => {
+                vars.push(value);
+            }
+            CaseFormMatchAction::TypeSymbol(value) => {
+                vars.push(value);
+            }
+            CaseFormMatchAction::ValueSymbol(value) => {
+                vars.push(value);
+            }
+            CaseFormMatchAction::TypePathSymbol(value) => {
+                vars.push(value);
+            }
+            CaseFormMatchAction::ValuePathSymbol(value) => {
+                vars.push(value);
+            }
+            CaseFormMatchAction::ProdForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            CaseFormMatchAction::FunForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            CaseFormMatchAction::LetForm(form) => {
+                vars.extend(form.all_variables());
+            }
+        }
+
+        vars
     }
 
     pub fn from_form(form: &Form) -> Result<CaseFormMatch> {
@@ -319,6 +397,25 @@ impl CaseForm {
             .map(|b| b.to_string())
             .collect::<Vec<String>>()
             .join(" ")
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+
+        vars.extend(self.variable.all_variables());
+
+        for branch in self.matches.iter() {
+            let new_vars = branch
+                .all_variables()
+                .iter()
+                .filter(|bv| !vars.iter().any(|v| v.to_string() == bv.to_string()))
+                .map(|v| v.to_owned())
+                .collect::<Vec<SimpleValue>>();
+
+            vars.extend(new_vars);
+        }
+
+        vars
     }
 
     pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {

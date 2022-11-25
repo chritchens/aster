@@ -64,6 +64,10 @@ impl TypeForm {
         }
     }
 
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        vec![]
+    }
+
     pub fn from_form(form: &Form) -> Result<TypeForm> {
         if form.head.to_string() != "type" {
             return Err(Error::Syntactic(SyntacticError {

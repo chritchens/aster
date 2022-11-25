@@ -139,6 +139,39 @@ impl ValForm {
             || (self.is_application_form() && is_value_symbol(&self.name.to_string()))
     }
 
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+
+        match self.value.clone() {
+            ValFormValue::Empty(value) => {
+                vars.push(value);
+            }
+            ValFormValue::Prim(value) => {
+                vars.push(value);
+            }
+            ValFormValue::ValueSymbol(value) => {
+                vars.push(value);
+            }
+            ValFormValue::ProdForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            ValFormValue::FunForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            ValFormValue::LetForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            ValFormValue::AppForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            ValFormValue::CaseForm(form) => {
+                vars.extend(form.all_variables());
+            }
+        }
+
+        vars
+    }
+
     pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
         match self.value.clone() {
             ValFormValue::ProdForm(form) => {

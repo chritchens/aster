@@ -71,6 +71,26 @@ impl ExportForm {
         }
     }
 
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+
+        for def in self.defs.iter() {
+            match def.clone() {
+                ExportFormDef::Empty(value) => {
+                    vars.push(value);
+                }
+                ExportFormDef::ValueSymbol(value) => {
+                    vars.push(value);
+                }
+                ExportFormDef::TypeSymbol(value) => {
+                    vars.push(value);
+                }
+            }
+        }
+
+        vars
+    }
+
     pub fn from_form(form: &Form) -> Result<ExportForm> {
         if form.head.to_string() != "export" {
             return Err(Error::Syntactic(SyntacticError {

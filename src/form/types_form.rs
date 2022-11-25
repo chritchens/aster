@@ -72,6 +72,10 @@ impl TypesForm {
             .join(" ")
     }
 
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        vec![]
+    }
+
     pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
         let bound_variables = self
             .tail

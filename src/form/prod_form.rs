@@ -120,6 +120,77 @@ impl ProdForm {
             .join(" ")
     }
 
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+
+        for value in self.values.iter() {
+            match value.clone() {
+                ProdFormValue::Ignore(value) => {
+                    vars.push(value);
+                }
+                ProdFormValue::Empty(value) => {
+                    vars.push(value);
+                }
+                ProdFormValue::Panic(value) => {
+                    vars.push(value);
+                }
+                ProdFormValue::Prim(value) => {
+                    vars.push(value);
+                }
+                ProdFormValue::ValueKeyword(value) => {
+                    vars.push(value);
+                }
+                ProdFormValue::TypeKeyword(value) => {
+                    vars.push(value);
+                }
+                ProdFormValue::ValueSymbol(value) => {
+                    vars.push(value);
+                }
+                ProdFormValue::TypeSymbol(value) => {
+                    vars.push(value);
+                }
+                ProdFormValue::ValuePathSymbol(value) => {
+                    vars.push(value);
+                }
+                ProdFormValue::TypePathSymbol(value) => {
+                    vars.push(value);
+                }
+                ProdFormValue::TypesForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::AttrsForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::ProdForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::FunForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::CaseForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::LetForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::AppForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::TypeForm(_form) => {}
+                ProdFormValue::SigForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::ValForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::ImportForm(_form) => {}
+                ProdFormValue::ExportForm(_form) => {}
+            }
+        }
+
+        vars
+    }
+
     pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
         let bound_variables = self
             .values

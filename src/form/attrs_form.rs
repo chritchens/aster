@@ -94,6 +94,10 @@ impl AttrsForm {
         }
     }
 
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        vec![]
+    }
+
     pub fn from_form(form: &Form) -> Result<AttrsForm> {
         if form.head.to_string() != "attrs" {
             return Err(Error::Syntactic(SyntacticError {

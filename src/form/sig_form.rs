@@ -64,6 +64,10 @@ impl SigForm {
         }
     }
 
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        vec![]
+    }
+
     pub fn from_form(form: &Form) -> Result<SigForm> {
         if form.head.to_string() != "sig" {
             return Err(Error::Syntactic(SyntacticError {

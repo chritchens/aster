@@ -100,6 +100,63 @@ impl AppForm {
         }
     }
 
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+        vars.push(self.name.clone());
+
+        for param in self.params.iter() {
+            match param.clone() {
+                AppFormParam::Ignore(value) => {
+                    vars.push(value);
+                }
+                AppFormParam::Empty(value) => {
+                    vars.push(value);
+                }
+                AppFormParam::Panic(value) => {
+                    vars.push(value);
+                }
+                AppFormParam::Prim(value) => {
+                    vars.push(value);
+                }
+                AppFormParam::TypeKeyword(value) => {
+                    vars.push(value);
+                }
+                AppFormParam::TypeSymbol(value) => {
+                    vars.push(value);
+                }
+                AppFormParam::ValueSymbol(value) => {
+                    vars.push(value);
+                }
+                AppFormParam::TypePathSymbol(value) => {
+                    vars.push(value);
+                }
+                AppFormParam::ValuePathSymbol(value) => {
+                    vars.push(value);
+                }
+                AppFormParam::TypesForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                AppFormParam::ProdForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                AppFormParam::FunForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                AppFormParam::LetForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                AppFormParam::CaseForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                AppFormParam::AppForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+            }
+        }
+
+        vars
+    }
+
     pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
         let mut variables: Vec<String> = vec![self.name.to_string()];
         variables.extend(
