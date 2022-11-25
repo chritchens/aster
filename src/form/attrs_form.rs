@@ -4,7 +4,6 @@ use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::form::simple_value::SimpleValue;
 use crate::loc::Loc;
 use crate::result::Result;
-use crate::syntax::{is_keyword, is_qualified, is_type_symbol, is_value_symbol};
 use crate::token::Tokens;
 use std::fmt;
 
@@ -49,7 +48,7 @@ impl fmt::Display for AttrsFormValue {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct AttrsForm {
     pub tokens: Box<Tokens>,
-    pub name: String,
+    pub name: SimpleValue,
     pub values: Vec<AttrsFormValue>,
 }
 
@@ -67,11 +66,17 @@ impl AttrsForm {
     }
 
     pub fn is_type_attributes(&self) -> bool {
-        is_type_symbol(&self.name)
+        match self.name {
+            SimpleValue::TypeSymbol(_) => true,
+            _ => false,
+        }
     }
 
     pub fn is_value_attributes(&self) -> bool {
-        is_value_symbol(&self.name)
+        match self.name {
+            SimpleValue::ValueSymbol(_) => true,
+            _ => false,
+        }
     }
 
     pub fn values_to_string(&self) -> String {
@@ -109,23 +114,28 @@ impl AttrsForm {
         let mut attrs = AttrsForm::new();
         attrs.tokens = form.tokens.clone();
 
-        let name = form.tail[0].to_string();
-
-        if is_qualified(&name) {
-            return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
-                desc: "expected an unqualified name".into(),
-            }));
+        match form.tail[0].clone() {
+            FormTailElement::Simple(value) => match value {
+                SimpleValue::ValueSymbol(_) => {
+                    attrs.name = value;
+                }
+                SimpleValue::TypeSymbol(_) => {
+                    attrs.name = value;
+                }
+                _ => {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "expected a type or value symbol".into(),
+                    }));
+                }
+            },
+            _ => {
+                return Err(Error::Syntactic(SyntacticError {
+                    loc: form.loc(),
+                    desc: "expected a type or value symbol".into(),
+                }));
+            }
         }
-
-        if is_keyword(&name) {
-            return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
-                desc: "expected a symbol".into(),
-            }));
-        }
-
-        attrs.name = name;
 
         match form.tail[1].clone() {
             FormTailElement::Simple(value) => match value {
@@ -246,7 +256,7 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name, "x".to_string());
+        assert_eq!(form.name.to_string(), "x".to_string());
         assert!(form.is_value_attributes());
         assert_eq!(form.values_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
@@ -259,7 +269,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "T".to_string());
+        assert_eq!(form.name.to_string(), "T".to_string());
         assert!(form.is_type_attributes());
         assert_eq!(form.values_to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
@@ -272,7 +282,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "T".to_string());
+        assert_eq!(form.name.to_string(), "T".to_string());
         assert!(form.is_type_attributes());
         assert_eq!(form.values_to_string(), "moduleX.X".to_string());
         assert_eq!(form.to_string(), s.to_string());
@@ -285,7 +295,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name, "x".to_string());
+        assert_eq!(form.name.to_string(), "x".to_string());
         assert!(form.is_value_attributes());
         assert_eq!(
             form.values_to_string(),
