@@ -12,7 +12,7 @@ use crate::token::Tokens;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum AppFormVariable {
+pub enum AppFormValue {
     Ignore(SimpleValue),
     Empty(SimpleValue),
     Panic(SimpleValue),
@@ -30,36 +30,36 @@ pub enum AppFormVariable {
     AppForm(Box<AppForm>),
 }
 
-impl Default for AppFormVariable {
-    fn default() -> AppFormVariable {
-        AppFormVariable::Empty(SimpleValue::new())
+impl Default for AppFormValue {
+    fn default() -> AppFormValue {
+        AppFormValue::Empty(SimpleValue::new())
     }
 }
 
-impl AppFormVariable {
+impl AppFormValue {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            AppFormVariable::Ignore(_) => "_".into(),
-            AppFormVariable::Empty(_) => "()".into(),
-            AppFormVariable::Panic(_) => "panic".into(),
-            AppFormVariable::Prim(prim) => prim.to_string(),
-            AppFormVariable::TypeKeyword(keyword) => keyword.to_string(),
-            AppFormVariable::TypeSymbol(symbol) => symbol.to_string(),
-            AppFormVariable::ValueSymbol(symbol) => symbol.to_string(),
-            AppFormVariable::TypePathSymbol(symbol) => symbol.to_string(),
-            AppFormVariable::ValuePathSymbol(symbol) => symbol.to_string(),
-            AppFormVariable::TypesForm(form) => form.to_string(),
-            AppFormVariable::ProdForm(form) => form.to_string(),
-            AppFormVariable::FunForm(form) => form.to_string(),
-            AppFormVariable::LetForm(form) => form.to_string(),
-            AppFormVariable::CaseForm(form) => form.to_string(),
-            AppFormVariable::AppForm(form) => form.to_string(),
+            AppFormValue::Ignore(_) => "_".into(),
+            AppFormValue::Empty(_) => "()".into(),
+            AppFormValue::Panic(_) => "panic".into(),
+            AppFormValue::Prim(prim) => prim.to_string(),
+            AppFormValue::TypeKeyword(keyword) => keyword.to_string(),
+            AppFormValue::TypeSymbol(symbol) => symbol.to_string(),
+            AppFormValue::ValueSymbol(symbol) => symbol.to_string(),
+            AppFormValue::TypePathSymbol(symbol) => symbol.to_string(),
+            AppFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
+            AppFormValue::TypesForm(form) => form.to_string(),
+            AppFormValue::ProdForm(form) => form.to_string(),
+            AppFormValue::FunForm(form) => form.to_string(),
+            AppFormValue::LetForm(form) => form.to_string(),
+            AppFormValue::CaseForm(form) => form.to_string(),
+            AppFormValue::AppForm(form) => form.to_string(),
         }
     }
 }
 
-impl fmt::Display for AppFormVariable {
+impl fmt::Display for AppFormValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
@@ -69,7 +69,7 @@ impl fmt::Display for AppFormVariable {
 pub struct AppForm {
     pub tokens: Box<Tokens>,
     pub name: SimpleValue,
-    pub variables: Vec<AppFormVariable>,
+    pub variables: Vec<AppFormValue>,
 }
 
 impl AppForm {
@@ -105,22 +105,22 @@ impl AppForm {
 
         for variable in self.variables.iter() {
             match variable.clone() {
-                AppFormVariable::TypesForm(form) => {
+                AppFormValue::TypesForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                AppFormVariable::ProdForm(form) => {
+                AppFormValue::ProdForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                AppFormVariable::FunForm(form) => {
+                AppFormValue::FunForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                AppFormVariable::LetForm(form) => {
+                AppFormValue::LetForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                AppFormVariable::CaseForm(form) => {
+                AppFormValue::CaseForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                AppFormVariable::AppForm(form) => {
+                AppFormValue::AppForm(form) => {
                     params.extend(form.all_parameters());
                 }
                 _ => {}
@@ -136,34 +136,34 @@ impl AppForm {
 
         for variable in self.variables.iter() {
             match variable.clone() {
-                AppFormVariable::TypeSymbol(value) => {
+                AppFormValue::TypeSymbol(value) => {
                     vars.push(value);
                 }
-                AppFormVariable::ValueSymbol(value) => {
+                AppFormValue::ValueSymbol(value) => {
                     vars.push(value);
                 }
-                AppFormVariable::TypePathSymbol(value) => {
+                AppFormValue::TypePathSymbol(value) => {
                     vars.push(value);
                 }
-                AppFormVariable::ValuePathSymbol(value) => {
+                AppFormValue::ValuePathSymbol(value) => {
                     vars.push(value);
                 }
-                AppFormVariable::TypesForm(form) => {
+                AppFormValue::TypesForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                AppFormVariable::ProdForm(form) => {
+                AppFormValue::ProdForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                AppFormVariable::FunForm(form) => {
+                AppFormValue::FunForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                AppFormVariable::LetForm(form) => {
+                AppFormValue::LetForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                AppFormVariable::CaseForm(form) => {
+                AppFormValue::CaseForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                AppFormVariable::AppForm(form) => {
+                AppFormValue::AppForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 _ => {}
@@ -210,31 +210,31 @@ impl AppForm {
         match form.tail[0].clone() {
             FormTailElement::Simple(value) => match value {
                 SimpleValue::Ignore(_) => {
-                    app.variables.push(AppFormVariable::Ignore(value));
+                    app.variables.push(AppFormValue::Ignore(value));
                 }
                 SimpleValue::Empty(_) => {
-                    app.variables.push(AppFormVariable::Empty(value));
+                    app.variables.push(AppFormValue::Empty(value));
                 }
                 SimpleValue::Panic(_) => {
-                    app.variables.push(AppFormVariable::Panic(value));
+                    app.variables.push(AppFormValue::Panic(value));
                 }
                 SimpleValue::Prim(_) => {
-                    app.variables.push(AppFormVariable::Prim(value));
+                    app.variables.push(AppFormValue::Prim(value));
                 }
                 SimpleValue::TypeKeyword(_) => {
-                    app.variables.push(AppFormVariable::TypeKeyword(value));
+                    app.variables.push(AppFormValue::TypeKeyword(value));
                 }
                 SimpleValue::ValueSymbol(_) => {
-                    app.variables.push(AppFormVariable::ValueSymbol(value));
+                    app.variables.push(AppFormValue::ValueSymbol(value));
                 }
                 SimpleValue::TypeSymbol(_) => {
-                    app.variables.push(AppFormVariable::TypeSymbol(value));
+                    app.variables.push(AppFormValue::TypeSymbol(value));
                 }
                 SimpleValue::ValuePathSymbol(_) => {
-                    app.variables.push(AppFormVariable::ValuePathSymbol(value));
+                    app.variables.push(AppFormValue::ValuePathSymbol(value));
                 }
                 SimpleValue::TypePathSymbol(_) => {
-                    app.variables.push(AppFormVariable::TypePathSymbol(value));
+                    app.variables.push(AppFormValue::TypePathSymbol(value));
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
@@ -248,43 +248,43 @@ impl AppForm {
                     for value in prod.values.iter() {
                         match value.clone() {
                             ProdFormValue::Ignore(prim) => {
-                                app.variables.push(AppFormVariable::Ignore(prim));
+                                app.variables.push(AppFormValue::Ignore(prim));
                             }
                             ProdFormValue::Panic(prim) => {
-                                app.variables.push(AppFormVariable::Panic(prim));
+                                app.variables.push(AppFormValue::Panic(prim));
                             }
                             ProdFormValue::Prim(prim) => {
-                                app.variables.push(AppFormVariable::Prim(prim));
+                                app.variables.push(AppFormValue::Prim(prim));
                             }
                             ProdFormValue::TypeKeyword(keyword) => {
-                                app.variables.push(AppFormVariable::TypeKeyword(keyword));
+                                app.variables.push(AppFormValue::TypeKeyword(keyword));
                             }
                             ProdFormValue::TypeSymbol(symbol) => {
-                                app.variables.push(AppFormVariable::TypeSymbol(symbol));
+                                app.variables.push(AppFormValue::TypeSymbol(symbol));
                             }
                             ProdFormValue::ValueSymbol(symbol) => {
-                                app.variables.push(AppFormVariable::ValueSymbol(symbol));
+                                app.variables.push(AppFormValue::ValueSymbol(symbol));
                             }
                             ProdFormValue::TypePathSymbol(symbol) => {
-                                app.variables.push(AppFormVariable::TypePathSymbol(symbol));
+                                app.variables.push(AppFormValue::TypePathSymbol(symbol));
                             }
                             ProdFormValue::ValuePathSymbol(symbol) => {
-                                app.variables.push(AppFormVariable::ValuePathSymbol(symbol));
+                                app.variables.push(AppFormValue::ValuePathSymbol(symbol));
                             }
                             ProdFormValue::TypesForm(form) => {
-                                app.variables.push(AppFormVariable::TypesForm(form));
+                                app.variables.push(AppFormValue::TypesForm(form));
                             }
                             ProdFormValue::FunForm(form) => {
-                                app.variables.push(AppFormVariable::FunForm(form));
+                                app.variables.push(AppFormValue::FunForm(form));
                             }
                             ProdFormValue::LetForm(form) => {
-                                app.variables.push(AppFormVariable::LetForm(form));
+                                app.variables.push(AppFormValue::LetForm(form));
                             }
                             ProdFormValue::CaseForm(form) => {
-                                app.variables.push(AppFormVariable::CaseForm(form));
+                                app.variables.push(AppFormValue::CaseForm(form));
                             }
                             ProdFormValue::AppForm(form) => {
-                                app.variables.push(AppFormVariable::AppForm(form));
+                                app.variables.push(AppFormValue::AppForm(form));
                             }
                             _ => {
                                 return Err(Error::Syntactic(SyntacticError {
@@ -295,17 +295,15 @@ impl AppForm {
                         }
                     }
                 } else if let Ok(form) = TypesForm::from_form(&form) {
-                    app.variables
-                        .push(AppFormVariable::TypesForm(Box::new(form)));
+                    app.variables.push(AppFormValue::TypesForm(Box::new(form)));
                 } else if let Ok(form) = FunForm::from_form(&form) {
-                    app.variables.push(AppFormVariable::FunForm(Box::new(form)));
+                    app.variables.push(AppFormValue::FunForm(Box::new(form)));
                 } else if let Ok(form) = LetForm::from_form(&form) {
-                    app.variables.push(AppFormVariable::LetForm(Box::new(form)));
+                    app.variables.push(AppFormValue::LetForm(Box::new(form)));
                 } else if let Ok(form) = CaseForm::from_form(&form) {
-                    app.variables
-                        .push(AppFormVariable::CaseForm(Box::new(form)));
+                    app.variables.push(AppFormValue::CaseForm(Box::new(form)));
                 } else if let Ok(form) = AppForm::from_form(&form) {
-                    app.variables.push(AppFormVariable::AppForm(Box::new(form)));
+                    app.variables.push(AppFormValue::AppForm(Box::new(form)));
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
