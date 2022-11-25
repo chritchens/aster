@@ -208,6 +208,34 @@ impl FunForm {
         vars
     }
 
+    pub fn all_bound_variables(&self) -> Vec<SimpleValue> {
+        let all_parameters = self.all_parameters();
+
+        self.all_variables()
+            .iter()
+            .filter(|v| {
+                all_parameters
+                    .iter()
+                    .any(|p| v.to_string() == p.to_string())
+            })
+            .map(|v| v.to_owned())
+            .collect::<Vec<SimpleValue>>()
+    }
+
+    pub fn all_unbound_variables(&self) -> Vec<SimpleValue> {
+        let all_parameters = self.all_parameters();
+
+        self.all_variables()
+            .iter()
+            .filter(|v| {
+                !all_parameters
+                    .iter()
+                    .any(|p| v.to_string() == p.to_string())
+            })
+            .map(|v| v.to_owned())
+            .collect::<Vec<SimpleValue>>()
+    }
+
     pub fn check_linearly_ordered_on_parameters(&self, parameters: &mut Vec<String>) -> Result<()> {
         match self.body.clone() {
             FunFormBody::Empty(_) | FunFormBody::Panic(_) | FunFormBody::Prim(_) => {}
@@ -580,6 +608,24 @@ mod tests {
 
         assert_eq!(all_variables, "".to_string());
 
+        let mut all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "".to_string());
+
+        let mut all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "".to_string());
+
         //assert!(form.check_parameters_use().is_ok());
 
         s = "(fun a ())";
@@ -603,6 +649,24 @@ mod tests {
             .join(", ");
 
         assert_eq!(all_variables, "".to_string());
+
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -628,6 +692,24 @@ mod tests {
 
         assert_eq!(all_variables, "".to_string());
 
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "".to_string());
+
         //assert!(form.check_parameters_use().is_ok());
 
         s = "(fun a a)";
@@ -651,6 +733,24 @@ mod tests {
             .join(", ");
 
         assert_eq!(all_variables, "a".to_string());
+
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -676,6 +776,24 @@ mod tests {
 
         assert_eq!(all_variables, "b".to_string());
 
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "b".to_string());
+
         //assert!(form.check_parameters_use().is_ok());
 
         s = "(fun a (+ (prod a 1)))";
@@ -699,6 +817,24 @@ mod tests {
             .join(", ");
 
         assert_eq!(all_variables, "+, a".to_string());
+
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "+".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -724,6 +860,24 @@ mod tests {
 
         assert_eq!(all_variables, "+, a, b, c, d".to_string());
 
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a, b, c, d".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "+".to_string());
+
         //assert!(form.check_parameters_use().is_ok());
 
         s = "(fun (prod a b d c) (+ (prod a b c d 1)))";
@@ -747,6 +901,24 @@ mod tests {
             .join(", ");
 
         assert_eq!(all_variables, "+, a, b, c, d".to_string());
+
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a, b, c, d".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "+".to_string());
 
         //assert!(form.check_parameters_use().is_err());
 
@@ -772,6 +944,24 @@ mod tests {
 
         assert_eq!(all_variables, "+, a, b, c, d".to_string());
 
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a, b, c, d".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "+".to_string());
+
         //assert!(form.check_parameters_use().is_err());
 
         s = "(fun (prod a b c d e) (+ (prod a b c d e f)))";
@@ -795,6 +985,24 @@ mod tests {
             .join(", ");
 
         assert_eq!(all_variables, "+, a, b, c, d, e, f".to_string());
+
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a, b, c, d, e".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "+, f".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -820,6 +1028,24 @@ mod tests {
 
         assert_eq!(all_variables, "a".to_string());
 
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "".to_string());
+
         //assert!(form.check_parameters_use().is_ok());
 
         s = "(fun a (case a (match T id) (match F (fun bool (printBool bool)))))";
@@ -843,6 +1069,24 @@ mod tests {
             .join(", ");
 
         assert_eq!(all_variables, "a, printBool, bool".to_string());
+
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a, bool".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "printBool".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -873,6 +1117,24 @@ mod tests {
 
         assert_eq!(all_variables, "a, printBool, bool, f".to_string());
 
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a, bool, f".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "printBool".to_string());
+
         //assert!(form.check_parameters_use().is_ok());
 
         s = "(fun (prod a b) (case a
@@ -901,6 +1163,24 @@ mod tests {
 
         assert_eq!(all_variables, "a, printBool, bool, f".to_string());
 
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a, bool, f".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "printBool".to_string());
+
         //assert!(form.check_parameters_use().is_err());
 
         s = "(fun (prod b a) (case a
@@ -928,6 +1208,24 @@ mod tests {
             .join(", ");
 
         assert_eq!(all_variables, "a, printBool, bool, f".to_string());
+
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a, bool, f".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "printBool".to_string());
 
         //assert!(form.check_parameters_use().is_err());
     }
