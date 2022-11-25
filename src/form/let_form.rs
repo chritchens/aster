@@ -173,9 +173,6 @@ impl LetForm {
 
         for entry in self.entries.iter() {
             match entry.clone() {
-                LetFormEntry::Empty(value) => {
-                    vars.push(value);
-                }
                 LetFormEntry::ImportForm(form) => {
                     vars.extend(form.all_variables());
                 }
@@ -191,6 +188,7 @@ impl LetForm {
                 LetFormEntry::ValForm(form) => {
                     vars.extend(form.all_variables());
                 }
+                _ => {}
             }
         }
 

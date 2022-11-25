@@ -178,15 +178,6 @@ impl ValForm {
         let mut vars = vec![];
 
         match self.value.clone() {
-            ValFormValue::Empty(value) => {
-                vars.push(value);
-            }
-            ValFormValue::Panic(value) => {
-                vars.push(value);
-            }
-            ValFormValue::Prim(value) => {
-                vars.push(value);
-            }
             ValFormValue::ValueSymbol(value) => {
                 vars.push(value);
             }
@@ -205,6 +196,7 @@ impl ValForm {
             ValFormValue::CaseForm(form) => {
                 vars.extend(form.all_variables());
             }
+            _ => {}
         }
 
         vars

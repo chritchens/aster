@@ -80,15 +80,13 @@ impl ExportForm {
 
         for def in self.defs.iter() {
             match def.clone() {
-                ExportFormDef::Empty(value) => {
-                    vars.push(value);
-                }
                 ExportFormDef::ValueSymbol(value) => {
                     vars.push(value);
                 }
                 ExportFormDef::TypeSymbol(value) => {
                     vars.push(value);
                 }
+                _ => {}
             }
         }
 

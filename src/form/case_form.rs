@@ -48,15 +48,6 @@ impl CaseFormVariable {
         let mut vars = vec![];
 
         match self.clone() {
-            CaseFormVariable::Empty(value) => {
-                vars.push(value);
-            }
-            CaseFormVariable::Prim(value) => {
-                vars.push(value);
-            }
-            CaseFormVariable::TypeKeyword(value) => {
-                vars.push(value);
-            }
             CaseFormVariable::TypeSymbol(value) => {
                 vars.push(value);
             }
@@ -69,6 +60,7 @@ impl CaseFormVariable {
             CaseFormVariable::LetForm(form) => {
                 vars.extend(form.all_variables());
             }
+            _ => {}
         }
 
         vars
@@ -225,24 +217,6 @@ impl CaseFormMatch {
         let mut vars = vec![];
 
         match self.action.clone() {
-            CaseFormMatchAction::Ignore(value) => {
-                vars.push(value);
-            }
-            CaseFormMatchAction::Empty(value) => {
-                vars.push(value);
-            }
-            CaseFormMatchAction::Panic(value) => {
-                vars.push(value);
-            }
-            CaseFormMatchAction::Prim(value) => {
-                vars.push(value);
-            }
-            CaseFormMatchAction::ValueKeyword(value) => {
-                vars.push(value);
-            }
-            CaseFormMatchAction::TypeKeyword(value) => {
-                vars.push(value);
-            }
             CaseFormMatchAction::TypeSymbol(value) => {
                 vars.push(value);
             }
@@ -264,6 +238,7 @@ impl CaseFormMatch {
             CaseFormMatchAction::LetForm(form) => {
                 vars.extend(form.all_variables());
             }
+            _ => {}
         }
 
         vars

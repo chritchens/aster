@@ -136,21 +136,6 @@ impl AppForm {
 
         for param in self.parameters.iter() {
             match param.clone() {
-                AppFormParameter::Ignore(value) => {
-                    vars.push(value);
-                }
-                AppFormParameter::Empty(value) => {
-                    vars.push(value);
-                }
-                AppFormParameter::Panic(value) => {
-                    vars.push(value);
-                }
-                AppFormParameter::Prim(value) => {
-                    vars.push(value);
-                }
-                AppFormParameter::TypeKeyword(value) => {
-                    vars.push(value);
-                }
                 AppFormParameter::TypeSymbol(value) => {
                     vars.push(value);
                 }
@@ -181,6 +166,7 @@ impl AppForm {
                 AppFormParameter::AppForm(form) => {
                     vars.extend(form.all_variables());
                 }
+                _ => {}
             }
         }
 

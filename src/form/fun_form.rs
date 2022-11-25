@@ -172,18 +172,6 @@ impl FunForm {
         let mut vars = vec![];
 
         match self.body.clone() {
-            FunFormBody::Empty(value) => {
-                vars.push(value);
-            }
-            FunFormBody::Panic(value) => {
-                vars.push(value);
-            }
-            FunFormBody::Prim(value) => {
-                vars.push(value);
-            }
-            FunFormBody::TypeKeyword(value) => {
-                vars.push(value);
-            }
             FunFormBody::ValueSymbol(value) => {
                 vars.push(value);
             }
@@ -214,6 +202,7 @@ impl FunForm {
             FunFormBody::FunForm(form) => {
                 vars.extend(form.all_variables());
             }
+            _ => {}
         }
 
         vars
@@ -589,7 +578,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_variables, "()".to_string());
+        assert_eq!(all_variables, "".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -613,7 +602,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_variables, "()".to_string());
+        assert_eq!(all_variables, "".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -637,7 +626,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_variables, "'a'".to_string());
+        assert_eq!(all_variables, "".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -709,7 +698,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_variables, "+, a, 1".to_string());
+        assert_eq!(all_variables, "+, a".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -733,7 +722,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_variables, "+, a, b, c, d, 1".to_string());
+        assert_eq!(all_variables, "+, a, b, c, d".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -757,7 +746,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_variables, "+, a, b, c, d, 1".to_string());
+        assert_eq!(all_variables, "+, a, b, c, d".to_string());
 
         //assert!(form.check_parameters_use().is_err());
 
@@ -781,7 +770,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_variables, "+, a, b, c, d, 1".to_string());
+        assert_eq!(all_variables, "+, a, b, c, d".to_string());
 
         //assert!(form.check_parameters_use().is_err());
 
@@ -829,7 +818,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_variables, "a, 'T', 'F'".to_string());
+        assert_eq!(all_variables, "a".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -853,7 +842,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_variables, "a, id, printBool, bool".to_string());
+        assert_eq!(all_variables, "a, printBool, bool".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -882,7 +871,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_variables, "a, id, printBool, bool, f, ()".to_string());
+        assert_eq!(all_variables, "a, printBool, bool, f".to_string());
 
         //assert!(form.check_parameters_use().is_ok());
 
@@ -910,7 +899,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_variables, "a, id, printBool, bool, f, ()".to_string());
+        assert_eq!(all_variables, "a, printBool, bool, f".to_string());
 
         //assert!(form.check_parameters_use().is_err());
 
@@ -938,7 +927,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_variables, "a, id, printBool, bool, f, ()".to_string());
+        assert_eq!(all_variables, "a, printBool, bool, f".to_string());
 
         //assert!(form.check_parameters_use().is_err());
     }

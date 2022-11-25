@@ -173,24 +173,6 @@ impl ProdForm {
 
         for value in self.values.iter() {
             match value.clone() {
-                ProdFormValue::Ignore(value) => {
-                    vars.push(value);
-                }
-                ProdFormValue::Empty(value) => {
-                    vars.push(value);
-                }
-                ProdFormValue::Panic(value) => {
-                    vars.push(value);
-                }
-                ProdFormValue::Prim(value) => {
-                    vars.push(value);
-                }
-                ProdFormValue::ValueKeyword(value) => {
-                    vars.push(value);
-                }
-                ProdFormValue::TypeKeyword(value) => {
-                    vars.push(value);
-                }
                 ProdFormValue::ValueSymbol(value) => {
                     vars.push(value);
                 }
@@ -239,6 +221,7 @@ impl ProdForm {
                 ProdFormValue::ExportForm(form) => {
                     vars.extend(form.all_variables());
                 }
+                _ => {}
             }
         }
 
