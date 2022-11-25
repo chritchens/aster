@@ -36,9 +36,9 @@ impl TypeForm {
         }
     }
 
-    pub fn is_primitive_type(&self) -> bool {
+    pub fn is_atomic_type(&self) -> bool {
         match self.value {
-            TypeFormValue::Prim(_) => true,
+            TypeFormValue::Atomic(_) => true,
             _ => false,
         }
     }
@@ -116,8 +116,8 @@ impl TypeForm {
                     "Empty" => {
                         type_form.value = TypeFormValue::Empty(value);
                     }
-                    "Prim" => {
-                        type_form.value = TypeFormValue::Prim(value);
+                    "Atomic" => {
+                        type_form.value = TypeFormValue::Atomic(value);
                     }
                     _ => {
                         type_form.value = TypeFormValue::Keyword(value);
@@ -203,7 +203,7 @@ mod tests {
         assert_eq!(form.value.to_string(), "Empty".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(type T Prim)";
+        s = "(type T Atomic)";
 
         res = TypeForm::from_str(s);
 
@@ -212,8 +212,8 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "T".to_string());
-        assert!(form.is_primitive_type());
-        assert_eq!(form.value.to_string(), "Prim".to_string());
+        assert!(form.is_atomic_type());
+        assert_eq!(form.value.to_string(), "Atomic".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(type T Char)";

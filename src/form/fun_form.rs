@@ -45,7 +45,7 @@ impl fmt::Display for FunFormParameter {
 pub enum FunFormBody {
     Empty(SimpleValue),
     Panic(SimpleValue),
-    Prim(SimpleValue),
+    Atomic(SimpleValue),
     TypeKeyword(SimpleValue),
     ValueSymbol(SimpleValue),
     TypeSymbol(SimpleValue),
@@ -71,7 +71,7 @@ impl FunFormBody {
         match self {
             FunFormBody::Empty(_) => "()".into(),
             FunFormBody::Panic(_) => "panic".into(),
-            FunFormBody::Prim(prim) => prim.to_string(),
+            FunFormBody::Atomic(atomic) => atomic.to_string(),
             FunFormBody::TypeKeyword(keyword) => keyword.to_string(),
             FunFormBody::ValueSymbol(symbol) => symbol.to_string(),
             FunFormBody::TypeSymbol(symbol) => symbol.to_string(),
@@ -293,7 +293,7 @@ impl FunForm {
         if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a symbol or form and a primitive, or a symbol or a form".into(),
+                desc: "expected a symbol or form and an atomic, or a symbol or a form".into(),
             }));
         }
 
@@ -348,8 +348,8 @@ impl FunForm {
                 SimpleValue::Empty(_) => {
                     fun.body = FunFormBody::Empty(value);
                 }
-                SimpleValue::Prim(_) => {
-                    fun.body = FunFormBody::Prim(value);
+                SimpleValue::Atomic(_) => {
+                    fun.body = FunFormBody::Atomic(value);
                 }
                 SimpleValue::Panic(_) => {
                     fun.body = FunFormBody::Panic(value);

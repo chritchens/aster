@@ -16,7 +16,7 @@ pub enum AppFormValue {
     Ignore(SimpleValue),
     Empty(SimpleValue),
     Panic(SimpleValue),
-    Prim(SimpleValue),
+    Atomic(SimpleValue),
     TypeKeyword(SimpleValue),
     TypeSymbol(SimpleValue),
     ValueSymbol(SimpleValue),
@@ -111,7 +111,7 @@ impl AppFormValue {
             AppFormValue::Ignore(_) => "_".into(),
             AppFormValue::Empty(_) => "()".into(),
             AppFormValue::Panic(_) => "panic".into(),
-            AppFormValue::Prim(prim) => prim.to_string(),
+            AppFormValue::Atomic(atomic) => atomic.to_string(),
             AppFormValue::TypeKeyword(keyword) => keyword.to_string(),
             AppFormValue::TypeSymbol(symbol) => symbol.to_string(),
             AppFormValue::ValueSymbol(symbol) => symbol.to_string(),
@@ -234,8 +234,8 @@ impl AppForm {
                 SimpleValue::Panic(_) => {
                     app.variables.push(AppFormValue::Panic(value));
                 }
-                SimpleValue::Prim(_) => {
-                    app.variables.push(AppFormValue::Prim(value));
+                SimpleValue::Atomic(_) => {
+                    app.variables.push(AppFormValue::Atomic(value));
                 }
                 SimpleValue::TypeKeyword(_) => {
                     app.variables.push(AppFormValue::TypeKeyword(value));
@@ -263,14 +263,14 @@ impl AppForm {
                 if let Ok(prod) = ProdForm::from_form(&form) {
                     for value in prod.values.iter() {
                         match value.clone() {
-                            ProdFormValue::Ignore(prim) => {
-                                app.variables.push(AppFormValue::Ignore(prim));
+                            ProdFormValue::Ignore(atomic) => {
+                                app.variables.push(AppFormValue::Ignore(atomic));
                             }
-                            ProdFormValue::Panic(prim) => {
-                                app.variables.push(AppFormValue::Panic(prim));
+                            ProdFormValue::Panic(atomic) => {
+                                app.variables.push(AppFormValue::Panic(atomic));
                             }
-                            ProdFormValue::Prim(prim) => {
-                                app.variables.push(AppFormValue::Prim(prim));
+                            ProdFormValue::Atomic(atomic) => {
+                                app.variables.push(AppFormValue::Atomic(atomic));
                             }
                             ProdFormValue::TypeKeyword(keyword) => {
                                 app.variables.push(AppFormValue::TypeKeyword(keyword));

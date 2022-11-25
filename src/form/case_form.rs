@@ -13,7 +13,7 @@ use std::fmt;
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum CaseFormVariable {
     Empty(SimpleValue),
-    Prim(SimpleValue),
+    Atomic(SimpleValue),
     TypeKeyword(SimpleValue),
     TypeSymbol(SimpleValue),
     ValueSymbol(SimpleValue),
@@ -70,7 +70,7 @@ impl CaseFormVariable {
     pub fn to_string(&self) -> String {
         match self {
             CaseFormVariable::Empty(_) => "()".into(),
-            CaseFormVariable::Prim(prim) => prim.to_string(),
+            CaseFormVariable::Atomic(atomic) => atomic.to_string(),
             CaseFormVariable::TypeKeyword(keyword) => keyword.to_string(),
             CaseFormVariable::TypeSymbol(symbol) => symbol.to_string(),
             CaseFormVariable::ValueSymbol(symbol) => symbol.to_string(),
@@ -89,7 +89,7 @@ impl fmt::Display for CaseFormVariable {
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum CaseFormMatchCase {
     Empty(SimpleValue),
-    Prim(SimpleValue),
+    Atomic(SimpleValue),
     TypeKeyword(SimpleValue),
     TypeSymbol(SimpleValue),
     ValueSymbol(SimpleValue),
@@ -102,7 +102,7 @@ impl CaseFormMatchCase {
     pub fn to_string(&self) -> String {
         match self {
             CaseFormMatchCase::Empty(_) => "()".into(),
-            CaseFormMatchCase::Prim(prim) => prim.to_string(),
+            CaseFormMatchCase::Atomic(atomic) => atomic.to_string(),
             CaseFormMatchCase::TypeKeyword(keyword) => keyword.to_string(),
             CaseFormMatchCase::TypeSymbol(symbol) => symbol.to_string(),
             CaseFormMatchCase::ValueSymbol(symbol) => symbol.to_string(),
@@ -129,7 +129,7 @@ pub enum CaseFormMatchAction {
     Ignore(SimpleValue),
     Empty(SimpleValue),
     Panic(SimpleValue),
-    Prim(SimpleValue),
+    Atomic(SimpleValue),
     ValueKeyword(SimpleValue),
     TypeKeyword(SimpleValue),
     TypeSymbol(SimpleValue),
@@ -148,7 +148,7 @@ impl CaseFormMatchAction {
             CaseFormMatchAction::Ignore(_) => "_".into(),
             CaseFormMatchAction::Empty(_) => "_".into(),
             CaseFormMatchAction::Panic(_) => "panic".into(),
-            CaseFormMatchAction::Prim(prim) => prim.to_string(),
+            CaseFormMatchAction::Atomic(atomic) => atomic.to_string(),
             CaseFormMatchAction::ValueKeyword(keyword) => keyword.to_string(),
             CaseFormMatchAction::TypeKeyword(keyword) => keyword.to_string(),
             CaseFormMatchAction::TypeSymbol(symbol) => symbol.to_string(),
@@ -255,7 +255,7 @@ impl CaseFormMatch {
         if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a symbol, primitive or application followed by a function".into(),
+                desc: "expected a symbol, an atomic or application followed by a function".into(),
             }));
         }
 
@@ -267,8 +267,8 @@ impl CaseFormMatch {
                 SimpleValue::Empty(_) => {
                     case_match.case = CaseFormMatchCase::Empty(value);
                 }
-                SimpleValue::Prim(_) => {
-                    case_match.case = CaseFormMatchCase::Prim(value);
+                SimpleValue::Atomic(_) => {
+                    case_match.case = CaseFormMatchCase::Atomic(value);
                 }
                 SimpleValue::TypeKeyword(_) => {
                     case_match.case = CaseFormMatchCase::TypeKeyword(value);
@@ -311,8 +311,8 @@ impl CaseFormMatch {
                 SimpleValue::Panic(_) => {
                     case_match.action = CaseFormMatchAction::Panic(value);
                 }
-                SimpleValue::Prim(_) => {
-                    case_match.action = CaseFormMatchAction::Prim(value);
+                SimpleValue::Atomic(_) => {
+                    case_match.action = CaseFormMatchAction::Atomic(value);
                 }
                 SimpleValue::ValueKeyword(_) => {
                     case_match.action = CaseFormMatchAction::ValueKeyword(value);
@@ -470,8 +470,8 @@ impl CaseForm {
                 SimpleValue::Empty(_) => {
                     case.variable = CaseFormVariable::Empty(value);
                 }
-                SimpleValue::Prim(_) => {
-                    case.variable = CaseFormVariable::Prim(value);
+                SimpleValue::Atomic(_) => {
+                    case.variable = CaseFormVariable::Atomic(value);
                 }
                 SimpleValue::TypeKeyword(_) => {
                     case.variable = CaseFormVariable::TypeKeyword(value);

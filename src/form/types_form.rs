@@ -10,7 +10,7 @@ use std::fmt;
 pub enum TypesFormTailElement {
     Ignore(SimpleValue),
     Empty(SimpleValue),
-    Prim(SimpleValue),
+    Atomic(SimpleValue),
     Keyword(SimpleValue),
     Symbol(SimpleValue),
     PathSymbol(SimpleValue),
@@ -29,7 +29,7 @@ impl TypesFormTailElement {
         match self {
             TypesFormTailElement::Ignore(_) => "_".into(),
             TypesFormTailElement::Empty(_) => "Empty".into(),
-            TypesFormTailElement::Prim(_) => "Prim".into(),
+            TypesFormTailElement::Atomic(_) => "Atomic".into(),
             TypesFormTailElement::Keyword(keyword) => keyword.to_string(),
             TypesFormTailElement::Symbol(symbol) => symbol.to_string(),
             TypesFormTailElement::PathSymbol(symbol) => symbol.to_string(),
@@ -93,8 +93,8 @@ impl TypesForm {
                 TypesFormTailElement::Empty(empty) => {
                     form.tail.push(FormTailElement::Simple(empty));
                 }
-                TypesFormTailElement::Prim(prim) => {
-                    form.tail.push(FormTailElement::Simple(prim));
+                TypesFormTailElement::Atomic(atomic) => {
+                    form.tail.push(FormTailElement::Simple(atomic));
                 }
                 TypesFormTailElement::Keyword(keyword) => {
                     form.tail.push(FormTailElement::Simple(keyword));
@@ -145,8 +145,8 @@ impl TypesForm {
                     SimpleValue::TypeKeyword(keyword) => {
                         if keyword.to_string() == "Empty" {
                             types_form.tail.push(TypesFormTailElement::Empty(value));
-                        } else if keyword.to_string() == "Prim" {
-                            types_form.tail.push(TypesFormTailElement::Prim(value));
+                        } else if keyword.to_string() == "Atomic" {
+                            types_form.tail.push(TypesFormTailElement::Atomic(value));
                         } else {
                             types_form.tail.push(TypesFormTailElement::Keyword(value));
                         }

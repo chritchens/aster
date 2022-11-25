@@ -12,7 +12,7 @@ pub enum SimpleValue {
     Panic(Token),
     ValueKeyword(Token),
     TypeKeyword(Token),
-    Prim(Token),
+    Atomic(Token),
     ValueSymbol(Token),
     TypeSymbol(Token),
     ValuePathSymbol(Token),
@@ -35,7 +35,7 @@ impl SimpleValue {
             SimpleValue::Ignore(token) => token.clone(),
             SimpleValue::Empty(token) => token.clone(),
             SimpleValue::Panic(token) => token.clone(),
-            SimpleValue::Prim(token) => token.clone(),
+            SimpleValue::Atomic(token) => token.clone(),
             SimpleValue::ValueKeyword(token) => token.clone(),
             SimpleValue::TypeKeyword(token) => token.clone(),
             SimpleValue::ValueSymbol(token) => token.clone(),
@@ -52,7 +52,7 @@ impl SimpleValue {
             SimpleValue::Panic(token) => token.file(),
             SimpleValue::ValueKeyword(token) => token.file(),
             SimpleValue::TypeKeyword(token) => token.file(),
-            SimpleValue::Prim(token) => token.file(),
+            SimpleValue::Atomic(token) => token.file(),
             SimpleValue::ValueSymbol(token) => token.file(),
             SimpleValue::TypeSymbol(token) => token.file(),
             SimpleValue::ValuePathSymbol(token) => token.file(),
@@ -67,7 +67,7 @@ impl SimpleValue {
             SimpleValue::Panic(token) => token.loc(),
             SimpleValue::ValueKeyword(token) => token.loc(),
             SimpleValue::TypeKeyword(token) => token.loc(),
-            SimpleValue::Prim(token) => token.loc(),
+            SimpleValue::Atomic(token) => token.loc(),
             SimpleValue::ValueSymbol(token) => token.loc(),
             SimpleValue::TypeSymbol(token) => token.loc(),
             SimpleValue::ValuePathSymbol(token) => token.loc(),
@@ -92,7 +92,7 @@ impl SimpleValue {
             | TokenKind::IntLiteral
             | TokenKind::FloatLiteral
             | TokenKind::CharLiteral
-            | TokenKind::StringLiteral => Ok(SimpleValue::Prim(token)),
+            | TokenKind::StringLiteral => Ok(SimpleValue::Atomic(token)),
             TokenKind::Keyword => match token.to_string().as_str() {
                 "_" => Ok(SimpleValue::Ignore(token)),
                 "panic" => Ok(SimpleValue::Panic(token)),
@@ -112,7 +112,7 @@ impl SimpleValue {
             SimpleValue::Ignore(_) => "_".into(),
             SimpleValue::Empty(_) => "()".into(),
             SimpleValue::Panic(_) => "panic".into(),
-            SimpleValue::Prim(token) => token.to_string(),
+            SimpleValue::Atomic(token) => token.to_string(),
             SimpleValue::ValueKeyword(token) => token.to_string(),
             SimpleValue::TypeKeyword(token) => token.to_string(),
             SimpleValue::ValueSymbol(token) => token.to_string(),

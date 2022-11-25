@@ -16,7 +16,7 @@ use std::fmt;
 pub enum ValFormValue {
     Empty(SimpleValue),
     Panic(SimpleValue),
-    Prim(SimpleValue),
+    Atomic(SimpleValue),
     ValueSymbol(SimpleValue),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
@@ -37,7 +37,7 @@ impl ValFormValue {
         match self {
             ValFormValue::Empty(_) => "()".into(),
             ValFormValue::Panic(_) => "panic".into(),
-            ValFormValue::Prim(prim) => prim.to_string(),
+            ValFormValue::Atomic(atomic) => atomic.to_string(),
             ValFormValue::ValueSymbol(symbol) => symbol.to_string(),
             ValFormValue::ProdForm(form) => form.to_string(),
             ValFormValue::FunForm(form) => form.to_string(),
@@ -88,9 +88,9 @@ impl ValForm {
         }
     }
 
-    pub fn is_primitive(&self) -> bool {
+    pub fn is_atomic(&self) -> bool {
         match self.value {
-            ValFormValue::Prim(_) => true,
+            ValFormValue::Atomic(_) => true,
             _ => false,
         }
     }
@@ -139,7 +139,7 @@ impl ValForm {
 
     pub fn is_value(&self) -> bool {
         self.is_empty_literal()
-            || self.is_primitive()
+            || self.is_atomic()
             || self.is_value_symbol()
             || self.is_product_form()
             || self.is_function_form()
@@ -213,7 +213,7 @@ impl ValForm {
         if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a name and an empty literal or a primitive or a symbol or a form"
+                desc: "expected a name and an empty literal or an atomic or a symbol or a form"
                     .into(),
             }));
         }
@@ -252,8 +252,8 @@ impl ValForm {
                 SimpleValue::Panic(empty) => {
                     val.value = ValFormValue::Panic(SimpleValue::Panic(empty));
                 }
-                SimpleValue::Prim(prim) => {
-                    val.value = ValFormValue::Prim(SimpleValue::Prim(prim));
+                SimpleValue::Atomic(atomic) => {
+                    val.value = ValFormValue::Atomic(SimpleValue::Atomic(atomic));
                 }
                 SimpleValue::ValueSymbol(symbol) => {
                     val.value = ValFormValue::ValueSymbol(SimpleValue::ValueSymbol(symbol));
@@ -363,7 +363,7 @@ mod tests {
         assert_eq!(form.name.to_string(), "x".to_string());
         assert_eq!(form.value.to_string(), "10".to_string());
         assert_eq!(form.to_string(), s.to_string());
-        assert!(form.is_primitive());
+        assert!(form.is_atomic());
         assert!(form.is_value());
 
         s = "(val w x)";

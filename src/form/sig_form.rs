@@ -36,9 +36,9 @@ impl SigForm {
         }
     }
 
-    pub fn is_primitive_type(&self) -> bool {
+    pub fn is_atomic_type(&self) -> bool {
         match self.value {
-            SigFormValue::Prim(_) => true,
+            SigFormValue::Atomic(_) => true,
             _ => false,
         }
     }
@@ -116,8 +116,8 @@ impl SigForm {
                     "Empty" => {
                         sig_form.value = SigFormValue::Empty(value);
                     }
-                    "Prim" => {
-                        sig_form.value = SigFormValue::Prim(value);
+                    "Atomic" => {
+                        sig_form.value = SigFormValue::Atomic(value);
                     }
                     _ => {
                         sig_form.value = SigFormValue::Keyword(value);
@@ -203,7 +203,7 @@ mod tests {
         assert_eq!(form.value.to_string(), "Empty".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(sig t Prim)";
+        s = "(sig t Atomic)";
 
         res = SigForm::from_str(s);
 
@@ -212,8 +212,8 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "t".to_string());
-        assert!(form.is_primitive_type());
-        assert_eq!(form.value.to_string(), "Prim".to_string());
+        assert!(form.is_atomic_type());
+        assert_eq!(form.value.to_string(), "Atomic".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(sig t Char)";

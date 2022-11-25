@@ -236,8 +236,8 @@ impl LetForm {
                     SimpleValue::Panic(_) => {
                         let_form.value = LetFormValue::Panic(value);
                     }
-                    SimpleValue::Prim(_) => {
-                        let_form.value = LetFormValue::Prim(value);
+                    SimpleValue::Atomic(_) => {
+                        let_form.value = LetFormValue::Atomic(value);
                     }
                     SimpleValue::TypeKeyword(_) => {
                         let_form.value = LetFormValue::TypeKeyword(value);
@@ -331,8 +331,8 @@ impl LetForm {
                     SimpleValue::Panic(_) => {
                         let_form.value = LetFormValue::Panic(value);
                     }
-                    SimpleValue::Prim(_) => {
-                        let_form.value = LetFormValue::Prim(value);
+                    SimpleValue::Atomic(_) => {
+                        let_form.value = LetFormValue::Atomic(value);
                     }
                     SimpleValue::TypeKeyword(_) => {
                         let_form.value = LetFormValue::TypeKeyword(value);

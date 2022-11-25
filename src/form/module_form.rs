@@ -18,7 +18,7 @@ use std::fmt;
 pub enum ModuleFormTypeParameter {
     Ignore(SimpleValue),
     Empty(SimpleValue),
-    Prim(SimpleValue),
+    Atomic(SimpleValue),
     Keyword(SimpleValue),
     Symbol(SimpleValue),
     PathSymbol(SimpleValue),
@@ -37,7 +37,7 @@ impl ModuleFormTypeParameter {
         match self {
             ModuleFormTypeParameter::Ignore(_) => "_".into(),
             ModuleFormTypeParameter::Empty(_) => "()".into(),
-            ModuleFormTypeParameter::Prim(_) => "Prim".into(),
+            ModuleFormTypeParameter::Atomic(_) => "Atomic".into(),
             ModuleFormTypeParameter::Keyword(keyword) => keyword.to_string(),
             ModuleFormTypeParameter::Symbol(symbol) => symbol.to_string(),
             ModuleFormTypeParameter::PathSymbol(symbol) => symbol.to_string(),

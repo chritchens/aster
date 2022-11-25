@@ -1,21 +1,21 @@
 (module main (prod 
-  #! An example on how booleans can be built using primitives
+  #! An example on how booleans can be built using atomics
 
   (import std.io _ printf)
 
   (attrs True (prod asSize 1))
-  (type True Prim)
+  (type True Atomic)
 
   (attrs True (prod asSize 0))
-  (type False Prim)
+  (type False Atomic)
 
   (type Bool (Sum True False))
 
   (sig true True)
-  (val true prim)
+  (val true atomic)
 
   (sig false False)
-  (val false prim)
+  (val false atomic)
 
   (sig boolToUInt (Fun Bool UInt))
   (val boolToUInt (fun pred

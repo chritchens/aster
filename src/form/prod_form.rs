@@ -22,7 +22,7 @@ pub enum ProdFormValue {
     Ignore(SimpleValue),
     Empty(SimpleValue),
     Panic(SimpleValue),
-    Prim(SimpleValue),
+    Atomic(SimpleValue),
     ValueKeyword(SimpleValue),
     TypeKeyword(SimpleValue),
     ValueSymbol(SimpleValue),
@@ -56,7 +56,7 @@ impl ProdFormValue {
             ProdFormValue::Ignore(_) => "_".into(),
             ProdFormValue::Empty(_) => "()".into(),
             ProdFormValue::Panic(_) => "panic".into(),
-            ProdFormValue::Prim(prim) => prim.to_string(),
+            ProdFormValue::Atomic(atomic) => atomic.to_string(),
             ProdFormValue::ValueKeyword(keyword) => keyword.to_string(),
             ProdFormValue::TypeKeyword(keyword) => keyword.to_string(),
             ProdFormValue::ValueSymbol(symbol) => symbol.to_string(),
@@ -252,8 +252,8 @@ impl ProdForm {
                     SimpleValue::Empty(_) => {
                         prod.values.push(ProdFormValue::Empty(value));
                     }
-                    SimpleValue::Prim(_) => {
-                        prod.values.push(ProdFormValue::Prim(value));
+                    SimpleValue::Atomic(_) => {
+                        prod.values.push(ProdFormValue::Atomic(value));
                     }
                     SimpleValue::ValueKeyword(_) => {
                         prod.values.push(ProdFormValue::ValueKeyword(value));
