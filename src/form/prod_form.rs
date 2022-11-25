@@ -191,21 +191,21 @@ impl ProdForm {
         vars
     }
 
-    pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
+    pub fn check_linearly_ordered_on_parameters(&self, parameters: &mut Vec<String>) -> Result<()> {
         let bound_variables = self
             .values
             .iter()
             .map(|p| p.to_string())
-            .filter(|v| params.iter().any(|p| p == v))
+            .filter(|v| parameters.iter().any(|p| p == v))
             .collect::<Vec<String>>();
 
-        if params != &bound_variables {
-            if bound_variables.len() != params.len() {
+        if parameters != &bound_variables {
+            if bound_variables.len() != parameters.len() {
                 return Err(Error::Semantic(SemanticError {
                     loc: self.loc(),
                     desc: format!(
-                        "non-linear use of params {}: {}",
-                        params.join(", "),
+                        "non-linear use of parameters {}: {}",
+                        parameters.join(", "),
                         bound_variables.join(" ")
                     ),
                 }));
@@ -213,15 +213,15 @@ impl ProdForm {
                 return Err(Error::Semantic(SemanticError {
                     loc: self.loc(),
                     desc: format!(
-                        "non-ordered use of params {}: {}",
-                        params.join(", "),
+                        "non-ordered use of parameters {}: {}",
+                        parameters.join(", "),
                         bound_variables.join(" ")
                     ),
                 }));
             }
         }
 
-        params.clear();
+        parameters.clear();
 
         Ok(())
     }

@@ -1,6 +1,6 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormTailElement};
-use crate::form::module_form::ModuleFormTypeParam;
+use crate::form::module_form::ModuleFormTypeParameter;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::form::simple_value::SimpleValue;
 use crate::loc::Loc;
@@ -8,7 +8,7 @@ use crate::result::Result;
 use crate::token::Tokens;
 use std::fmt;
 
-pub type ImportFormTypeParam = ModuleFormTypeParam;
+pub type ImportFormTypeParameter = ModuleFormTypeParameter;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ImportFormDef {
@@ -47,7 +47,7 @@ pub struct ImportForm {
     pub tokens: Box<Tokens>,
     pub module: SimpleValue,
     pub qualifier: Option<SimpleValue>,
-    pub type_params: Vec<ImportFormTypeParam>,
+    pub type_parameters: Vec<ImportFormTypeParameter>,
     pub defs: Vec<ImportFormDef>,
 }
 
@@ -64,12 +64,12 @@ impl ImportForm {
         self.tokens[0].loc()
     }
 
-    pub fn type_params_to_string(&self) -> String {
-        match self.type_params.len() {
-            1 => self.type_params[0].to_string(),
+    pub fn type_parameters_to_string(&self) -> String {
+        match self.type_parameters.len() {
+            1 => self.type_parameters[0].to_string(),
             x if x > 1 => format!(
                 "(prod {})",
-                self.type_params
+                self.type_parameters
                     .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
@@ -122,24 +122,28 @@ impl ImportForm {
         Ok(())
     }
 
-    fn parse_type_params(&mut self, form: &Form, idx: usize) -> Result<()> {
+    fn parse_type_parameters(&mut self, form: &Form, idx: usize) -> Result<()> {
         match form.tail[idx].clone() {
             FormTailElement::Simple(value) => match value {
                 SimpleValue::Ignore(_) => {
-                    self.type_params.push(ImportFormTypeParam::Ignore(value));
+                    self.type_parameters
+                        .push(ImportFormTypeParameter::Ignore(value));
                 }
                 SimpleValue::Empty(_) => {
-                    self.type_params.push(ImportFormTypeParam::Empty(value));
+                    self.type_parameters
+                        .push(ImportFormTypeParameter::Empty(value));
                 }
                 SimpleValue::TypeKeyword(_) => {
-                    self.type_params.push(ImportFormTypeParam::Keyword(value));
+                    self.type_parameters
+                        .push(ImportFormTypeParameter::Keyword(value));
                 }
                 SimpleValue::TypeSymbol(_) => {
-                    self.type_params.push(ImportFormTypeParam::Symbol(value));
+                    self.type_parameters
+                        .push(ImportFormTypeParameter::Symbol(value));
                 }
                 SimpleValue::TypePathSymbol(_) => {
-                    self.type_params
-                        .push(ImportFormTypeParam::PathSymbol(value));
+                    self.type_parameters
+                        .push(ImportFormTypeParameter::PathSymbol(value));
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
@@ -153,17 +157,20 @@ impl ImportForm {
                     for value in prod.values.iter() {
                         match value.clone() {
                             ProdFormValue::TypeKeyword(keyword) => {
-                                self.type_params.push(ImportFormTypeParam::Keyword(keyword));
+                                self.type_parameters
+                                    .push(ImportFormTypeParameter::Keyword(keyword));
                             }
                             ProdFormValue::TypeSymbol(symbol) => {
-                                self.type_params.push(ImportFormTypeParam::Symbol(symbol));
+                                self.type_parameters
+                                    .push(ImportFormTypeParameter::Symbol(symbol));
                             }
                             ProdFormValue::TypePathSymbol(symbol) => {
-                                self.type_params
-                                    .push(ImportFormTypeParam::PathSymbol(symbol));
+                                self.type_parameters
+                                    .push(ImportFormTypeParameter::PathSymbol(symbol));
                             }
                             ProdFormValue::TypesForm(form) => {
-                                self.type_params.push(ImportFormTypeParam::Form(form));
+                                self.type_parameters
+                                    .push(ImportFormTypeParameter::Form(form));
                             }
                             _ => {
                                 return Err(Error::Syntactic(SyntacticError {
@@ -286,14 +293,14 @@ impl ImportForm {
         if len > 1 {
             match len {
                 2 => {
-                    import.parse_type_params(&form, 1)?;
+                    import.parse_type_parameters(&form, 1)?;
                 }
                 3 => {
-                    import.parse_type_params(&form, 1)?;
+                    import.parse_type_parameters(&form, 1)?;
                     import.parse_defs(&form, 2)?;
                 }
                 4 => {
-                    import.parse_type_params(&form, 1)?;
+                    import.parse_type_parameters(&form, 1)?;
                     import.parse_defs(&form, 2)?;
                     import.parse_qualifier(&form, 3)?;
                 }
@@ -323,21 +330,25 @@ impl ImportForm {
             format!(
                 "(import {} {} {} {})",
                 self.module,
-                self.type_params_to_string(),
+                self.type_parameters_to_string(),
                 self.defs_to_string(),
                 qualifier
             )
         } else if self.defs.is_empty() {
-            if self.type_params.is_empty() {
+            if self.type_parameters.is_empty() {
                 format!("(import {})", self.module)
             } else {
-                format!("(import {} {})", self.module, self.type_params_to_string())
+                format!(
+                    "(import {} {})",
+                    self.module,
+                    self.type_parameters_to_string()
+                )
             }
         } else {
             format!(
                 "(import {} {} {})",
                 self.module,
-                self.type_params_to_string(),
+                self.type_parameters_to_string(),
                 self.defs_to_string()
             )
         }
@@ -377,7 +388,7 @@ mod tests {
             form.qualifier.as_ref().map(|q| q.to_string()),
             Some("x".into())
         );
-        assert_eq!(form.type_params_to_string(), "_".to_string());
+        assert_eq!(form.type_parameters_to_string(), "_".to_string());
         assert_eq!(form.defs_to_string(), "(prod a B c D)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -394,7 +405,7 @@ mod tests {
             form.qualifier.as_ref().map(|q| q.to_string()),
             Some("x".into())
         );
-        assert_eq!(form.type_params_to_string(), "_".to_string());
+        assert_eq!(form.type_parameters_to_string(), "_".to_string());
         assert_eq!(form.defs_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -411,7 +422,7 @@ mod tests {
             form.qualifier.as_ref().map(|q| q.to_string()),
             Some("x".into())
         );
-        assert_eq!(form.type_params_to_string(), "()".to_string());
+        assert_eq!(form.type_parameters_to_string(), "()".to_string());
         assert_eq!(form.defs_to_string(), "_".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -425,7 +436,7 @@ mod tests {
 
         assert_eq!(form.module.to_string(), "std.x".to_string());
         assert_eq!(form.qualifier, None);
-        assert_eq!(form.type_params_to_string(), "_".to_string());
+        assert_eq!(form.type_parameters_to_string(), "_".to_string());
         assert_eq!(form.defs_to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -439,7 +450,7 @@ mod tests {
 
         assert_eq!(form.module.to_string(), "std.x".to_string());
         assert_eq!(form.qualifier, None);
-        assert_eq!(form.type_params_to_string(), "_".to_string());
+        assert_eq!(form.type_parameters_to_string(), "_".to_string());
         assert_eq!(form.defs_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -453,7 +464,7 @@ mod tests {
 
         assert_eq!(form.module.to_string(), "std.x".to_string());
         assert_eq!(form.qualifier, None);
-        assert!(form.type_params.is_empty());
+        assert!(form.type_parameters.is_empty());
         assert!(form.defs.is_empty());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -467,7 +478,7 @@ mod tests {
 
         assert_eq!(form.module.to_string(), "std.x".to_string());
         assert_eq!(form.qualifier, None);
-        assert_eq!(form.type_params_to_string(), "X".to_string());
+        assert_eq!(form.type_parameters_to_string(), "X".to_string());
         assert!(form.defs.is_empty());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -484,7 +495,7 @@ mod tests {
             form.qualifier.as_ref().map(|q| q.to_string()),
             Some("x".into())
         );
-        assert_eq!(form.type_params_to_string(), "_".to_string());
+        assert_eq!(form.type_parameters_to_string(), "_".to_string());
         assert_eq!(form.defs_to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -501,7 +512,7 @@ mod tests {
             form.qualifier.as_ref().map(|q| q.to_string()),
             Some("x".into())
         );
-        assert_eq!(form.type_params_to_string(), "_".to_string());
+        assert_eq!(form.type_parameters_to_string(), "_".to_string());
         assert_eq!(form.defs_to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -518,7 +529,7 @@ mod tests {
             form.qualifier.as_ref().map(|q| q.to_string()),
             Some("x".into())
         );
-        assert_eq!(form.type_params_to_string(), "(prod T Q)");
+        assert_eq!(form.type_parameters_to_string(), "(prod T Q)");
         assert_eq!(form.defs_to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -535,7 +546,7 @@ mod tests {
             form.qualifier.as_ref().map(|q| q.to_string()),
             Some("x".into())
         );
-        assert_eq!(form.type_params_to_string(), "(prod T Q)");
+        assert_eq!(form.type_parameters_to_string(), "(prod T Q)");
         assert_eq!(form.defs_to_string(), "(prod A b C)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -552,7 +563,7 @@ mod tests {
             form.qualifier.as_ref().map(|q| q.to_string()),
             Some("x".into())
         );
-        assert_eq!(form.type_params_to_string(), "(prod Char Float)");
+        assert_eq!(form.type_parameters_to_string(), "(prod Char Float)");
         assert_eq!(form.defs_to_string(), "_".to_string());
         assert_eq!(form.to_string(), s.to_string());
     }

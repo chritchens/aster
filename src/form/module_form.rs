@@ -15,7 +15,7 @@ use crate::token::Tokens;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum ModuleFormTypeParam {
+pub enum ModuleFormTypeParameter {
     Ignore(SimpleValue),
     Empty(SimpleValue),
     Prim(SimpleValue),
@@ -25,28 +25,28 @@ pub enum ModuleFormTypeParam {
     Form(Box<TypesForm>),
 }
 
-impl Default for ModuleFormTypeParam {
-    fn default() -> ModuleFormTypeParam {
-        ModuleFormTypeParam::Empty(SimpleValue::new())
+impl Default for ModuleFormTypeParameter {
+    fn default() -> ModuleFormTypeParameter {
+        ModuleFormTypeParameter::Empty(SimpleValue::new())
     }
 }
 
-impl ModuleFormTypeParam {
+impl ModuleFormTypeParameter {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            ModuleFormTypeParam::Ignore(_) => "_".into(),
-            ModuleFormTypeParam::Empty(_) => "()".into(),
-            ModuleFormTypeParam::Prim(_) => "Prim".into(),
-            ModuleFormTypeParam::Keyword(keyword) => keyword.to_string(),
-            ModuleFormTypeParam::Symbol(symbol) => symbol.to_string(),
-            ModuleFormTypeParam::PathSymbol(symbol) => symbol.to_string(),
-            ModuleFormTypeParam::Form(form) => form.to_string(),
+            ModuleFormTypeParameter::Ignore(_) => "_".into(),
+            ModuleFormTypeParameter::Empty(_) => "()".into(),
+            ModuleFormTypeParameter::Prim(_) => "Prim".into(),
+            ModuleFormTypeParameter::Keyword(keyword) => keyword.to_string(),
+            ModuleFormTypeParameter::Symbol(symbol) => symbol.to_string(),
+            ModuleFormTypeParameter::PathSymbol(symbol) => symbol.to_string(),
+            ModuleFormTypeParameter::Form(form) => form.to_string(),
         }
     }
 }
 
-impl fmt::Display for ModuleFormTypeParam {
+impl fmt::Display for ModuleFormTypeParameter {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
@@ -94,7 +94,7 @@ impl fmt::Display for ModuleFormEntry {
 pub struct ModuleForm {
     pub tokens: Box<Tokens>,
     pub name: SimpleValue,
-    pub type_params: Vec<ModuleFormTypeParam>,
+    pub type_parameters: Vec<ModuleFormTypeParameter>,
     pub entries: Vec<ModuleFormEntry>,
 }
 
@@ -177,12 +177,12 @@ impl ModuleForm {
         }
     }
 
-    pub fn type_params_to_string(&self) -> String {
-        match self.type_params.len() {
-            1 => self.type_params[0].to_string(),
+    pub fn type_parameters_to_string(&self) -> String {
+        match self.type_parameters.len() {
+            1 => self.type_parameters[0].to_string(),
             x if x > 1 => format!(
                 "(prod {})",
-                self.type_params
+                self.type_parameters
                     .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
@@ -208,24 +208,28 @@ impl ModuleForm {
         }
     }
 
-    fn parse_type_params(&mut self, form: &Form, idx: usize) -> Result<()> {
+    fn parse_type_parameters(&mut self, form: &Form, idx: usize) -> Result<()> {
         match form.tail[idx].clone() {
             FormTailElement::Simple(value) => match value {
                 SimpleValue::Ignore(_) => {
-                    self.type_params.push(ModuleFormTypeParam::Ignore(value));
+                    self.type_parameters
+                        .push(ModuleFormTypeParameter::Ignore(value));
                 }
                 SimpleValue::Empty(_) => {
-                    self.type_params.push(ModuleFormTypeParam::Empty(value));
+                    self.type_parameters
+                        .push(ModuleFormTypeParameter::Empty(value));
                 }
                 SimpleValue::TypeKeyword(_) => {
-                    self.type_params.push(ModuleFormTypeParam::Keyword(value));
+                    self.type_parameters
+                        .push(ModuleFormTypeParameter::Keyword(value));
                 }
                 SimpleValue::TypeSymbol(_) => {
-                    self.type_params.push(ModuleFormTypeParam::Symbol(value));
+                    self.type_parameters
+                        .push(ModuleFormTypeParameter::Symbol(value));
                 }
                 SimpleValue::TypePathSymbol(_) => {
-                    self.type_params
-                        .push(ModuleFormTypeParam::PathSymbol(value));
+                    self.type_parameters
+                        .push(ModuleFormTypeParameter::PathSymbol(value));
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
@@ -239,17 +243,20 @@ impl ModuleForm {
                     for value in prod.values.iter() {
                         match value.clone() {
                             ProdFormValue::TypeKeyword(keyword) => {
-                                self.type_params.push(ModuleFormTypeParam::Keyword(keyword));
+                                self.type_parameters
+                                    .push(ModuleFormTypeParameter::Keyword(keyword));
                             }
                             ProdFormValue::TypeSymbol(symbol) => {
-                                self.type_params.push(ModuleFormTypeParam::Symbol(symbol));
+                                self.type_parameters
+                                    .push(ModuleFormTypeParameter::Symbol(symbol));
                             }
                             ProdFormValue::TypePathSymbol(symbol) => {
-                                self.type_params
-                                    .push(ModuleFormTypeParam::PathSymbol(symbol));
+                                self.type_parameters
+                                    .push(ModuleFormTypeParameter::PathSymbol(symbol));
                             }
                             ProdFormValue::TypesForm(form) => {
-                                self.type_params.push(ModuleFormTypeParam::Form(form));
+                                self.type_parameters
+                                    .push(ModuleFormTypeParameter::Form(form));
                             }
                             _ => {
                                 return Err(Error::Syntactic(SyntacticError {
@@ -366,7 +373,7 @@ impl ModuleForm {
                 module.parse_entries(form, 1)?;
             }
             3 => {
-                module.parse_type_params(form, 1)?;
+                module.parse_type_parameters(form, 1)?;
                 module.parse_entries(form, 2)?;
             }
             _ => unreachable!(),
@@ -390,13 +397,13 @@ impl ModuleForm {
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        if self.type_params.is_empty() {
+        if self.type_parameters.is_empty() {
             format!("(module {} {})", self.name, self.entries_to_string(),)
         } else {
             format!(
                 "(module {} {} {})",
                 self.name,
-                self.type_params_to_string(),
+                self.type_parameters_to_string(),
                 self.entries_to_string(),
             )
         }
@@ -432,7 +439,7 @@ mod tests {
         let mut form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "x".to_string());
-        assert_eq!(form.type_params_to_string(), "()".to_string());
+        assert_eq!(form.type_parameters_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(module x ())";
@@ -444,8 +451,8 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "x".to_string());
-        assert!(form.type_params.is_empty());
-        assert_eq!(form.type_params_to_string(), "".to_string());
+        assert!(form.type_parameters.is_empty());
+        assert_eq!(form.type_parameters_to_string(), "".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "
@@ -466,7 +473,7 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "x".to_string());
-        assert_eq!(form.type_params_to_string(), "(prod T E)".to_string());
+        assert_eq!(form.type_parameters_to_string(), "(prod T E)".to_string());
         assert_eq!(form.entries.len(), 3);
         assert_eq!(
             form.entries[0].to_string(),
@@ -517,7 +524,7 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "main".to_string());
-        assert_eq!(form.type_params_to_string(), "()".to_string());
+        assert_eq!(form.type_parameters_to_string(), "()".to_string());
         assert_eq!(form.entries.len(), 5);
         assert_eq!(
             form.entries[0].to_string(),
@@ -563,7 +570,7 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "main".to_string());
-        assert!(form.type_params.is_empty());
+        assert!(form.type_parameters.is_empty());
         assert_eq!(form.entries.len(), 5);
         assert_eq!(
             form.entries[0].to_string(),

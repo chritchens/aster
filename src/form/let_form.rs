@@ -170,38 +170,40 @@ impl LetForm {
         vars
     }
 
-    pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
+    pub fn check_linearly_ordered_on_parameters(&self, parameters: &mut Vec<String>) -> Result<()> {
         for entry in self.entries.iter() {
             if let LetFormEntry::ValForm(form) = entry {
-                form.check_params_use()?;
-                form.check_linearly_ordered_on_params(params)?;
-                params.push(form.name.to_string());
+                form.check_parameters_use()?;
+                form.check_linearly_ordered_on_parameters(parameters)?;
+                parameters.push(form.name.to_string());
             }
         }
 
-        self.value.check_linearly_ordered_on_params(params)?;
+        self.value
+            .check_linearly_ordered_on_parameters(parameters)?;
 
-        params.clear();
+        parameters.clear();
 
         Ok(())
     }
 
-    pub fn check_params_use(&self) -> Result<()> {
-        let mut params = vec![];
+    pub fn check_parameters_use(&self) -> Result<()> {
+        let mut parameters = vec![];
 
         for entry in self.entries.iter() {
             match entry {
                 LetFormEntry::TypeForm(form) => {
-                    params.push(form.name.to_string());
+                    parameters.push(form.name.to_string());
                 }
                 LetFormEntry::ValForm(form) => {
-                    params.push(form.name.to_string());
+                    parameters.push(form.name.to_string());
                 }
                 _ => {}
             }
         }
 
-        self.value.check_linearly_ordered_on_params(&mut params)
+        self.value
+            .check_linearly_ordered_on_parameters(&mut parameters)
     }
 
     pub fn from_form(form: &Form) -> Result<LetForm> {

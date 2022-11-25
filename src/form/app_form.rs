@@ -12,7 +12,7 @@ use crate::token::Tokens;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum AppFormParam {
+pub enum AppFormParameter {
     Ignore(SimpleValue),
     Empty(SimpleValue),
     Panic(SimpleValue),
@@ -30,36 +30,36 @@ pub enum AppFormParam {
     AppForm(Box<AppForm>),
 }
 
-impl Default for AppFormParam {
-    fn default() -> AppFormParam {
-        AppFormParam::Empty(SimpleValue::new())
+impl Default for AppFormParameter {
+    fn default() -> AppFormParameter {
+        AppFormParameter::Empty(SimpleValue::new())
     }
 }
 
-impl AppFormParam {
+impl AppFormParameter {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            AppFormParam::Ignore(_) => "_".into(),
-            AppFormParam::Empty(_) => "()".into(),
-            AppFormParam::Panic(_) => "panic".into(),
-            AppFormParam::Prim(prim) => prim.to_string(),
-            AppFormParam::TypeKeyword(keyword) => keyword.to_string(),
-            AppFormParam::TypeSymbol(symbol) => symbol.to_string(),
-            AppFormParam::ValueSymbol(symbol) => symbol.to_string(),
-            AppFormParam::TypePathSymbol(symbol) => symbol.to_string(),
-            AppFormParam::ValuePathSymbol(symbol) => symbol.to_string(),
-            AppFormParam::TypesForm(form) => form.to_string(),
-            AppFormParam::ProdForm(form) => form.to_string(),
-            AppFormParam::FunForm(form) => form.to_string(),
-            AppFormParam::LetForm(form) => form.to_string(),
-            AppFormParam::CaseForm(form) => form.to_string(),
-            AppFormParam::AppForm(form) => form.to_string(),
+            AppFormParameter::Ignore(_) => "_".into(),
+            AppFormParameter::Empty(_) => "()".into(),
+            AppFormParameter::Panic(_) => "panic".into(),
+            AppFormParameter::Prim(prim) => prim.to_string(),
+            AppFormParameter::TypeKeyword(keyword) => keyword.to_string(),
+            AppFormParameter::TypeSymbol(symbol) => symbol.to_string(),
+            AppFormParameter::ValueSymbol(symbol) => symbol.to_string(),
+            AppFormParameter::TypePathSymbol(symbol) => symbol.to_string(),
+            AppFormParameter::ValuePathSymbol(symbol) => symbol.to_string(),
+            AppFormParameter::TypesForm(form) => form.to_string(),
+            AppFormParameter::ProdForm(form) => form.to_string(),
+            AppFormParameter::FunForm(form) => form.to_string(),
+            AppFormParameter::LetForm(form) => form.to_string(),
+            AppFormParameter::CaseForm(form) => form.to_string(),
+            AppFormParameter::AppForm(form) => form.to_string(),
         }
     }
 }
 
-impl fmt::Display for AppFormParam {
+impl fmt::Display for AppFormParameter {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
@@ -69,7 +69,7 @@ impl fmt::Display for AppFormParam {
 pub struct AppForm {
     pub tokens: Box<Tokens>,
     pub name: SimpleValue,
-    pub params: Vec<AppFormParam>,
+    pub parameters: Vec<AppFormParameter>,
 }
 
 impl AppForm {
@@ -85,12 +85,12 @@ impl AppForm {
         self.tokens[0].loc()
     }
 
-    pub fn params_to_string(&self) -> String {
-        match self.params.len() {
-            1 => self.params[0].to_string(),
+    pub fn parameters_to_string(&self) -> String {
+        match self.parameters.len() {
+            1 => self.parameters[0].to_string(),
             x if x > 1 => format!(
                 "(prod {})",
-                self.params
+                self.parameters
                     .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
@@ -104,51 +104,51 @@ impl AppForm {
         let mut vars = vec![];
         vars.push(self.name.clone());
 
-        for param in self.params.iter() {
+        for param in self.parameters.iter() {
             match param.clone() {
-                AppFormParam::Ignore(value) => {
+                AppFormParameter::Ignore(value) => {
                     vars.push(value);
                 }
-                AppFormParam::Empty(value) => {
+                AppFormParameter::Empty(value) => {
                     vars.push(value);
                 }
-                AppFormParam::Panic(value) => {
+                AppFormParameter::Panic(value) => {
                     vars.push(value);
                 }
-                AppFormParam::Prim(value) => {
+                AppFormParameter::Prim(value) => {
                     vars.push(value);
                 }
-                AppFormParam::TypeKeyword(value) => {
+                AppFormParameter::TypeKeyword(value) => {
                     vars.push(value);
                 }
-                AppFormParam::TypeSymbol(value) => {
+                AppFormParameter::TypeSymbol(value) => {
                     vars.push(value);
                 }
-                AppFormParam::ValueSymbol(value) => {
+                AppFormParameter::ValueSymbol(value) => {
                     vars.push(value);
                 }
-                AppFormParam::TypePathSymbol(value) => {
+                AppFormParameter::TypePathSymbol(value) => {
                     vars.push(value);
                 }
-                AppFormParam::ValuePathSymbol(value) => {
+                AppFormParameter::ValuePathSymbol(value) => {
                     vars.push(value);
                 }
-                AppFormParam::TypesForm(form) => {
+                AppFormParameter::TypesForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                AppFormParam::ProdForm(form) => {
+                AppFormParameter::ProdForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                AppFormParam::FunForm(form) => {
+                AppFormParameter::FunForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                AppFormParam::LetForm(form) => {
+                AppFormParameter::LetForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                AppFormParam::CaseForm(form) => {
+                AppFormParameter::CaseForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                AppFormParam::AppForm(form) => {
+                AppFormParameter::AppForm(form) => {
                     vars.extend(form.all_variables());
                 }
             }
@@ -157,10 +157,10 @@ impl AppForm {
         vars
     }
 
-    pub fn check_linearly_ordered_on_params(&self, params: &mut Vec<String>) -> Result<()> {
+    pub fn check_linearly_ordered_on_parameters(&self, parameters: &mut Vec<String>) -> Result<()> {
         let mut variables: Vec<String> = vec![self.name.to_string()];
         variables.extend(
-            self.params
+            self.parameters
                 .iter()
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>(),
@@ -168,17 +168,17 @@ impl AppForm {
 
         let bound_variables = variables
             .iter()
-            .filter(|v| params.iter().any(|p| v == &p))
+            .filter(|v| parameters.iter().any(|p| v == &p))
             .map(|v| v.to_owned())
             .collect::<Vec<String>>();
 
-        if params != &bound_variables {
-            if bound_variables.len() != params.len() {
+        if parameters != &bound_variables {
+            if bound_variables.len() != parameters.len() {
                 return Err(Error::Semantic(SemanticError {
                     loc: self.loc(),
                     desc: format!(
-                        "non-linear use of params {}: {}",
-                        params.join(", "),
+                        "non-linear use of parameters {}: {}",
+                        parameters.join(", "),
                         bound_variables.join(" ")
                     ),
                 }));
@@ -186,15 +186,15 @@ impl AppForm {
                 return Err(Error::Semantic(SemanticError {
                     loc: self.loc(),
                     desc: format!(
-                        "non-ordered use of params {}: {}",
-                        params.join(", "),
+                        "non-ordered use of parameters {}: {}",
+                        parameters.join(", "),
                         bound_variables.join(" ")
                     ),
                 }));
             }
         }
 
-        params.clear();
+        parameters.clear();
 
         Ok(())
     }
@@ -236,31 +236,32 @@ impl AppForm {
         match form.tail[0].clone() {
             FormTailElement::Simple(value) => match value {
                 SimpleValue::Ignore(_) => {
-                    app.params.push(AppFormParam::Ignore(value));
+                    app.parameters.push(AppFormParameter::Ignore(value));
                 }
                 SimpleValue::Empty(_) => {
-                    app.params.push(AppFormParam::Empty(value));
+                    app.parameters.push(AppFormParameter::Empty(value));
                 }
                 SimpleValue::Panic(_) => {
-                    app.params.push(AppFormParam::Panic(value));
+                    app.parameters.push(AppFormParameter::Panic(value));
                 }
                 SimpleValue::Prim(_) => {
-                    app.params.push(AppFormParam::Prim(value));
+                    app.parameters.push(AppFormParameter::Prim(value));
                 }
                 SimpleValue::TypeKeyword(_) => {
-                    app.params.push(AppFormParam::TypeKeyword(value));
+                    app.parameters.push(AppFormParameter::TypeKeyword(value));
                 }
                 SimpleValue::ValueSymbol(_) => {
-                    app.params.push(AppFormParam::ValueSymbol(value));
+                    app.parameters.push(AppFormParameter::ValueSymbol(value));
                 }
                 SimpleValue::TypeSymbol(_) => {
-                    app.params.push(AppFormParam::TypeSymbol(value));
+                    app.parameters.push(AppFormParameter::TypeSymbol(value));
                 }
                 SimpleValue::ValuePathSymbol(_) => {
-                    app.params.push(AppFormParam::ValuePathSymbol(value));
+                    app.parameters
+                        .push(AppFormParameter::ValuePathSymbol(value));
                 }
                 SimpleValue::TypePathSymbol(_) => {
-                    app.params.push(AppFormParam::TypePathSymbol(value));
+                    app.parameters.push(AppFormParameter::TypePathSymbol(value));
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
@@ -274,43 +275,45 @@ impl AppForm {
                     for value in prod.values.iter() {
                         match value.clone() {
                             ProdFormValue::Ignore(prim) => {
-                                app.params.push(AppFormParam::Ignore(prim));
+                                app.parameters.push(AppFormParameter::Ignore(prim));
                             }
                             ProdFormValue::Panic(prim) => {
-                                app.params.push(AppFormParam::Panic(prim));
+                                app.parameters.push(AppFormParameter::Panic(prim));
                             }
                             ProdFormValue::Prim(prim) => {
-                                app.params.push(AppFormParam::Prim(prim));
+                                app.parameters.push(AppFormParameter::Prim(prim));
                             }
                             ProdFormValue::TypeKeyword(keyword) => {
-                                app.params.push(AppFormParam::TypeKeyword(keyword));
+                                app.parameters.push(AppFormParameter::TypeKeyword(keyword));
                             }
                             ProdFormValue::TypeSymbol(symbol) => {
-                                app.params.push(AppFormParam::TypeSymbol(symbol));
+                                app.parameters.push(AppFormParameter::TypeSymbol(symbol));
                             }
                             ProdFormValue::ValueSymbol(symbol) => {
-                                app.params.push(AppFormParam::ValueSymbol(symbol));
+                                app.parameters.push(AppFormParameter::ValueSymbol(symbol));
                             }
                             ProdFormValue::TypePathSymbol(symbol) => {
-                                app.params.push(AppFormParam::TypePathSymbol(symbol));
+                                app.parameters
+                                    .push(AppFormParameter::TypePathSymbol(symbol));
                             }
                             ProdFormValue::ValuePathSymbol(symbol) => {
-                                app.params.push(AppFormParam::ValuePathSymbol(symbol));
+                                app.parameters
+                                    .push(AppFormParameter::ValuePathSymbol(symbol));
                             }
                             ProdFormValue::TypesForm(form) => {
-                                app.params.push(AppFormParam::TypesForm(form));
+                                app.parameters.push(AppFormParameter::TypesForm(form));
                             }
                             ProdFormValue::FunForm(form) => {
-                                app.params.push(AppFormParam::FunForm(form));
+                                app.parameters.push(AppFormParameter::FunForm(form));
                             }
                             ProdFormValue::LetForm(form) => {
-                                app.params.push(AppFormParam::LetForm(form));
+                                app.parameters.push(AppFormParameter::LetForm(form));
                             }
                             ProdFormValue::CaseForm(form) => {
-                                app.params.push(AppFormParam::CaseForm(form));
+                                app.parameters.push(AppFormParameter::CaseForm(form));
                             }
                             ProdFormValue::AppForm(form) => {
-                                app.params.push(AppFormParam::AppForm(form));
+                                app.parameters.push(AppFormParameter::AppForm(form));
                             }
                             _ => {
                                 return Err(Error::Syntactic(SyntacticError {
@@ -321,15 +324,20 @@ impl AppForm {
                         }
                     }
                 } else if let Ok(form) = TypesForm::from_form(&form) {
-                    app.params.push(AppFormParam::TypesForm(Box::new(form)));
+                    app.parameters
+                        .push(AppFormParameter::TypesForm(Box::new(form)));
                 } else if let Ok(form) = FunForm::from_form(&form) {
-                    app.params.push(AppFormParam::FunForm(Box::new(form)));
+                    app.parameters
+                        .push(AppFormParameter::FunForm(Box::new(form)));
                 } else if let Ok(form) = LetForm::from_form(&form) {
-                    app.params.push(AppFormParam::LetForm(Box::new(form)));
+                    app.parameters
+                        .push(AppFormParameter::LetForm(Box::new(form)));
                 } else if let Ok(form) = CaseForm::from_form(&form) {
-                    app.params.push(AppFormParam::CaseForm(Box::new(form)));
+                    app.parameters
+                        .push(AppFormParameter::CaseForm(Box::new(form)));
                 } else if let Ok(form) = AppForm::from_form(&form) {
-                    app.params.push(AppFormParam::AppForm(Box::new(form)));
+                    app.parameters
+                        .push(AppFormParameter::AppForm(Box::new(form)));
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
@@ -357,7 +365,7 @@ impl AppForm {
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        format!("({} {})", self.name, self.params_to_string(),)
+        format!("({} {})", self.name, self.parameters_to_string(),)
     }
 }
 
@@ -390,7 +398,7 @@ mod tests {
         let mut form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "math.+".to_string());
-        assert_eq!(form.params_to_string(), "(prod 0 1 2 3)".to_string());
+        assert_eq!(form.parameters_to_string(), "(prod 0 1 2 3)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(unwrap ())";
@@ -402,7 +410,7 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "unwrap".to_string());
-        assert_eq!(form.params_to_string(), "()".to_string());
+        assert_eq!(form.parameters_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(panic E)";
@@ -414,7 +422,7 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "panic".to_string());
-        assert_eq!(form.params_to_string(), "E".to_string());
+        assert_eq!(form.parameters_to_string(), "E".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(unwrap stdIO)";
@@ -425,7 +433,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.params_to_string(), "stdIO".to_string());
+        assert_eq!(form.parameters_to_string(), "stdIO".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(unwrap \"io error\")";
@@ -436,7 +444,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.params_to_string(), "\"io error\"".to_string());
+        assert_eq!(form.parameters_to_string(), "\"io error\"".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(unwrap stdIO)";
@@ -447,7 +455,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.params_to_string(), "stdIO".to_string());
+        assert_eq!(form.parameters_to_string(), "stdIO".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(unwrap (fun (prod a b) (math.+ (prod a b))))";
@@ -459,7 +467,7 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(
-            form.params_to_string(),
+            form.parameters_to_string(),
             "(fun (prod a b) (math.+ (prod a b)))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
