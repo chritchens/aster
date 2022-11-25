@@ -1,5 +1,5 @@
 use crate::error::{Error, SyntacticError};
-use crate::form::form::{Form, FormParam};
+use crate::form::form::{Form, FormTailElement};
 use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::form::simple_value::SimpleValue;
 use crate::loc::Loc;
@@ -72,14 +72,14 @@ impl ExportForm {
     }
 
     pub fn from_form(form: &Form) -> Result<ExportForm> {
-        if form.name.to_string() != "export" {
+        if form.head.to_string() != "export" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected an export keyword".into(),
             }));
         }
 
-        if form.params.len() != 1 {
+        if form.tail.len() != 1 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a product of exported symbols or an empty literal".into(),
@@ -89,9 +89,9 @@ impl ExportForm {
         let mut export = ExportForm::new();
         export.tokens = form.tokens.clone();
 
-        for param in form.params.clone() {
+        for param in form.tail.clone() {
             match param {
-                FormParam::Simple(value) => match value {
+                FormTailElement::Simple(value) => match value {
                     SimpleValue::Empty(_) => {
                         export.defs.push(ExportFormDef::Empty(value));
                     }
@@ -108,7 +108,7 @@ impl ExportForm {
                         }));
                     }
                 },
-                FormParam::Form(form) => {
+                FormTailElement::Form(form) => {
                     let prod = ProdForm::from_form(&form)?;
 
                     for value in prod.values {

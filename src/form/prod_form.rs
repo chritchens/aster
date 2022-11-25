@@ -3,7 +3,7 @@ use crate::form::app_form::AppForm;
 use crate::form::attrs_form::AttrsForm;
 use crate::form::case_form::CaseForm;
 use crate::form::export_form::ExportForm;
-use crate::form::form::{Form, FormParam};
+use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::import_form::ImportForm;
 use crate::form::let_form::LetForm;
@@ -156,14 +156,14 @@ impl ProdForm {
     }
 
     pub fn from_form(form: &Form) -> Result<ProdForm> {
-        if form.name.to_string() != "prod" {
+        if form.head.to_string() != "prod" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a prod keyword".into(),
             }));
         }
 
-        if form.params.len() < 2 {
+        if form.tail.len() < 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected at least two values".into(),
@@ -173,9 +173,9 @@ impl ProdForm {
         let mut prod = ProdForm::new();
         prod.tokens = form.tokens.clone();
 
-        for param in form.params.iter() {
+        for param in form.tail.iter() {
             match param.clone() {
-                FormParam::Simple(value) => match value {
+                FormTailElement::Simple(value) => match value {
                     SimpleValue::Empty(_) => {
                         prod.values.push(ProdFormValue::Empty(value));
                     }
@@ -207,7 +207,7 @@ impl ProdForm {
                         }));
                     }
                 },
-                FormParam::Form(form) => {
+                FormTailElement::Form(form) => {
                     if let Ok(form) = TypesForm::from_form(&form) {
                         prod.values.push(ProdFormValue::TypesForm(Box::new(form)));
                     } else if let Ok(form) = ProdForm::from_form(&form) {

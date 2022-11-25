@@ -1,6 +1,6 @@
 use crate::error::{Error, SemanticError, SyntacticError};
 use crate::form::app_form::AppForm;
-use crate::form::form::{Form, FormParam};
+use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::ProdForm;
@@ -157,14 +157,14 @@ impl CaseFormMatch {
     }
 
     pub fn from_form(form: &Form) -> Result<CaseFormMatch> {
-        if form.name.to_string() != "match" {
+        if form.head.to_string() != "match" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a match keyword".into(),
             }));
         }
 
-        if form.params.len() != 2 {
+        if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a symbol, primitive or application followed by a function".into(),
@@ -174,8 +174,8 @@ impl CaseFormMatch {
         let mut case_match = CaseFormMatch::new();
         case_match.tokens = form.tokens.clone();
 
-        match form.params[0].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[0].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::Empty(_) => {
                     case_match.case = CaseFormMatchCase::Empty(value);
                 }
@@ -212,8 +212,8 @@ impl CaseFormMatch {
             }
         }
 
-        match form.params[1].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[1].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::Ignore(_) => {
                     case_match.action = CaseFormMatchAction::Ignore(value);
                 }
@@ -245,7 +245,7 @@ impl CaseFormMatch {
                     case_match.action = CaseFormMatchAction::ValuePathSymbol(value);
                 }
             },
-            FormParam::Form(form) => {
+            FormTailElement::Form(form) => {
                 if let Ok(form) = ProdForm::from_form(&form) {
                     case_match.action = CaseFormMatchAction::ProdForm(Box::new(form));
                 } else if let Ok(form) = FunForm::from_form(&form) {
@@ -393,14 +393,14 @@ impl CaseForm {
     }
 
     pub fn from_form(form: &Form) -> Result<CaseForm> {
-        if form.name.to_string() != "case" {
+        if form.head.to_string() != "case" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a case keyword".into(),
             }));
         }
 
-        if form.params.len() < 2 {
+        if form.tail.len() < 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a case form parameter and at least one match branch".into(),
@@ -410,8 +410,8 @@ impl CaseForm {
         let mut case = CaseForm::new();
         case.tokens = form.tokens.clone();
 
-        match form.params[0].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[0].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::Empty(_) => {
                     case.variable = CaseFormVariable::Empty(value);
                 }
@@ -434,7 +434,7 @@ impl CaseForm {
                     }));
                 }
             },
-            FormParam::Form(form) => {
+            FormTailElement::Form(form) => {
                 if let Ok(form) = LetForm::from_form(&form) {
                     case.variable = CaseFormVariable::LetForm(Box::new(form));
                 } else if let Ok(form) = AppForm::from_form(&form) {
@@ -448,9 +448,9 @@ impl CaseForm {
             }
         }
 
-        for param in form.params[1..].iter() {
+        for param in form.tail[1..].iter() {
             match param.clone() {
-                FormParam::Form(form) => {
+                FormTailElement::Form(form) => {
                     if let Ok(form) = CaseFormMatch::from_form(&form) {
                         case.matches.push(form);
                     } else {

@@ -1,7 +1,7 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::app_form::AppForm;
 use crate::form::case_form::CaseForm;
-use crate::form::form::{Form, FormParam};
+use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::ProdForm;
@@ -191,14 +191,14 @@ impl ValForm {
     }
 
     pub fn from_form(form: &Form) -> Result<ValForm> {
-        if form.name.to_string() != "val" {
+        if form.head.to_string() != "val" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a val keyword".into(),
             }));
         }
 
-        if form.params.len() != 2 {
+        if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a name and an empty literal or a primitive or a symbol or a form"
@@ -209,8 +209,8 @@ impl ValForm {
         let mut val = ValForm::new();
         val.tokens = form.tokens.clone();
 
-        match form.params[0].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[0].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::ValueSymbol(_) => {
                     val.name = value;
                 }
@@ -232,8 +232,8 @@ impl ValForm {
             }
         }
 
-        match form.params[1].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[1].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::Empty(empty) => {
                     val.value = ValFormValue::Empty(SimpleValue::Empty(empty));
                 }
@@ -251,7 +251,7 @@ impl ValForm {
                 }
             },
 
-            FormParam::Form(form) => match form.name.to_string().as_str() {
+            FormTailElement::Form(form) => match form.head.to_string().as_str() {
                 "prod" => {
                     let form = ProdForm::from_form(&form)?;
                     val.value = ValFormValue::ProdForm(Box::new(form));

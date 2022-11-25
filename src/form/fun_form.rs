@@ -1,7 +1,7 @@
 use crate::error::{Error, SemanticError, SyntacticError};
 use crate::form::app_form::AppForm;
 use crate::form::case_form::CaseForm;
-use crate::form::form::{Form, FormParam};
+use crate::form::form::{Form, FormTailElement};
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::form::simple_value::SimpleValue;
@@ -226,14 +226,14 @@ impl FunForm {
     }
 
     pub fn from_form(form: &Form) -> Result<FunForm> {
-        if form.name.to_string() != "fun" {
+        if form.head.to_string() != "fun" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a fun keyword".into(),
             }));
         }
 
-        if form.params.len() != 2 {
+        if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a symbol or form and a primitive, or a symbol or a form".into(),
@@ -243,8 +243,8 @@ impl FunForm {
         let mut fun = FunForm::new();
         fun.tokens = form.tokens.clone();
 
-        match form.params[0].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[0].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::Empty(_) => fun.params.push(FunFormParam::Empty(value)),
                 SimpleValue::ValueSymbol(_) => {
                     fun.params.push(FunFormParam::ValueSymbol(value));
@@ -259,7 +259,7 @@ impl FunForm {
                     }));
                 }
             },
-            FormParam::Form(form) => {
+            FormTailElement::Form(form) => {
                 if let Ok(prod) = ProdForm::from_form(&form) {
                     for value in prod.values.iter() {
                         match value.clone() {
@@ -286,8 +286,8 @@ impl FunForm {
             }
         }
 
-        match form.params[1].clone() {
-            FormParam::Simple(value) => match value.clone() {
+        match form.tail[1].clone() {
+            FormTailElement::Simple(value) => match value.clone() {
                 SimpleValue::Empty(_) => {
                     fun.body = FunFormBody::Empty(value);
                 }
@@ -319,7 +319,7 @@ impl FunForm {
                     }));
                 }
             },
-            FormParam::Form(form) => {
+            FormTailElement::Form(form) => {
                 if let Ok(form) = TypesForm::from_form(&form) {
                     fun.body = FunFormBody::TypesForm(Box::new(form));
                 } else if let Ok(form) = ProdForm::from_form(&form) {

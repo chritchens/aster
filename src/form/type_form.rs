@@ -1,13 +1,13 @@
 use crate::error::{Error, SyntacticError};
-use crate::form::form::{Form, FormParam};
+use crate::form::form::{Form, FormTailElement};
 use crate::form::simple_value::SimpleValue;
-use crate::form::types_form::{TypesForm, TypesFormParam};
+use crate::form::types_form::{TypesForm, TypesFormTailElement};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
 use std::fmt;
 
-pub type TypeFormValue = TypesFormParam;
+pub type TypeFormValue = TypesFormTailElement;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct TypeForm {
@@ -65,14 +65,14 @@ impl TypeForm {
     }
 
     pub fn from_form(form: &Form) -> Result<TypeForm> {
-        if form.name.to_string() != "type" {
+        if form.head.to_string() != "type" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a type keyword".into(),
             }));
         }
 
-        if form.params.len() != 2 {
+        if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a name and a type keyword or a type symbol or a types form".into(),
@@ -82,8 +82,8 @@ impl TypeForm {
         let mut type_form = TypeForm::new();
         type_form.tokens = form.tokens.clone();
 
-        match form.params[0].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[0].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::TypeSymbol(_) => {
                     type_form.name = value;
                 }
@@ -102,8 +102,8 @@ impl TypeForm {
             }
         }
 
-        match form.params[1].clone() {
-            FormParam::Simple(value) => match value.clone() {
+        match form.tail[1].clone() {
+            FormTailElement::Simple(value) => match value.clone() {
                 SimpleValue::TypeKeyword(keyword) => match keyword.to_string().as_str() {
                     "Empty" => {
                         type_form.value = TypeFormValue::Empty(value);
@@ -128,7 +128,7 @@ impl TypeForm {
                     }));
                 }
             },
-            FormParam::Form(form) => {
+            FormTailElement::Form(form) => {
                 if let Ok(form) = TypesForm::from_form(&form) {
                     type_form.value = TypeFormValue::Form(Box::new(form));
                 } else {

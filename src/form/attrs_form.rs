@@ -1,5 +1,5 @@
 use crate::error::{Error, SyntacticError};
-use crate::form::form::{Form, FormParam};
+use crate::form::form::{Form, FormTailElement};
 use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::form::simple_value::SimpleValue;
 use crate::loc::Loc;
@@ -90,14 +90,14 @@ impl AttrsForm {
     }
 
     pub fn from_form(form: &Form) -> Result<AttrsForm> {
-        if form.name.to_string() != "attrs" {
+        if form.head.to_string() != "attrs" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a attrs keyword".into(),
             }));
         }
 
-        if form.params.len() != 2 {
+        if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc:
@@ -109,7 +109,7 @@ impl AttrsForm {
         let mut attrs = AttrsForm::new();
         attrs.tokens = form.tokens.clone();
 
-        let name = form.params[0].to_string();
+        let name = form.tail[0].to_string();
 
         if is_qualified(&name) {
             return Err(Error::Syntactic(SyntacticError {
@@ -127,8 +127,8 @@ impl AttrsForm {
 
         attrs.name = name;
 
-        match form.params[1].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[1].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::Empty(_) => {
                     attrs.values.push(AttrsFormValue::Empty(value));
                 }
@@ -157,7 +157,7 @@ impl AttrsForm {
                     }));
                 }
             },
-            FormParam::Form(form) => {
+            FormTailElement::Form(form) => {
                 if let Ok(prod) = ProdForm::from_form(&form) {
                     for value in prod.values.iter() {
                         match value.clone() {

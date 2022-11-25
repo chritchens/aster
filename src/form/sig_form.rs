@@ -1,13 +1,13 @@
 use crate::error::{Error, SyntacticError};
-use crate::form::form::{Form, FormParam};
+use crate::form::form::{Form, FormTailElement};
 use crate::form::simple_value::SimpleValue;
-use crate::form::types_form::{TypesForm, TypesFormParam};
+use crate::form::types_form::{TypesForm, TypesFormTailElement};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
 use std::fmt;
 
-pub type SigFormValue = TypesFormParam;
+pub type SigFormValue = TypesFormTailElement;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct SigForm {
@@ -65,14 +65,14 @@ impl SigForm {
     }
 
     pub fn from_form(form: &Form) -> Result<SigForm> {
-        if form.name.to_string() != "sig" {
+        if form.head.to_string() != "sig" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a sig keyword".into(),
             }));
         }
 
-        if form.params.len() != 2 {
+        if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a name and a type keyword or a type symbol or a types form".into(),
@@ -82,8 +82,8 @@ impl SigForm {
         let mut sig_form = SigForm::new();
         sig_form.tokens = form.tokens.clone();
 
-        match form.params[0].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[0].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::ValueSymbol(_) => {
                     sig_form.name = value;
                 }
@@ -102,8 +102,8 @@ impl SigForm {
             }
         }
 
-        match form.params[1].clone() {
-            FormParam::Simple(value) => match value.clone() {
+        match form.tail[1].clone() {
+            FormTailElement::Simple(value) => match value.clone() {
                 SimpleValue::TypeKeyword(keyword) => match keyword.to_string().as_str() {
                     "Empty" => {
                         sig_form.value = SigFormValue::Empty(value);
@@ -128,7 +128,7 @@ impl SigForm {
                     }));
                 }
             },
-            FormParam::Form(form) => {
+            FormTailElement::Form(form) => {
                 if let Ok(form) = TypesForm::from_form(&form) {
                     sig_form.value = SigFormValue::Form(Box::new(form));
                 } else {

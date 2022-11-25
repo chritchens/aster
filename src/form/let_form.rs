@@ -1,7 +1,7 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::app_form::AppForm;
 use crate::form::attrs_form::AttrsForm;
-use crate::form::form::{Form, FormParam};
+use crate::form::form::{Form, FormTailElement};
 use crate::form::import_form::ImportForm;
 use crate::form::sig_form::SigForm;
 use crate::form::simple_value::SimpleValue;
@@ -174,14 +174,14 @@ impl LetForm {
     }
 
     pub fn from_form(form: &Form) -> Result<LetForm> {
-        if form.name.to_string() != "let" {
+        if form.head.to_string() != "let" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a let keyword".into(),
             }));
         }
 
-        let len = form.params.len();
+        let len = form.tail.len();
 
         if len == 0 {
             return Err(Error::Syntactic(SyntacticError {
@@ -194,8 +194,8 @@ impl LetForm {
         let_form.tokens = form.tokens.clone();
 
         if len == 1 {
-            match form.params[0].clone() {
-                FormParam::Form(form) => {
+            match form.tail[0].clone() {
+                FormTailElement::Form(form) => {
                     let form = AppForm::from_form(&form)?;
                     let_form.value = form;
                 }
@@ -209,9 +209,9 @@ impl LetForm {
         }
 
         if len > 1 {
-            for param in form.params[0..(len - 1)].iter().clone() {
+            for param in form.tail[0..(len - 1)].iter().clone() {
                 match param {
-                    FormParam::Form(form) => {
+                    FormTailElement::Form(form) => {
                         if let Ok(form) = ImportForm::from_form(&form) {
                             let_form
                                 .entries
@@ -244,8 +244,8 @@ impl LetForm {
                 }
             }
 
-            match form.params[len - 1].clone() {
-                FormParam::Form(form) => {
+            match form.tail[len - 1].clone() {
+                FormTailElement::Form(form) => {
                     if let Ok(form) = AppForm::from_form(&form) {
                         let_form.value = form;
                     } else {

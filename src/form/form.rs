@@ -8,22 +8,22 @@ use crate::token::{TokenKind, Tokens};
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum FormParam {
+pub enum FormTailElement {
     Simple(SimpleValue),
     Form(Box<Form>),
 }
 
-impl FormParam {
+impl FormTailElement {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            FormParam::Simple(value) => value.to_string(),
-            FormParam::Form(form) => form.to_string(),
+            FormTailElement::Simple(value) => value.to_string(),
+            FormTailElement::Form(form) => form.to_string(),
         }
     }
 }
 
-impl fmt::Display for FormParam {
+impl fmt::Display for FormTailElement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
@@ -32,8 +32,8 @@ impl fmt::Display for FormParam {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Form {
     pub tokens: Box<Tokens>,
-    pub name: SimpleValue,
-    pub params: Vec<FormParam>,
+    pub head: SimpleValue,
+    pub tail: Vec<FormTailElement>,
 }
 
 impl Form {
@@ -49,8 +49,8 @@ impl Form {
         self.tokens[0].loc()
     }
 
-    pub fn params_to_string(&self) -> String {
-        self.params
+    pub fn tail_to_string(&self) -> String {
+        self.tail
             .iter()
             .map(|p| p.to_string())
             .collect::<Vec<String>>()
@@ -58,13 +58,13 @@ impl Form {
     }
 
     pub fn is_value_form(&self) -> bool {
-        if !is_value_symbol(&symbol_name(&self.name.to_string())) {
+        if !is_value_symbol(&symbol_name(&self.head.to_string())) {
             return false;
         }
 
-        for param in self.params.iter() {
+        for param in self.tail.iter() {
             match param {
-                FormParam::Simple(value) => match value {
+                FormTailElement::Simple(value) => match value {
                     SimpleValue::TypeKeyword(_)
                     | SimpleValue::TypeSymbol(_)
                     | SimpleValue::TypePathSymbol(_) => {
@@ -72,7 +72,7 @@ impl Form {
                     }
                     _ => {}
                 },
-                FormParam::Form(form) => {
+                FormTailElement::Form(form) => {
                     if !form.is_value_form() {
                         return false;
                     }
@@ -84,15 +84,15 @@ impl Form {
     }
 
     pub fn is_types_form(&self) -> bool {
-        let name = self.name.to_string();
+        let head = self.head.to_string();
 
-        if !is_type_symbol(&symbol_name(&name)) && !is_type_keyword(&name) {
+        if !is_type_symbol(&symbol_name(&head)) && !is_type_keyword(&head) {
             return false;
         }
 
-        for param in self.params.iter() {
+        for param in self.tail.iter() {
             match param {
-                FormParam::Simple(value) => match value {
+                FormTailElement::Simple(value) => match value {
                     SimpleValue::TypeKeyword(_)
                     | SimpleValue::TypeSymbol(_)
                     | SimpleValue::TypePathSymbol(_) => {}
@@ -100,7 +100,7 @@ impl Form {
                         return false;
                     }
                 },
-                FormParam::Form(form) => {
+                FormTailElement::Form(form) => {
                     if !form.is_types_form() {
                         return false;
                     }
@@ -135,17 +135,17 @@ impl Form {
         let mut form = Form::new();
         form.tokens = Box::new(tokens.to_owned());
 
-        let name_token = tokens[1].clone();
-        let name = name_token.to_string();
+        let head_token = tokens[1].clone();
+        let head = head_token.to_string();
 
-        if !is_symbol(&symbol_name(&name)) && !is_keyword(&name) {
+        if !is_symbol(&symbol_name(&head)) && !is_keyword(&head) {
             return Err(Error::Syntactic(SyntacticError {
                 loc: tokens[1].loc(),
                 desc: "expected a symbol or a keyword".into(),
             }));
         }
 
-        form.name = SimpleValue::from_token(&name_token)?;
+        form.head = SimpleValue::from_token(&head_token)?;
 
         let mut idx = 2;
 
@@ -179,7 +179,7 @@ impl Form {
                     }
 
                     let inner_form = Form::from_tokens(&inner_tokens)?;
-                    form.params.push(FormParam::Form(Box::new(inner_form)));
+                    form.tail.push(FormTailElement::Form(Box::new(inner_form)));
                 }
                 TokenKind::FormEnd => {
                     idx += 1;
@@ -189,7 +189,7 @@ impl Form {
                     let token = tokens[idx].clone();
                     let value = SimpleValue::from_token(&token)?;
 
-                    form.params.push(FormParam::Simple(value));
+                    form.tail.push(FormTailElement::Simple(value));
 
                     idx += 1;
                 }
@@ -217,8 +217,8 @@ impl Form {
     pub fn to_string(&self) -> String {
         format!(
             "({} {})",
-            self.name,
-            self.params
+            self.head,
+            self.tail
                 .iter()
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>()
@@ -255,8 +255,8 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(form.name.to_string(), "x.f".to_string());
-        assert_eq!(form.params_to_string(), "-1 T".to_string());
+        assert_eq!(form.head.to_string(), "x.f".to_string());
+        assert_eq!(form.tail_to_string(), "-1 T".to_string());
         assert!(form.is_mixed_form());
 
         s = "(x.f a 'b' 0)";
@@ -267,8 +267,8 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name.to_string(), "x.f".to_string());
-        assert_eq!(form.params_to_string(), "a 'b' 0".to_string());
+        assert_eq!(form.head.to_string(), "x.f".to_string());
+        assert_eq!(form.tail_to_string(), "a 'b' 0".to_string());
         assert!(form.is_value_form());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -280,9 +280,9 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name.to_string(), "Fun".to_string());
+        assert_eq!(form.head.to_string(), "Fun".to_string());
         assert_eq!(
-            form.params
+            form.tail
                 .iter()
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>(),
@@ -292,7 +292,7 @@ mod tests {
             ]
         );
         assert_eq!(
-            form.params_to_string(),
+            form.tail_to_string(),
             "(Prod T Q) (Fun (Prod moduleA.A T Q) B)".to_string()
         );
         assert!(form.is_types_form());
@@ -305,15 +305,15 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.name.to_string(), "Sum".to_string());
+        assert_eq!(form.head.to_string(), "Sum".to_string());
         assert_eq!(
-            form.params
+            form.tail
                 .iter()
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>(),
             vec!["A".to_string(), "B".into(), "c.C".into(), "Char".into()]
         );
-        assert_eq!(form.params_to_string(), "A B c.C Char".to_string());
+        assert_eq!(form.tail_to_string(), "A B c.C Char".to_string());
         assert!(form.is_types_form());
         assert_eq!(form.to_string(), s.to_string());
     }

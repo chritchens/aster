@@ -1,7 +1,7 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::attrs_form::AttrsForm;
 use crate::form::export_form::ExportForm;
-use crate::form::form::{Form, FormParam};
+use crate::form::form::{Form, FormTailElement};
 use crate::form::import_form::ImportForm;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::form::sig_form::SigForm;
@@ -209,8 +209,8 @@ impl ModuleForm {
     }
 
     fn parse_type_params(&mut self, form: &Form, idx: usize) -> Result<()> {
-        match form.params[idx].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[idx].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::Ignore(_) => {
                     self.type_params.push(ModuleFormTypeParam::Ignore(value));
                 }
@@ -234,7 +234,7 @@ impl ModuleForm {
                     }));
                 }
             },
-            FormParam::Form(form) => {
+            FormTailElement::Form(form) => {
                 if let Ok(prod) = ProdForm::from_form(&form) {
                     for value in prod.values.iter() {
                         match value.clone() {
@@ -272,8 +272,8 @@ impl ModuleForm {
     }
 
     fn parse_entries(&mut self, form: &Form, idx: usize) -> Result<()> {
-        match form.params[idx].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[idx].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::Empty(_) => {
                     self.entries.push(ModuleFormEntry::Empty(value));
                 }
@@ -284,7 +284,7 @@ impl ModuleForm {
                     }));
                 }
             },
-            FormParam::Form(form) => {
+            FormTailElement::Form(form) => {
                 let prod = ProdForm::from_form(&form)?;
 
                 for value in prod.values {
@@ -322,14 +322,14 @@ impl ModuleForm {
     }
 
     pub fn from_form(form: &Form) -> Result<ModuleForm> {
-        if form.name.to_string() != "module" {
+        if form.head.to_string() != "module" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a module keyword".into(),
             }));
         }
 
-        let len = form.params.len();
+        let len = form.tail.len();
 
         if len < 2 || len > 3 {
             return Err(Error::Syntactic(SyntacticError {
@@ -341,8 +341,8 @@ impl ModuleForm {
         let mut module = ModuleForm::new();
         module.tokens = form.tokens.clone();
 
-        match form.params[0].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[0].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::ValueSymbol(_) => {
                     module.name = value;
                 }

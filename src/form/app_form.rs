@@ -1,6 +1,6 @@
 use crate::error::{Error, SemanticError, SyntacticError};
 use crate::form::case_form::CaseForm;
-use crate::form::form::{Form, FormParam};
+use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
@@ -143,7 +143,7 @@ impl AppForm {
     }
 
     pub fn from_form(form: &Form) -> Result<AppForm> {
-        if form.params.len() != 1 {
+        if form.tail.len() != 1 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "a parameter or product of parameters".into(),
@@ -153,7 +153,7 @@ impl AppForm {
         let mut app = AppForm::new();
         app.tokens = form.tokens.clone();
 
-        let name = form.name.clone();
+        let name = form.head.clone();
 
         match name {
             SimpleValue::Panic(_) => {
@@ -176,8 +176,8 @@ impl AppForm {
             }
         }
 
-        match form.params[0].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[0].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::Ignore(_) => {
                     app.params.push(AppFormParam::Ignore(value));
                 }
@@ -212,7 +212,7 @@ impl AppForm {
                     }));
                 }
             },
-            FormParam::Form(form) => {
+            FormTailElement::Form(form) => {
                 if let Ok(prod) = ProdForm::from_form(&form) {
                     for value in prod.values.iter() {
                         match value.clone() {

@@ -1,5 +1,5 @@
 use crate::error::{Error, SyntacticError};
-use crate::form::form::{Form, FormParam};
+use crate::form::form::{Form, FormTailElement};
 use crate::form::module_form::ModuleFormTypeParam;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::form::simple_value::SimpleValue;
@@ -95,8 +95,8 @@ impl ImportForm {
     }
 
     fn parse_qualifier(&mut self, form: &Form, idx: usize) -> Result<()> {
-        match form.params[idx].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[idx].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::ValueSymbol(_) => {
                     self.qualifier = Some(value);
                 }
@@ -119,8 +119,8 @@ impl ImportForm {
     }
 
     fn parse_type_params(&mut self, form: &Form, idx: usize) -> Result<()> {
-        match form.params[idx].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[idx].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::Ignore(_) => {
                     self.type_params.push(ImportFormTypeParam::Ignore(value));
                 }
@@ -144,7 +144,7 @@ impl ImportForm {
                     }));
                 }
             },
-            FormParam::Form(form) => {
+            FormTailElement::Form(form) => {
                 if let Ok(prod) = ProdForm::from_form(&form) {
                     for value in prod.values.iter() {
                         match value.clone() {
@@ -182,8 +182,8 @@ impl ImportForm {
     }
 
     fn parse_defs(&mut self, form: &Form, idx: usize) -> Result<()> {
-        match form.params[idx].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[idx].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::Ignore(_) => {
                     self.defs.push(ImportFormDef::Ignore(value));
                 }
@@ -203,7 +203,7 @@ impl ImportForm {
                     }));
                 }
             },
-            FormParam::Form(form) => {
+            FormTailElement::Form(form) => {
                 let prod = ProdForm::from_form(&form)?;
 
                 for value in prod.values {
@@ -229,7 +229,7 @@ impl ImportForm {
     }
 
     pub fn from_form(form: &Form) -> Result<ImportForm> {
-        if form.name.to_string() != "import" {
+        if form.head.to_string() != "import" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected an import keyword".into(),
@@ -239,7 +239,7 @@ impl ImportForm {
         let mut import = ImportForm::new();
         import.tokens = form.tokens.clone();
 
-        let len = form.params.len();
+        let len = form.tail.len();
 
         if len == 0 {
             return Err(Error::Syntactic(SyntacticError {
@@ -256,8 +256,8 @@ impl ImportForm {
             }));
         }
 
-        match form.params[0].clone() {
-            FormParam::Simple(value) => match value {
+        match form.tail[0].clone() {
+            FormTailElement::Simple(value) => match value {
                 SimpleValue::ValueSymbol(_) => {
                     import.module = value;
                 }
