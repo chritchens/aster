@@ -94,6 +94,29 @@ impl ImportForm {
         }
     }
 
+    pub fn all_parameters(&self) -> Vec<SimpleValue> {
+        let mut params = vec![];
+
+        for def in self.defs.iter() {
+            match def.clone() {
+                ImportFormDef::Ignore(value) => {
+                    params.push(value);
+                }
+                ImportFormDef::Empty(value) => {
+                    params.push(value);
+                }
+                ImportFormDef::ValueSymbol(value) => {
+                    params.push(value);
+                }
+                ImportFormDef::TypeSymbol(value) => {
+                    params.push(value);
+                }
+            }
+        }
+
+        params
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         vec![]
     }

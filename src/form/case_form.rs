@@ -28,6 +28,22 @@ impl Default for CaseFormVariable {
 }
 
 impl CaseFormVariable {
+    pub fn all_parameters(&self) -> Vec<SimpleValue> {
+        let mut params = vec![];
+
+        match self.clone() {
+            CaseFormVariable::AppForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            CaseFormVariable::LetForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            _ => {}
+        }
+
+        params
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         let mut vars = vec![];
 
@@ -184,6 +200,25 @@ impl CaseFormMatch {
 
     pub fn loc(&self) -> Option<Loc> {
         self.tokens[0].loc()
+    }
+
+    pub fn all_parameters(&self) -> Vec<SimpleValue> {
+        let mut params = vec![];
+
+        match self.action.clone() {
+            CaseFormMatchAction::ProdForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            CaseFormMatchAction::FunForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            CaseFormMatchAction::LetForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            _ => {}
+        }
+
+        params
     }
 
     pub fn all_variables(&self) -> Vec<SimpleValue> {
@@ -397,6 +432,25 @@ impl CaseForm {
             .map(|b| b.to_string())
             .collect::<Vec<String>>()
             .join(" ")
+    }
+
+    pub fn all_parameters(&self) -> Vec<SimpleValue> {
+        let mut params = vec![];
+
+        params.extend(self.variable.all_parameters());
+
+        for branch in self.matches.iter() {
+            let new_params = branch
+                .all_parameters()
+                .iter()
+                .filter(|bv| !params.iter().any(|v| v.to_string() == bv.to_string()))
+                .map(|v| v.to_owned())
+                .collect::<Vec<SimpleValue>>();
+
+            params.extend(new_params);
+        }
+
+        params
     }
 
     pub fn all_variables(&self) -> Vec<SimpleValue> {

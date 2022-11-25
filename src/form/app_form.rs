@@ -100,6 +100,36 @@ impl AppForm {
         }
     }
 
+    pub fn all_parameters(&self) -> Vec<SimpleValue> {
+        let mut params = vec![];
+
+        for param in self.parameters.iter() {
+            match param.clone() {
+                AppFormParameter::TypesForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                AppFormParameter::ProdForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                AppFormParameter::FunForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                AppFormParameter::LetForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                AppFormParameter::CaseForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                AppFormParameter::AppForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                _ => {}
+            }
+        }
+
+        params
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         let mut vars = vec![];
         vars.push(self.name.clone());

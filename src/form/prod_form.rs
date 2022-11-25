@@ -120,6 +120,54 @@ impl ProdForm {
             .join(" ")
     }
 
+    pub fn all_parameters(&self) -> Vec<SimpleValue> {
+        let mut params = vec![];
+
+        for value in self.values.iter() {
+            match value.clone() {
+                ProdFormValue::TypesForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::AttrsForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::ProdForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::FunForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::CaseForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::LetForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::AppForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::TypeForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::SigForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::ValForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::ImportForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::ExportForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                _ => {}
+            }
+        }
+
+        params
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         let mut vars = vec![];
 

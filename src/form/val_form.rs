@@ -148,6 +148,32 @@ impl ValForm {
             || (self.is_application_form() && is_value_symbol(&self.name.to_string()))
     }
 
+    pub fn all_parameters(&self) -> Vec<SimpleValue> {
+        let mut params = vec![];
+        params.push(self.name.clone());
+
+        match self.value.clone() {
+            ValFormValue::ProdForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            ValFormValue::FunForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            ValFormValue::LetForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            ValFormValue::AppForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            ValFormValue::CaseForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            _ => {}
+        }
+
+        params
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         let mut vars = vec![];
 

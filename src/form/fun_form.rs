@@ -128,6 +128,46 @@ impl FunForm {
         }
     }
 
+    pub fn all_parameters(&self) -> Vec<SimpleValue> {
+        let mut params = vec![];
+
+        for param in self.parameters.iter() {
+            match param.clone() {
+                FunFormParameter::ValueSymbol(value) => {
+                    params.push(value);
+                }
+                FunFormParameter::TypeSymbol(value) => {
+                    params.push(value);
+                }
+                _ => {}
+            }
+        }
+
+        match self.body.clone() {
+            FunFormBody::TypesForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            FunFormBody::ProdForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            FunFormBody::AppForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            FunFormBody::LetForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            FunFormBody::CaseForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            FunFormBody::FunForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            _ => {}
+        }
+
+        params
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         let mut vars = vec![];
 
@@ -533,6 +573,15 @@ mod tests {
 
         let mut form = FunForm::from_str(s).unwrap();
 
+        let mut all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "".to_string());
+
         let mut all_variables = form
             .all_variables()
             .iter()
@@ -541,11 +590,21 @@ mod tests {
             .join(", ");
 
         assert_eq!(all_variables, "()".to_string());
+
         //assert!(form.check_parameters_use().is_ok());
 
         s = "(fun a ())";
 
         form = FunForm::from_str(s).unwrap();
+
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a".to_string());
 
         all_variables = form
             .all_variables()
@@ -562,6 +621,15 @@ mod tests {
 
         form = FunForm::from_str(s).unwrap();
 
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a".to_string());
+
         all_variables = form
             .all_variables()
             .iter()
@@ -576,6 +644,15 @@ mod tests {
         s = "(fun a a)";
 
         form = FunForm::from_str(s).unwrap();
+
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a".to_string());
 
         all_variables = form
             .all_variables()
@@ -592,6 +669,15 @@ mod tests {
 
         form = FunForm::from_str(s).unwrap();
 
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a".to_string());
+
         all_variables = form
             .all_variables()
             .iter()
@@ -606,6 +692,15 @@ mod tests {
         s = "(fun a (+ (prod a 1)))";
 
         form = FunForm::from_str(s).unwrap();
+
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a".to_string());
 
         all_variables = form
             .all_variables()
@@ -622,6 +717,15 @@ mod tests {
 
         form = FunForm::from_str(s).unwrap();
 
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a, b, c, d".to_string());
+
         all_variables = form
             .all_variables()
             .iter()
@@ -636,6 +740,15 @@ mod tests {
         s = "(fun (prod a b d c) (+ (prod a b c d 1)))";
 
         form = FunForm::from_str(s).unwrap();
+
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a, b, d, c".to_string());
 
         all_variables = form
             .all_variables()
@@ -652,6 +765,15 @@ mod tests {
 
         form = FunForm::from_str(s).unwrap();
 
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a, b, c, d, e".to_string());
+
         all_variables = form
             .all_variables()
             .iter()
@@ -666,6 +788,15 @@ mod tests {
         s = "(fun (prod a b c d e) (+ (prod a b c d e f)))";
 
         form = FunForm::from_str(s).unwrap();
+
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a, b, c, d, e".to_string());
 
         all_variables = form
             .all_variables()
@@ -682,6 +813,15 @@ mod tests {
 
         form = FunForm::from_str(s).unwrap();
 
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a".to_string());
+
         all_variables = form
             .all_variables()
             .iter()
@@ -696,6 +836,15 @@ mod tests {
         s = "(fun a (case a (match T id) (match F (fun bool (printBool bool)))))";
 
         form = FunForm::from_str(s).unwrap();
+
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a, bool".to_string());
 
         all_variables = form
             .all_variables()
@@ -717,6 +866,15 @@ mod tests {
 
         form = FunForm::from_str(s).unwrap();
 
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a, bool, f".to_string());
+
         all_variables = form
             .all_variables()
             .iter()
@@ -736,6 +894,15 @@ mod tests {
 
         form = FunForm::from_str(s).unwrap();
 
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "a, b, bool, f".to_string());
+
         all_variables = form
             .all_variables()
             .iter()
@@ -754,6 +921,15 @@ mod tests {
                     (f ()))))))";
 
         form = FunForm::from_str(s).unwrap();
+
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "b, a, bool, f".to_string());
 
         all_variables = form
             .all_variables()

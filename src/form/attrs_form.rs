@@ -94,6 +94,10 @@ impl AttrsForm {
         }
     }
 
+    pub fn all_parameters(&self) -> Vec<SimpleValue> {
+        vec![]
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         vec![]
     }

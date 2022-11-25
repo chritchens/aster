@@ -139,6 +139,35 @@ impl LetForm {
         }
     }
 
+    pub fn all_parameters(&self) -> Vec<SimpleValue> {
+        let mut params = vec![];
+
+        for entry in self.entries.iter() {
+            match entry.clone() {
+                LetFormEntry::ImportForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                LetFormEntry::AttrsForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                LetFormEntry::TypeForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                LetFormEntry::SigForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                LetFormEntry::ValForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                _ => {}
+            }
+        }
+
+        params.extend(self.value.all_parameters());
+
+        params
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         let mut vars = vec![];
 
