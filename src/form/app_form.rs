@@ -37,6 +37,46 @@ impl Default for AppFormValue {
 }
 
 impl AppFormValue {
+    pub fn file(&self) -> String {
+        match self {
+            AppFormValue::Ignore(ignore) => ignore.file(),
+            AppFormValue::Empty(empty) => empty.file(),
+            AppFormValue::Panic(panic) => panic.file(),
+            AppFormValue::Atomic(atomic) => atomic.file(),
+            AppFormValue::TypeKeyword(keyword) => keyword.file(),
+            AppFormValue::TypeSymbol(symbol) => symbol.file(),
+            AppFormValue::ValueSymbol(symbol) => symbol.file(),
+            AppFormValue::TypePathSymbol(symbol) => symbol.file(),
+            AppFormValue::ValuePathSymbol(symbol) => symbol.file(),
+            AppFormValue::TypesForm(form) => form.file(),
+            AppFormValue::ProdForm(form) => form.file(),
+            AppFormValue::FunForm(form) => form.file(),
+            AppFormValue::LetForm(form) => form.file(),
+            AppFormValue::CaseForm(form) => form.file(),
+            AppFormValue::AppForm(form) => form.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            AppFormValue::Ignore(ignore) => ignore.loc(),
+            AppFormValue::Empty(empty) => empty.loc(),
+            AppFormValue::Panic(panic) => panic.loc(),
+            AppFormValue::Atomic(atomic) => atomic.loc(),
+            AppFormValue::TypeKeyword(keyword) => keyword.loc(),
+            AppFormValue::TypeSymbol(symbol) => symbol.loc(),
+            AppFormValue::ValueSymbol(symbol) => symbol.loc(),
+            AppFormValue::TypePathSymbol(symbol) => symbol.loc(),
+            AppFormValue::ValuePathSymbol(symbol) => symbol.loc(),
+            AppFormValue::TypesForm(form) => form.loc(),
+            AppFormValue::ProdForm(form) => form.loc(),
+            AppFormValue::FunForm(form) => form.loc(),
+            AppFormValue::LetForm(form) => form.loc(),
+            AppFormValue::CaseForm(form) => form.loc(),
+            AppFormValue::AppForm(form) => form.loc(),
+        }
+    }
+
     pub fn all_parameters(&self) -> Vec<SimpleValue> {
         let mut params = vec![];
 

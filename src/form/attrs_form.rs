@@ -25,6 +25,30 @@ impl Default for AttrsFormValue {
 }
 
 impl AttrsFormValue {
+    pub fn file(&self) -> String {
+        match self {
+            AttrsFormValue::Empty(empty) => empty.file(),
+            AttrsFormValue::ValueKeyword(keyword) => keyword.file(),
+            AttrsFormValue::TypeKeyword(keyword) => keyword.file(),
+            AttrsFormValue::ValueSymbol(symbol) => symbol.file(),
+            AttrsFormValue::TypeSymbol(symbol) => symbol.file(),
+            AttrsFormValue::ValuePathSymbol(symbol) => symbol.file(),
+            AttrsFormValue::TypePathSymbol(symbol) => symbol.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            AttrsFormValue::Empty(empty) => empty.loc(),
+            AttrsFormValue::ValueKeyword(keyword) => keyword.loc(),
+            AttrsFormValue::TypeKeyword(keyword) => keyword.loc(),
+            AttrsFormValue::ValueSymbol(symbol) => symbol.loc(),
+            AttrsFormValue::TypeSymbol(symbol) => symbol.loc(),
+            AttrsFormValue::ValuePathSymbol(symbol) => symbol.loc(),
+            AttrsFormValue::TypePathSymbol(symbol) => symbol.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {

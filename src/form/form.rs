@@ -14,6 +14,20 @@ pub enum FormTailElement {
 }
 
 impl FormTailElement {
+    pub fn file(&self) -> String {
+        match self {
+            FormTailElement::Simple(value) => value.file(),
+            FormTailElement::Form(form) => form.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            FormTailElement::Simple(value) => value.loc(),
+            FormTailElement::Form(form) => form.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {

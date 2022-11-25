@@ -21,6 +21,22 @@ impl Default for ExportFormDef {
 }
 
 impl ExportFormDef {
+    pub fn file(&self) -> String {
+        match self {
+            ExportFormDef::Empty(empty) => empty.file(),
+            ExportFormDef::ValueSymbol(symbol) => symbol.file(),
+            ExportFormDef::TypeSymbol(symbol) => symbol.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            ExportFormDef::Empty(empty) => empty.loc(),
+            ExportFormDef::ValueSymbol(symbol) => symbol.loc(),
+            ExportFormDef::TypeSymbol(symbol) => symbol.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {

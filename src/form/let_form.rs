@@ -34,6 +34,28 @@ impl Default for LetFormEntry {
 }
 
 impl LetFormEntry {
+    pub fn file(&self) -> String {
+        match self {
+            LetFormEntry::Empty(empty) => empty.file(),
+            LetFormEntry::ImportForm(form) => form.file(),
+            LetFormEntry::AttrsForm(form) => form.file(),
+            LetFormEntry::TypeForm(form) => form.file(),
+            LetFormEntry::SigForm(form) => form.file(),
+            LetFormEntry::ValForm(form) => form.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            LetFormEntry::Empty(empty) => empty.loc(),
+            LetFormEntry::ImportForm(form) => form.loc(),
+            LetFormEntry::AttrsForm(form) => form.loc(),
+            LetFormEntry::TypeForm(form) => form.loc(),
+            LetFormEntry::SigForm(form) => form.loc(),
+            LetFormEntry::ValForm(form) => form.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {

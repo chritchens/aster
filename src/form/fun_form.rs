@@ -25,6 +25,22 @@ impl Default for FunFormParameter {
 }
 
 impl FunFormParameter {
+    pub fn file(&self) -> String {
+        match self {
+            FunFormParameter::Empty(empty) => empty.file(),
+            FunFormParameter::ValueSymbol(symbol) => symbol.file(),
+            FunFormParameter::TypeSymbol(symbol) => symbol.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            FunFormParameter::Empty(empty) => empty.loc(),
+            FunFormParameter::ValueSymbol(symbol) => symbol.loc(),
+            FunFormParameter::TypeSymbol(symbol) => symbol.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
@@ -66,6 +82,44 @@ impl Default for FunFormBody {
 }
 
 impl FunFormBody {
+    pub fn file(&self) -> String {
+        match self {
+            FunFormBody::Empty(empty) => empty.file(),
+            FunFormBody::Panic(panic) => panic.file(),
+            FunFormBody::Atomic(atomic) => atomic.file(),
+            FunFormBody::TypeKeyword(keyword) => keyword.file(),
+            FunFormBody::ValueSymbol(symbol) => symbol.file(),
+            FunFormBody::TypeSymbol(symbol) => symbol.file(),
+            FunFormBody::ValuePathSymbol(symbol) => symbol.file(),
+            FunFormBody::TypePathSymbol(symbol) => symbol.file(),
+            FunFormBody::TypesForm(form) => form.file(),
+            FunFormBody::ProdForm(form) => form.file(),
+            FunFormBody::AppForm(form) => form.file(),
+            FunFormBody::LetForm(form) => form.file(),
+            FunFormBody::CaseForm(form) => form.file(),
+            FunFormBody::FunForm(form) => form.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            FunFormBody::Empty(empty) => empty.loc(),
+            FunFormBody::Panic(panic) => panic.loc(),
+            FunFormBody::Atomic(atomic) => atomic.loc(),
+            FunFormBody::TypeKeyword(keyword) => keyword.loc(),
+            FunFormBody::ValueSymbol(symbol) => symbol.loc(),
+            FunFormBody::TypeSymbol(symbol) => symbol.loc(),
+            FunFormBody::ValuePathSymbol(symbol) => symbol.loc(),
+            FunFormBody::TypePathSymbol(symbol) => symbol.loc(),
+            FunFormBody::TypesForm(form) => form.loc(),
+            FunFormBody::ProdForm(form) => form.loc(),
+            FunFormBody::AppForm(form) => form.loc(),
+            FunFormBody::LetForm(form) => form.loc(),
+            FunFormBody::CaseForm(form) => form.loc(),
+            FunFormBody::FunForm(form) => form.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {

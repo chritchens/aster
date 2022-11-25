@@ -32,6 +32,30 @@ impl Default for ModuleFormTypeParameter {
 }
 
 impl ModuleFormTypeParameter {
+    pub fn file(&self) -> String {
+        match self {
+            ModuleFormTypeParameter::Ignore(ignore) => ignore.file(),
+            ModuleFormTypeParameter::Empty(empty) => empty.file(),
+            ModuleFormTypeParameter::Atomic(atomic) => atomic.file(),
+            ModuleFormTypeParameter::Keyword(keyword) => keyword.file(),
+            ModuleFormTypeParameter::Symbol(symbol) => symbol.file(),
+            ModuleFormTypeParameter::PathSymbol(symbol) => symbol.file(),
+            ModuleFormTypeParameter::Form(form) => form.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            ModuleFormTypeParameter::Ignore(ignore) => ignore.loc(),
+            ModuleFormTypeParameter::Empty(empty) => empty.loc(),
+            ModuleFormTypeParameter::Atomic(atomic) => atomic.loc(),
+            ModuleFormTypeParameter::Keyword(keyword) => keyword.loc(),
+            ModuleFormTypeParameter::Symbol(symbol) => symbol.loc(),
+            ModuleFormTypeParameter::PathSymbol(symbol) => symbol.loc(),
+            ModuleFormTypeParameter::Form(form) => form.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
@@ -70,6 +94,30 @@ impl Default for ModuleFormEntry {
 }
 
 impl ModuleFormEntry {
+    pub fn file(&self) -> String {
+        match self {
+            ModuleFormEntry::Empty(empty) => empty.file(),
+            ModuleFormEntry::ImportForm(form) => form.file(),
+            ModuleFormEntry::ExportForm(form) => form.file(),
+            ModuleFormEntry::AttrsForm(form) => form.file(),
+            ModuleFormEntry::TypeForm(form) => form.file(),
+            ModuleFormEntry::SigForm(form) => form.file(),
+            ModuleFormEntry::ValForm(form) => form.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            ModuleFormEntry::Empty(empty) => empty.loc(),
+            ModuleFormEntry::ImportForm(form) => form.loc(),
+            ModuleFormEntry::ExportForm(form) => form.loc(),
+            ModuleFormEntry::AttrsForm(form) => form.loc(),
+            ModuleFormEntry::TypeForm(form) => form.loc(),
+            ModuleFormEntry::SigForm(form) => form.loc(),
+            ModuleFormEntry::ValForm(form) => form.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {

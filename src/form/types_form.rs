@@ -24,6 +24,30 @@ impl Default for TypesFormTailElement {
 }
 
 impl TypesFormTailElement {
+    pub fn file(&self) -> String {
+        match self {
+            TypesFormTailElement::Ignore(value) => value.file(),
+            TypesFormTailElement::Empty(value) => value.file(),
+            TypesFormTailElement::Atomic(value) => value.file(),
+            TypesFormTailElement::Keyword(value) => value.file(),
+            TypesFormTailElement::Symbol(value) => value.file(),
+            TypesFormTailElement::PathSymbol(value) => value.file(),
+            TypesFormTailElement::Form(form) => form.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            TypesFormTailElement::Ignore(value) => value.loc(),
+            TypesFormTailElement::Empty(value) => value.loc(),
+            TypesFormTailElement::Atomic(value) => value.loc(),
+            TypesFormTailElement::Keyword(value) => value.loc(),
+            TypesFormTailElement::Symbol(value) => value.loc(),
+            TypesFormTailElement::PathSymbol(value) => value.loc(),
+            TypesFormTailElement::Form(form) => form.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {

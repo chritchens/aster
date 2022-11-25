@@ -32,6 +32,34 @@ impl Default for ValFormValue {
 }
 
 impl ValFormValue {
+    pub fn file(&self) -> String {
+        match self {
+            ValFormValue::Empty(empty) => empty.file(),
+            ValFormValue::Panic(panic) => panic.file(),
+            ValFormValue::Atomic(atomic) => atomic.file(),
+            ValFormValue::ValueSymbol(symbol) => symbol.file(),
+            ValFormValue::ProdForm(form) => form.file(),
+            ValFormValue::FunForm(form) => form.file(),
+            ValFormValue::LetForm(form) => form.file(),
+            ValFormValue::AppForm(form) => form.file(),
+            ValFormValue::CaseForm(form) => form.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            ValFormValue::Empty(empty) => empty.loc(),
+            ValFormValue::Panic(panic) => panic.loc(),
+            ValFormValue::Atomic(atomic) => atomic.loc(),
+            ValFormValue::ValueSymbol(symbol) => symbol.loc(),
+            ValFormValue::ProdForm(form) => form.loc(),
+            ValFormValue::FunForm(form) => form.loc(),
+            ValFormValue::LetForm(form) => form.loc(),
+            ValFormValue::AppForm(form) => form.loc(),
+            ValFormValue::CaseForm(form) => form.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {

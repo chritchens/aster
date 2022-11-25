@@ -50,6 +50,60 @@ impl Default for ProdFormValue {
 }
 
 impl ProdFormValue {
+    pub fn file(&self) -> String {
+        match self {
+            ProdFormValue::Ignore(ignore) => ignore.file(),
+            ProdFormValue::Empty(empty) => empty.file(),
+            ProdFormValue::Panic(panic) => panic.file(),
+            ProdFormValue::Atomic(atomic) => atomic.file(),
+            ProdFormValue::ValueKeyword(keyword) => keyword.file(),
+            ProdFormValue::TypeKeyword(keyword) => keyword.file(),
+            ProdFormValue::ValueSymbol(symbol) => symbol.file(),
+            ProdFormValue::TypeSymbol(symbol) => symbol.file(),
+            ProdFormValue::ValuePathSymbol(symbol) => symbol.file(),
+            ProdFormValue::TypePathSymbol(symbol) => symbol.file(),
+            ProdFormValue::TypesForm(form) => form.file(),
+            ProdFormValue::AttrsForm(form) => form.file(),
+            ProdFormValue::ProdForm(form) => form.file(),
+            ProdFormValue::FunForm(form) => form.file(),
+            ProdFormValue::CaseForm(form) => form.file(),
+            ProdFormValue::LetForm(form) => form.file(),
+            ProdFormValue::AppForm(form) => form.file(),
+            ProdFormValue::TypeForm(form) => form.file(),
+            ProdFormValue::SigForm(form) => form.file(),
+            ProdFormValue::ValForm(form) => form.file(),
+            ProdFormValue::ImportForm(form) => form.file(),
+            ProdFormValue::ExportForm(form) => form.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            ProdFormValue::Ignore(ignore) => ignore.loc(),
+            ProdFormValue::Empty(empty) => empty.loc(),
+            ProdFormValue::Panic(panic) => panic.loc(),
+            ProdFormValue::Atomic(atomic) => atomic.loc(),
+            ProdFormValue::ValueKeyword(keyword) => keyword.loc(),
+            ProdFormValue::TypeKeyword(keyword) => keyword.loc(),
+            ProdFormValue::ValueSymbol(symbol) => symbol.loc(),
+            ProdFormValue::TypeSymbol(symbol) => symbol.loc(),
+            ProdFormValue::ValuePathSymbol(symbol) => symbol.loc(),
+            ProdFormValue::TypePathSymbol(symbol) => symbol.loc(),
+            ProdFormValue::TypesForm(form) => form.loc(),
+            ProdFormValue::AttrsForm(form) => form.loc(),
+            ProdFormValue::ProdForm(form) => form.loc(),
+            ProdFormValue::FunForm(form) => form.loc(),
+            ProdFormValue::CaseForm(form) => form.loc(),
+            ProdFormValue::LetForm(form) => form.loc(),
+            ProdFormValue::AppForm(form) => form.loc(),
+            ProdFormValue::TypeForm(form) => form.loc(),
+            ProdFormValue::SigForm(form) => form.loc(),
+            ProdFormValue::ValForm(form) => form.loc(),
+            ProdFormValue::ImportForm(form) => form.loc(),
+            ProdFormValue::ExportForm(form) => form.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {

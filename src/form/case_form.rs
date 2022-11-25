@@ -28,6 +28,30 @@ impl Default for CaseFormVariable {
 }
 
 impl CaseFormVariable {
+    pub fn file(&self) -> String {
+        match self {
+            CaseFormVariable::Empty(empty) => empty.file(),
+            CaseFormVariable::Atomic(atomic) => atomic.file(),
+            CaseFormVariable::TypeKeyword(keyword) => keyword.file(),
+            CaseFormVariable::TypeSymbol(symbol) => symbol.file(),
+            CaseFormVariable::ValueSymbol(symbol) => symbol.file(),
+            CaseFormVariable::AppForm(form) => form.file(),
+            CaseFormVariable::LetForm(form) => form.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            CaseFormVariable::Empty(empty) => empty.loc(),
+            CaseFormVariable::Atomic(atomic) => atomic.loc(),
+            CaseFormVariable::TypeKeyword(keyword) => keyword.loc(),
+            CaseFormVariable::TypeSymbol(symbol) => symbol.loc(),
+            CaseFormVariable::ValueSymbol(symbol) => symbol.loc(),
+            CaseFormVariable::AppForm(form) => form.loc(),
+            CaseFormVariable::LetForm(form) => form.loc(),
+        }
+    }
+
     pub fn all_parameters(&self) -> Vec<SimpleValue> {
         let mut params = vec![];
 
@@ -98,6 +122,30 @@ pub enum CaseFormMatchCase {
 }
 
 impl CaseFormMatchCase {
+    pub fn file(&self) -> String {
+        match self {
+            CaseFormMatchCase::Empty(empty) => empty.file(),
+            CaseFormMatchCase::Atomic(atomic) => atomic.file(),
+            CaseFormMatchCase::TypeKeyword(keyword) => keyword.file(),
+            CaseFormMatchCase::TypeSymbol(symbol) => symbol.file(),
+            CaseFormMatchCase::ValueSymbol(symbol) => symbol.file(),
+            CaseFormMatchCase::TypePathSymbol(symbol) => symbol.file(),
+            CaseFormMatchCase::ValuePathSymbol(symbol) => symbol.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            CaseFormMatchCase::Empty(empty) => empty.loc(),
+            CaseFormMatchCase::Atomic(atomic) => atomic.loc(),
+            CaseFormMatchCase::TypeKeyword(keyword) => keyword.loc(),
+            CaseFormMatchCase::TypeSymbol(symbol) => symbol.loc(),
+            CaseFormMatchCase::ValueSymbol(symbol) => symbol.loc(),
+            CaseFormMatchCase::TypePathSymbol(symbol) => symbol.loc(),
+            CaseFormMatchCase::ValuePathSymbol(symbol) => symbol.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
@@ -142,6 +190,42 @@ pub enum CaseFormMatchAction {
 }
 
 impl CaseFormMatchAction {
+    pub fn file(&self) -> String {
+        match self {
+            CaseFormMatchAction::Ignore(ignore) => ignore.file(),
+            CaseFormMatchAction::Empty(empty) => empty.file(),
+            CaseFormMatchAction::Panic(panic) => panic.file(),
+            CaseFormMatchAction::Atomic(atomic) => atomic.file(),
+            CaseFormMatchAction::ValueKeyword(keyword) => keyword.file(),
+            CaseFormMatchAction::TypeKeyword(keyword) => keyword.file(),
+            CaseFormMatchAction::TypeSymbol(symbol) => symbol.file(),
+            CaseFormMatchAction::ValueSymbol(symbol) => symbol.file(),
+            CaseFormMatchAction::TypePathSymbol(symbol) => symbol.file(),
+            CaseFormMatchAction::ValuePathSymbol(symbol) => symbol.file(),
+            CaseFormMatchAction::ProdForm(form) => form.file(),
+            CaseFormMatchAction::FunForm(form) => form.file(),
+            CaseFormMatchAction::LetForm(form) => form.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            CaseFormMatchAction::Ignore(ignore) => ignore.loc(),
+            CaseFormMatchAction::Empty(empty) => empty.loc(),
+            CaseFormMatchAction::Panic(panic) => panic.loc(),
+            CaseFormMatchAction::Atomic(atomic) => atomic.loc(),
+            CaseFormMatchAction::ValueKeyword(keyword) => keyword.loc(),
+            CaseFormMatchAction::TypeKeyword(keyword) => keyword.loc(),
+            CaseFormMatchAction::TypeSymbol(symbol) => symbol.loc(),
+            CaseFormMatchAction::ValueSymbol(symbol) => symbol.loc(),
+            CaseFormMatchAction::TypePathSymbol(symbol) => symbol.loc(),
+            CaseFormMatchAction::ValuePathSymbol(symbol) => symbol.loc(),
+            CaseFormMatchAction::ProdForm(form) => form.loc(),
+            CaseFormMatchAction::FunForm(form) => form.loc(),
+            CaseFormMatchAction::LetForm(form) => form.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {

@@ -25,6 +25,24 @@ impl Default for ImportFormDef {
 }
 
 impl ImportFormDef {
+    pub fn file(&self) -> String {
+        match self {
+            ImportFormDef::Ignore(ignore) => ignore.file(),
+            ImportFormDef::Empty(empty) => empty.file(),
+            ImportFormDef::ValueSymbol(symbol) => symbol.file(),
+            ImportFormDef::TypeSymbol(symbol) => symbol.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            ImportFormDef::Ignore(ignore) => ignore.loc(),
+            ImportFormDef::Empty(empty) => empty.loc(),
+            ImportFormDef::ValueSymbol(symbol) => symbol.loc(),
+            ImportFormDef::TypeSymbol(symbol) => symbol.loc(),
+        }
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
