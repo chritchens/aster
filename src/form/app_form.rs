@@ -5,7 +5,6 @@ use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::form::simple_value::SimpleValue;
-use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -17,12 +16,8 @@ pub enum AppFormValue {
     Empty(SimpleValue),
     Panic(SimpleValue),
     Atomic(SimpleValue),
-    TypeKeyword(SimpleValue),
-    TypeSymbol(SimpleValue),
     ValueSymbol(SimpleValue),
-    TypePathSymbol(SimpleValue),
     ValuePathSymbol(SimpleValue),
-    TypesForm(Box<TypesForm>),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
     LetForm(Box<LetForm>),
@@ -43,12 +38,8 @@ impl AppFormValue {
             AppFormValue::Empty(empty) => empty.file(),
             AppFormValue::Panic(panic) => panic.file(),
             AppFormValue::Atomic(atomic) => atomic.file(),
-            AppFormValue::TypeKeyword(keyword) => keyword.file(),
-            AppFormValue::TypeSymbol(symbol) => symbol.file(),
             AppFormValue::ValueSymbol(symbol) => symbol.file(),
-            AppFormValue::TypePathSymbol(symbol) => symbol.file(),
             AppFormValue::ValuePathSymbol(symbol) => symbol.file(),
-            AppFormValue::TypesForm(form) => form.file(),
             AppFormValue::ProdForm(form) => form.file(),
             AppFormValue::FunForm(form) => form.file(),
             AppFormValue::LetForm(form) => form.file(),
@@ -63,12 +54,8 @@ impl AppFormValue {
             AppFormValue::Empty(empty) => empty.loc(),
             AppFormValue::Panic(panic) => panic.loc(),
             AppFormValue::Atomic(atomic) => atomic.loc(),
-            AppFormValue::TypeKeyword(keyword) => keyword.loc(),
-            AppFormValue::TypeSymbol(symbol) => symbol.loc(),
             AppFormValue::ValueSymbol(symbol) => symbol.loc(),
-            AppFormValue::TypePathSymbol(symbol) => symbol.loc(),
             AppFormValue::ValuePathSymbol(symbol) => symbol.loc(),
-            AppFormValue::TypesForm(form) => form.loc(),
             AppFormValue::ProdForm(form) => form.loc(),
             AppFormValue::FunForm(form) => form.loc(),
             AppFormValue::LetForm(form) => form.loc(),
@@ -81,9 +68,6 @@ impl AppFormValue {
         let mut params = vec![];
 
         match self.clone() {
-            AppFormValue::TypesForm(form) => {
-                params.extend(form.all_parameters());
-            }
             AppFormValue::ProdForm(form) => {
                 params.extend(form.all_parameters());
             }
@@ -109,20 +93,11 @@ impl AppFormValue {
         let mut vars = vec![];
 
         match self.clone() {
-            AppFormValue::TypeSymbol(value) => {
-                vars.push(value);
-            }
             AppFormValue::ValueSymbol(value) => {
-                vars.push(value);
-            }
-            AppFormValue::TypePathSymbol(value) => {
                 vars.push(value);
             }
             AppFormValue::ValuePathSymbol(value) => {
                 vars.push(value);
-            }
-            AppFormValue::TypesForm(form) => {
-                vars.extend(form.all_variables());
             }
             AppFormValue::ProdForm(form) => {
                 vars.extend(form.all_variables());
@@ -152,12 +127,8 @@ impl AppFormValue {
             AppFormValue::Empty(_) => "()".into(),
             AppFormValue::Panic(_) => "panic".into(),
             AppFormValue::Atomic(atomic) => atomic.to_string(),
-            AppFormValue::TypeKeyword(keyword) => keyword.to_string(),
-            AppFormValue::TypeSymbol(symbol) => symbol.to_string(),
             AppFormValue::ValueSymbol(symbol) => symbol.to_string(),
-            AppFormValue::TypePathSymbol(symbol) => symbol.to_string(),
             AppFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
-            AppFormValue::TypesForm(form) => form.to_string(),
             AppFormValue::ProdForm(form) => form.to_string(),
             AppFormValue::FunForm(form) => form.to_string(),
             AppFormValue::LetForm(form) => form.to_string(),
@@ -277,20 +248,11 @@ impl AppForm {
                 SimpleValue::Atomic(_) => {
                     app.variables.push(AppFormValue::Atomic(value));
                 }
-                SimpleValue::TypeKeyword(_) => {
-                    app.variables.push(AppFormValue::TypeKeyword(value));
-                }
                 SimpleValue::ValueSymbol(_) => {
                     app.variables.push(AppFormValue::ValueSymbol(value));
                 }
-                SimpleValue::TypeSymbol(_) => {
-                    app.variables.push(AppFormValue::TypeSymbol(value));
-                }
                 SimpleValue::ValuePathSymbol(_) => {
                     app.variables.push(AppFormValue::ValuePathSymbol(value));
-                }
-                SimpleValue::TypePathSymbol(_) => {
-                    app.variables.push(AppFormValue::TypePathSymbol(value));
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
@@ -312,23 +274,11 @@ impl AppForm {
                             ProdFormValue::Atomic(atomic) => {
                                 app.variables.push(AppFormValue::Atomic(atomic));
                             }
-                            ProdFormValue::TypeKeyword(keyword) => {
-                                app.variables.push(AppFormValue::TypeKeyword(keyword));
-                            }
-                            ProdFormValue::TypeSymbol(symbol) => {
-                                app.variables.push(AppFormValue::TypeSymbol(symbol));
-                            }
                             ProdFormValue::ValueSymbol(symbol) => {
                                 app.variables.push(AppFormValue::ValueSymbol(symbol));
                             }
-                            ProdFormValue::TypePathSymbol(symbol) => {
-                                app.variables.push(AppFormValue::TypePathSymbol(symbol));
-                            }
                             ProdFormValue::ValuePathSymbol(symbol) => {
                                 app.variables.push(AppFormValue::ValuePathSymbol(symbol));
-                            }
-                            ProdFormValue::TypesForm(form) => {
-                                app.variables.push(AppFormValue::TypesForm(form));
                             }
                             ProdFormValue::FunForm(form) => {
                                 app.variables.push(AppFormValue::FunForm(form));
@@ -350,8 +300,6 @@ impl AppForm {
                             }
                         }
                     }
-                } else if let Ok(form) = TypesForm::from_form(&form) {
-                    app.variables.push(AppFormValue::TypesForm(Box::new(form)));
                 } else if let Ok(form) = FunForm::from_form(&form) {
                     app.variables.push(AppFormValue::FunForm(Box::new(form)));
                 } else if let Ok(form) = LetForm::from_form(&form) {
@@ -435,7 +383,7 @@ mod tests {
         assert_eq!(form.variables_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(panic E)";
+        s = "(panic e)";
 
         res = AppForm::from_str(s);
 
@@ -444,7 +392,7 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "panic".to_string());
-        assert_eq!(form.variables_to_string(), "E".to_string());
+        assert_eq!(form.variables_to_string(), "e".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(unwrap stdIO)";

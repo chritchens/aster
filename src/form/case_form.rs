@@ -14,8 +14,6 @@ use std::fmt;
 pub enum CaseFormVariable {
     Empty(SimpleValue),
     Atomic(SimpleValue),
-    TypeKeyword(SimpleValue),
-    TypeSymbol(SimpleValue),
     ValueSymbol(SimpleValue),
     AppForm(Box<AppForm>),
     LetForm(Box<LetForm>),
@@ -33,8 +31,6 @@ impl CaseFormVariable {
         match self {
             CaseFormVariable::Empty(empty) => empty.file(),
             CaseFormVariable::Atomic(atomic) => atomic.file(),
-            CaseFormVariable::TypeKeyword(keyword) => keyword.file(),
-            CaseFormVariable::TypeSymbol(symbol) => symbol.file(),
             CaseFormVariable::ValueSymbol(symbol) => symbol.file(),
             CaseFormVariable::AppForm(form) => form.file(),
             CaseFormVariable::LetForm(form) => form.file(),
@@ -46,8 +42,6 @@ impl CaseFormVariable {
         match self {
             CaseFormVariable::Empty(empty) => empty.loc(),
             CaseFormVariable::Atomic(atomic) => atomic.loc(),
-            CaseFormVariable::TypeKeyword(keyword) => keyword.loc(),
-            CaseFormVariable::TypeSymbol(symbol) => symbol.loc(),
             CaseFormVariable::ValueSymbol(symbol) => symbol.loc(),
             CaseFormVariable::AppForm(form) => form.loc(),
             CaseFormVariable::LetForm(form) => form.loc(),
@@ -78,9 +72,6 @@ impl CaseFormVariable {
         let mut vars = vec![];
 
         match self.clone() {
-            CaseFormVariable::TypeSymbol(value) => {
-                vars.push(value);
-            }
             CaseFormVariable::ValueSymbol(value) => {
                 vars.push(value);
             }
@@ -104,8 +95,6 @@ impl CaseFormVariable {
         match self {
             CaseFormVariable::Empty(_) => "()".into(),
             CaseFormVariable::Atomic(atomic) => atomic.to_string(),
-            CaseFormVariable::TypeKeyword(keyword) => keyword.to_string(),
-            CaseFormVariable::TypeSymbol(symbol) => symbol.to_string(),
             CaseFormVariable::ValueSymbol(symbol) => symbol.to_string(),
             CaseFormVariable::AppForm(form) => form.to_string(),
             CaseFormVariable::LetForm(form) => form.to_string(),
@@ -189,10 +178,7 @@ pub enum CaseFormMatchAction {
     Panic(SimpleValue),
     Atomic(SimpleValue),
     ValueKeyword(SimpleValue),
-    TypeKeyword(SimpleValue),
-    TypeSymbol(SimpleValue),
     ValueSymbol(SimpleValue),
-    TypePathSymbol(SimpleValue),
     ValuePathSymbol(SimpleValue),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
@@ -207,10 +193,7 @@ impl CaseFormMatchAction {
             CaseFormMatchAction::Panic(panic) => panic.file(),
             CaseFormMatchAction::Atomic(atomic) => atomic.file(),
             CaseFormMatchAction::ValueKeyword(keyword) => keyword.file(),
-            CaseFormMatchAction::TypeKeyword(keyword) => keyword.file(),
-            CaseFormMatchAction::TypeSymbol(symbol) => symbol.file(),
             CaseFormMatchAction::ValueSymbol(symbol) => symbol.file(),
-            CaseFormMatchAction::TypePathSymbol(symbol) => symbol.file(),
             CaseFormMatchAction::ValuePathSymbol(symbol) => symbol.file(),
             CaseFormMatchAction::ProdForm(form) => form.file(),
             CaseFormMatchAction::FunForm(form) => form.file(),
@@ -225,10 +208,7 @@ impl CaseFormMatchAction {
             CaseFormMatchAction::Panic(panic) => panic.loc(),
             CaseFormMatchAction::Atomic(atomic) => atomic.loc(),
             CaseFormMatchAction::ValueKeyword(keyword) => keyword.loc(),
-            CaseFormMatchAction::TypeKeyword(keyword) => keyword.loc(),
-            CaseFormMatchAction::TypeSymbol(symbol) => symbol.loc(),
             CaseFormMatchAction::ValueSymbol(symbol) => symbol.loc(),
-            CaseFormMatchAction::TypePathSymbol(symbol) => symbol.loc(),
             CaseFormMatchAction::ValuePathSymbol(symbol) => symbol.loc(),
             CaseFormMatchAction::ProdForm(form) => form.loc(),
             CaseFormMatchAction::FunForm(form) => form.loc(),
@@ -244,10 +224,7 @@ impl CaseFormMatchAction {
             CaseFormMatchAction::Panic(_) => "panic".into(),
             CaseFormMatchAction::Atomic(atomic) => atomic.to_string(),
             CaseFormMatchAction::ValueKeyword(keyword) => keyword.to_string(),
-            CaseFormMatchAction::TypeKeyword(keyword) => keyword.to_string(),
-            CaseFormMatchAction::TypeSymbol(symbol) => symbol.to_string(),
             CaseFormMatchAction::ValueSymbol(symbol) => symbol.to_string(),
-            CaseFormMatchAction::TypePathSymbol(symbol) => symbol.to_string(),
             CaseFormMatchAction::ValuePathSymbol(symbol) => symbol.to_string(),
             CaseFormMatchAction::ProdForm(form) => form.to_string(),
             CaseFormMatchAction::FunForm(form) => form.to_string(),
@@ -311,13 +288,7 @@ impl CaseFormMatch {
         let mut vars = vec![];
 
         match self.action.clone() {
-            CaseFormMatchAction::TypeSymbol(value) => {
-                vars.push(value);
-            }
             CaseFormMatchAction::ValueSymbol(value) => {
-                vars.push(value);
-            }
-            CaseFormMatchAction::TypePathSymbol(value) => {
                 vars.push(value);
             }
             CaseFormMatchAction::ValuePathSymbol(value) => {
@@ -411,20 +382,17 @@ impl CaseFormMatch {
                 SimpleValue::ValueKeyword(_) => {
                     case_match.action = CaseFormMatchAction::ValueKeyword(value);
                 }
-                SimpleValue::TypeKeyword(_) => {
-                    case_match.action = CaseFormMatchAction::TypeKeyword(value);
-                }
-                SimpleValue::TypeSymbol(_) => {
-                    case_match.action = CaseFormMatchAction::TypeSymbol(value);
-                }
                 SimpleValue::ValueSymbol(_) => {
                     case_match.action = CaseFormMatchAction::ValueSymbol(value);
                 }
-                SimpleValue::TypePathSymbol(_) => {
-                    case_match.action = CaseFormMatchAction::TypePathSymbol(value);
-                }
                 SimpleValue::ValuePathSymbol(_) => {
                     case_match.action = CaseFormMatchAction::ValuePathSymbol(value);
+                }
+                x => {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: x.loc(),
+                        desc: "unexpected value".into(),
+                    }));
                 }
             },
             FormTailElement::Form(form) => {
@@ -566,12 +534,6 @@ impl CaseForm {
                 }
                 SimpleValue::Atomic(_) => {
                     case.variable = CaseFormVariable::Atomic(value);
-                }
-                SimpleValue::TypeKeyword(_) => {
-                    case.variable = CaseFormVariable::TypeKeyword(value);
-                }
-                SimpleValue::TypeSymbol(_) => {
-                    case.variable = CaseFormVariable::TypeSymbol(value);
                 }
                 SimpleValue::ValueSymbol(_) => {
                     case.variable = CaseFormVariable::ValueSymbol(value);
@@ -815,7 +777,7 @@ mod tests {
         );
         assert_eq!(case.to_string(), s.to_string());
 
-        s = "(case (id True) (match True (fun t \"True\")) (match False (fun f \"False\")))";
+        s = "(case (id bool) (match True (fun t \"True\")) (match False (fun f \"False\")))";
 
         res = CaseForm::from_str(s);
 
@@ -823,10 +785,10 @@ mod tests {
 
         case = res.unwrap();
 
-        assert_eq!(case.variable.to_string(), "(id True)".to_string());
+        assert_eq!(case.variable.to_string(), "(id bool)".to_string());
         assert_eq!(case.to_string(), s.to_string());
 
-        s = "(case (let (id True)) (match True (fun t \"True\")) (match False (fun f \"False\")))";
+        s = "(case (let (id bool)) (match True (fun t \"True\")) (match False (fun f \"False\")))";
 
         res = CaseForm::from_str(s);
 
@@ -834,10 +796,10 @@ mod tests {
 
         case = res.unwrap();
 
-        assert_eq!(case.variable.to_string(), "(let (id True))".to_string());
+        assert_eq!(case.variable.to_string(), "(let (id bool))".to_string());
         assert_eq!(case.to_string(), s.to_string());
 
-        s = "(case True (match True (fun t \"True\")) (match False _))";
+        s = "(case bool (match True (fun t \"True\")) (match False _))";
 
         res = CaseForm::from_str(s);
 
@@ -845,7 +807,7 @@ mod tests {
 
         case = res.unwrap();
 
-        assert_eq!(case.variable.to_string(), "True".to_string());
+        assert_eq!(case.variable.to_string(), "bool".to_string());
         assert_eq!(case.to_string(), s.to_string());
 
         s = "(case res (match T id) (match E panic))";

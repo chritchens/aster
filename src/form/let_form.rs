@@ -10,7 +10,6 @@ use crate::form::prod_form::ProdForm;
 use crate::form::sig_form::SigForm;
 use crate::form::simple_value::SimpleValue;
 use crate::form::type_form::TypeForm;
-use crate::form::types_form::TypesForm;
 use crate::form::val_form::ValForm;
 use crate::loc::Loc;
 use crate::result::Result;
@@ -261,17 +260,8 @@ impl LetForm {
                     SimpleValue::Atomic(_) => {
                         let_form.value = LetFormValue::Atomic(value);
                     }
-                    SimpleValue::TypeKeyword(_) => {
-                        let_form.value = LetFormValue::TypeKeyword(value);
-                    }
-                    SimpleValue::TypeSymbol(_) => {
-                        let_form.value = LetFormValue::TypeSymbol(value);
-                    }
                     SimpleValue::ValueSymbol(_) => {
                         let_form.value = LetFormValue::ValueSymbol(value);
-                    }
-                    SimpleValue::TypePathSymbol(_) => {
-                        let_form.value = LetFormValue::TypePathSymbol(value);
                     }
                     SimpleValue::ValuePathSymbol(_) => {
                         let_form.value = LetFormValue::ValuePathSymbol(value);
@@ -284,9 +274,7 @@ impl LetForm {
                     }
                 },
                 FormTailElement::Form(form) => {
-                    if let Ok(form) = TypesForm::from_form(&form) {
-                        let_form.value = LetFormValue::TypesForm(Box::new(form));
-                    } else if let Ok(form) = ProdForm::from_form(&form) {
+                    if let Ok(form) = ProdForm::from_form(&form) {
                         let_form.value = LetFormValue::ProdForm(Box::new(form));
                     } else if let Ok(form) = FunForm::from_form(&form) {
                         let_form.value = LetFormValue::FunForm(Box::new(form));
@@ -356,17 +344,8 @@ impl LetForm {
                     SimpleValue::Atomic(_) => {
                         let_form.value = LetFormValue::Atomic(value);
                     }
-                    SimpleValue::TypeKeyword(_) => {
-                        let_form.value = LetFormValue::TypeKeyword(value);
-                    }
-                    SimpleValue::TypeSymbol(_) => {
-                        let_form.value = LetFormValue::TypeSymbol(value);
-                    }
                     SimpleValue::ValueSymbol(_) => {
                         let_form.value = LetFormValue::ValueSymbol(value);
-                    }
-                    SimpleValue::TypePathSymbol(_) => {
-                        let_form.value = LetFormValue::TypePathSymbol(value);
                     }
                     SimpleValue::ValuePathSymbol(_) => {
                         let_form.value = LetFormValue::ValuePathSymbol(value);
@@ -379,9 +358,7 @@ impl LetForm {
                     }
                 },
                 FormTailElement::Form(form) => {
-                    if let Ok(form) = TypesForm::from_form(&form) {
-                        let_form.value = LetFormValue::TypesForm(Box::new(form));
-                    } else if let Ok(form) = ProdForm::from_form(&form) {
+                    if let Ok(form) = ProdForm::from_form(&form) {
                         let_form.value = LetFormValue::ProdForm(Box::new(form));
                     } else if let Ok(form) = FunForm::from_form(&form) {
                         let_form.value = LetFormValue::FunForm(Box::new(form));

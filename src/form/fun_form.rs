@@ -5,7 +5,6 @@ use crate::form::form::{Form, FormTailElement};
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::form::simple_value::SimpleValue;
-use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -15,7 +14,6 @@ use std::fmt;
 pub enum FunFormParameter {
     Empty(SimpleValue),
     ValueSymbol(SimpleValue),
-    TypeSymbol(SimpleValue),
 }
 
 impl Default for FunFormParameter {
@@ -29,7 +27,6 @@ impl FunFormParameter {
         match self {
             FunFormParameter::Empty(empty) => empty.file(),
             FunFormParameter::ValueSymbol(symbol) => symbol.file(),
-            FunFormParameter::TypeSymbol(symbol) => symbol.file(),
         }
     }
 
@@ -37,7 +34,6 @@ impl FunFormParameter {
         match self {
             FunFormParameter::Empty(empty) => empty.loc(),
             FunFormParameter::ValueSymbol(symbol) => symbol.loc(),
-            FunFormParameter::TypeSymbol(symbol) => symbol.loc(),
         }
     }
 
@@ -46,7 +42,6 @@ impl FunFormParameter {
         match self {
             FunFormParameter::Empty(_) => "()".into(),
             FunFormParameter::ValueSymbol(symbol) => symbol.to_string(),
-            FunFormParameter::TypeSymbol(symbol) => symbol.to_string(),
         }
     }
 }
@@ -62,12 +57,8 @@ pub enum FunFormBody {
     Empty(SimpleValue),
     Panic(SimpleValue),
     Atomic(SimpleValue),
-    TypeKeyword(SimpleValue),
     ValueSymbol(SimpleValue),
-    TypeSymbol(SimpleValue),
     ValuePathSymbol(SimpleValue),
-    TypePathSymbol(SimpleValue),
-    TypesForm(Box<TypesForm>),
     ProdForm(Box<ProdForm>),
     AppForm(Box<AppForm>),
     LetForm(Box<LetForm>),
@@ -87,12 +78,8 @@ impl FunFormBody {
             FunFormBody::Empty(empty) => empty.file(),
             FunFormBody::Panic(panic) => panic.file(),
             FunFormBody::Atomic(atomic) => atomic.file(),
-            FunFormBody::TypeKeyword(keyword) => keyword.file(),
             FunFormBody::ValueSymbol(symbol) => symbol.file(),
-            FunFormBody::TypeSymbol(symbol) => symbol.file(),
             FunFormBody::ValuePathSymbol(symbol) => symbol.file(),
-            FunFormBody::TypePathSymbol(symbol) => symbol.file(),
-            FunFormBody::TypesForm(form) => form.file(),
             FunFormBody::ProdForm(form) => form.file(),
             FunFormBody::AppForm(form) => form.file(),
             FunFormBody::LetForm(form) => form.file(),
@@ -106,12 +93,8 @@ impl FunFormBody {
             FunFormBody::Empty(empty) => empty.loc(),
             FunFormBody::Panic(panic) => panic.loc(),
             FunFormBody::Atomic(atomic) => atomic.loc(),
-            FunFormBody::TypeKeyword(keyword) => keyword.loc(),
             FunFormBody::ValueSymbol(symbol) => symbol.loc(),
-            FunFormBody::TypeSymbol(symbol) => symbol.loc(),
             FunFormBody::ValuePathSymbol(symbol) => symbol.loc(),
-            FunFormBody::TypePathSymbol(symbol) => symbol.loc(),
-            FunFormBody::TypesForm(form) => form.loc(),
             FunFormBody::ProdForm(form) => form.loc(),
             FunFormBody::AppForm(form) => form.loc(),
             FunFormBody::LetForm(form) => form.loc(),
@@ -126,12 +109,8 @@ impl FunFormBody {
             FunFormBody::Empty(_) => "()".into(),
             FunFormBody::Panic(_) => "panic".into(),
             FunFormBody::Atomic(atomic) => atomic.to_string(),
-            FunFormBody::TypeKeyword(keyword) => keyword.to_string(),
             FunFormBody::ValueSymbol(symbol) => symbol.to_string(),
-            FunFormBody::TypeSymbol(symbol) => symbol.to_string(),
             FunFormBody::ValuePathSymbol(symbol) => symbol.to_string(),
-            FunFormBody::TypePathSymbol(symbol) => symbol.to_string(),
-            FunFormBody::TypesForm(form) => form.to_string(),
             FunFormBody::ProdForm(form) => form.to_string(),
             FunFormBody::AppForm(form) => form.to_string(),
             FunFormBody::LetForm(form) => form.to_string(),
@@ -186,21 +165,12 @@ impl FunForm {
         let mut params = vec![];
 
         for param in self.parameters.iter() {
-            match param.clone() {
-                FunFormParameter::ValueSymbol(value) => {
-                    params.push(value);
-                }
-                FunFormParameter::TypeSymbol(value) => {
-                    params.push(value);
-                }
-                _ => {}
+            if let FunFormParameter::ValueSymbol(value) = param.clone() {
+                params.push(value);
             }
         }
 
         match self.body.clone() {
-            FunFormBody::TypesForm(form) => {
-                params.extend(form.all_parameters());
-            }
             FunFormBody::ProdForm(form) => {
                 params.extend(form.all_parameters());
             }
@@ -229,17 +199,8 @@ impl FunForm {
             FunFormBody::ValueSymbol(value) => {
                 vars.push(value);
             }
-            FunFormBody::TypeSymbol(value) => {
-                vars.push(value);
-            }
             FunFormBody::ValuePathSymbol(value) => {
                 vars.push(value);
-            }
-            FunFormBody::TypePathSymbol(value) => {
-                vars.push(value);
-            }
-            FunFormBody::TypesForm(form) => {
-                vars.extend(form.all_variables());
             }
             FunFormBody::ProdForm(form) => {
                 vars.extend(form.all_variables());
@@ -360,13 +321,10 @@ impl FunForm {
                 SimpleValue::ValueSymbol(_) => {
                     fun.parameters.push(FunFormParameter::ValueSymbol(value));
                 }
-                SimpleValue::TypeSymbol(_) => {
-                    fun.parameters.push(FunFormParameter::TypeSymbol(value));
-                }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: x.loc(),
-                        desc: "unexpected function parameter".into(),
+                        desc: "expected an unqualified value symbol or an empty literal".into(),
                     }));
                 }
             },
@@ -374,16 +332,13 @@ impl FunForm {
                 if let Ok(prod) = ProdForm::from_form(&form) {
                     for value in prod.values.iter() {
                         match value.clone() {
-                            ProdFormValue::TypeSymbol(symbol) => {
-                                fun.parameters.push(FunFormParameter::TypeSymbol(symbol));
-                            }
                             ProdFormValue::ValueSymbol(symbol) => {
                                 fun.parameters.push(FunFormParameter::ValueSymbol(symbol));
                             }
                             x => {
                                 return Err(Error::Syntactic(SyntacticError {
                                     loc: x.loc(),
-                                    desc: "expected an unqualified symbol".into(),
+                                    desc: "expected an unqualified value symbol".into(),
                                 }));
                             }
                         }
@@ -408,20 +363,11 @@ impl FunForm {
                 SimpleValue::Panic(_) => {
                     fun.body = FunFormBody::Panic(value);
                 }
-                SimpleValue::TypeKeyword(_) => {
-                    fun.body = FunFormBody::TypeKeyword(value);
-                }
                 SimpleValue::ValueSymbol(_) => {
                     fun.body = FunFormBody::ValueSymbol(value);
                 }
-                SimpleValue::TypeSymbol(_) => {
-                    fun.body = FunFormBody::TypeSymbol(value);
-                }
                 SimpleValue::ValuePathSymbol(_) => {
                     fun.body = FunFormBody::ValuePathSymbol(value);
-                }
-                SimpleValue::TypePathSymbol(_) => {
-                    fun.body = FunFormBody::TypePathSymbol(value);
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
@@ -431,9 +377,7 @@ impl FunForm {
                 }
             },
             FormTailElement::Form(form) => {
-                if let Ok(form) = TypesForm::from_form(&form) {
-                    fun.body = FunFormBody::TypesForm(Box::new(form));
-                } else if let Ok(form) = ProdForm::from_form(&form) {
+                if let Ok(form) = ProdForm::from_form(&form) {
                     fun.body = FunFormBody::ProdForm(Box::new(form));
                 } else if let Ok(form) = LetForm::from_form(&form) {
                     fun.body = FunFormBody::LetForm(Box::new(form));
