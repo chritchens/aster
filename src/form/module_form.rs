@@ -7,7 +7,6 @@ use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::form::sig_form::SigForm;
 use crate::form::simple_value::SimpleValue;
 use crate::form::type_form::TypeForm;
-use crate::form::types_form::TypesForm;
 use crate::form::val_form::ValForm;
 use crate::loc::Loc;
 use crate::result::Result;
@@ -16,13 +15,8 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ModuleFormTypeParameter {
-    Ignore(SimpleValue),
     Empty(SimpleValue),
-    Atomic(SimpleValue),
-    Keyword(SimpleValue),
     Symbol(SimpleValue),
-    PathSymbol(SimpleValue),
-    Form(Box<TypesForm>),
 }
 
 impl Default for ModuleFormTypeParameter {
@@ -34,38 +28,23 @@ impl Default for ModuleFormTypeParameter {
 impl ModuleFormTypeParameter {
     pub fn file(&self) -> String {
         match self {
-            ModuleFormTypeParameter::Ignore(ignore) => ignore.file(),
             ModuleFormTypeParameter::Empty(empty) => empty.file(),
-            ModuleFormTypeParameter::Atomic(atomic) => atomic.file(),
-            ModuleFormTypeParameter::Keyword(keyword) => keyword.file(),
             ModuleFormTypeParameter::Symbol(symbol) => symbol.file(),
-            ModuleFormTypeParameter::PathSymbol(symbol) => symbol.file(),
-            ModuleFormTypeParameter::Form(form) => form.file(),
         }
     }
 
     pub fn loc(&self) -> Option<Loc> {
         match self {
-            ModuleFormTypeParameter::Ignore(ignore) => ignore.loc(),
             ModuleFormTypeParameter::Empty(empty) => empty.loc(),
-            ModuleFormTypeParameter::Atomic(atomic) => atomic.loc(),
-            ModuleFormTypeParameter::Keyword(keyword) => keyword.loc(),
             ModuleFormTypeParameter::Symbol(symbol) => symbol.loc(),
-            ModuleFormTypeParameter::PathSymbol(symbol) => symbol.loc(),
-            ModuleFormTypeParameter::Form(form) => form.loc(),
         }
     }
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            ModuleFormTypeParameter::Ignore(_) => "_".into(),
             ModuleFormTypeParameter::Empty(_) => "()".into(),
-            ModuleFormTypeParameter::Atomic(_) => "Atomic".into(),
-            ModuleFormTypeParameter::Keyword(keyword) => keyword.to_string(),
             ModuleFormTypeParameter::Symbol(symbol) => symbol.to_string(),
-            ModuleFormTypeParameter::PathSymbol(symbol) => symbol.to_string(),
-            ModuleFormTypeParameter::Form(form) => form.to_string(),
         }
     }
 }
@@ -259,30 +238,18 @@ impl ModuleForm {
     fn parse_type_parameters(&mut self, form: &Form, idx: usize) -> Result<()> {
         match form.tail[idx].clone() {
             FormTailElement::Simple(value) => match value {
-                SimpleValue::Ignore(_) => {
-                    self.type_parameters
-                        .push(ModuleFormTypeParameter::Ignore(value));
-                }
                 SimpleValue::Empty(_) => {
                     self.type_parameters
                         .push(ModuleFormTypeParameter::Empty(value));
-                }
-                SimpleValue::TypeKeyword(_) => {
-                    self.type_parameters
-                        .push(ModuleFormTypeParameter::Keyword(value));
                 }
                 SimpleValue::TypeSymbol(_) => {
                     self.type_parameters
                         .push(ModuleFormTypeParameter::Symbol(value));
                 }
-                SimpleValue::TypePathSymbol(_) => {
-                    self.type_parameters
-                        .push(ModuleFormTypeParameter::PathSymbol(value));
-                }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: x.loc(),
-                        desc: "unexpected type parameter".into(),
+                        desc: "expected an unqualified type symbol or an empty literal".into(),
                     }));
                 }
             },
@@ -290,26 +257,14 @@ impl ModuleForm {
                 if let Ok(prod) = ProdForm::from_form(&form) {
                     for value in prod.values.iter() {
                         match value.clone() {
-                            ProdFormValue::TypeKeyword(keyword) => {
-                                self.type_parameters
-                                    .push(ModuleFormTypeParameter::Keyword(keyword));
-                            }
                             ProdFormValue::TypeSymbol(symbol) => {
                                 self.type_parameters
                                     .push(ModuleFormTypeParameter::Symbol(symbol));
                             }
-                            ProdFormValue::TypePathSymbol(symbol) => {
-                                self.type_parameters
-                                    .push(ModuleFormTypeParameter::PathSymbol(symbol));
-                            }
-                            ProdFormValue::TypesForm(form) => {
-                                self.type_parameters
-                                    .push(ModuleFormTypeParameter::Form(form));
-                            }
                             x => {
                                 return Err(Error::Syntactic(SyntacticError {
                                     loc: x.loc(),
-                                    desc: "expected a type".into(),
+                                    desc: "expected an unqualified type symbol".into(),
                                 }));
                             }
                         }
