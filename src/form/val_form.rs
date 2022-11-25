@@ -15,6 +15,7 @@ use std::fmt;
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ValFormValue {
     Empty(SimpleValue),
+    Panic(SimpleValue),
     Prim(SimpleValue),
     ValueSymbol(SimpleValue),
     ProdForm(Box<ProdForm>),
@@ -35,6 +36,7 @@ impl ValFormValue {
     pub fn to_string(&self) -> String {
         match self {
             ValFormValue::Empty(_) => "()".into(),
+            ValFormValue::Panic(_) => "panic".into(),
             ValFormValue::Prim(prim) => prim.to_string(),
             ValFormValue::ValueSymbol(symbol) => symbol.to_string(),
             ValFormValue::ProdForm(form) => form.to_string(),
@@ -75,6 +77,13 @@ impl ValForm {
     pub fn is_empty_literal(&self) -> bool {
         match self.value {
             ValFormValue::Empty(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_panic(&self) -> bool {
+        match self.value {
+            ValFormValue::Panic(_) => true,
             _ => false,
         }
     }
@@ -144,6 +153,9 @@ impl ValForm {
 
         match self.value.clone() {
             ValFormValue::Empty(value) => {
+                vars.push(value);
+            }
+            ValFormValue::Panic(value) => {
                 vars.push(value);
             }
             ValFormValue::Prim(value) => {
@@ -269,6 +281,9 @@ impl ValForm {
             FormTailElement::Simple(value) => match value {
                 SimpleValue::Empty(empty) => {
                     val.value = ValFormValue::Empty(SimpleValue::Empty(empty));
+                }
+                SimpleValue::Panic(empty) => {
+                    val.value = ValFormValue::Panic(SimpleValue::Panic(empty));
                 }
                 SimpleValue::Prim(prim) => {
                     val.value = ValFormValue::Prim(SimpleValue::Prim(prim));
