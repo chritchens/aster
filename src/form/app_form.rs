@@ -37,6 +37,74 @@ impl Default for AppFormValue {
 }
 
 impl AppFormValue {
+    pub fn all_parameters(&self) -> Vec<SimpleValue> {
+        let mut params = vec![];
+
+        match self.clone() {
+            AppFormValue::TypesForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            AppFormValue::ProdForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            AppFormValue::FunForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            AppFormValue::LetForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            AppFormValue::CaseForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            AppFormValue::AppForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            _ => {}
+        }
+
+        params
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+
+        match self.clone() {
+            AppFormValue::TypeSymbol(value) => {
+                vars.push(value);
+            }
+            AppFormValue::ValueSymbol(value) => {
+                vars.push(value);
+            }
+            AppFormValue::TypePathSymbol(value) => {
+                vars.push(value);
+            }
+            AppFormValue::ValuePathSymbol(value) => {
+                vars.push(value);
+            }
+            AppFormValue::TypesForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            AppFormValue::ProdForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            AppFormValue::FunForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            AppFormValue::LetForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            AppFormValue::CaseForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            AppFormValue::AppForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            _ => {}
+        }
+
+        vars
+    }
+
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
@@ -104,27 +172,7 @@ impl AppForm {
         let mut params = vec![];
 
         for variable in self.variables.iter() {
-            match variable.clone() {
-                AppFormValue::TypesForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                AppFormValue::ProdForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                AppFormValue::FunForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                AppFormValue::LetForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                AppFormValue::CaseForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                AppFormValue::AppForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                _ => {}
-            }
+            params.extend(variable.all_parameters());
         }
 
         params
@@ -135,39 +183,7 @@ impl AppForm {
         vars.push(self.name.clone());
 
         for variable in self.variables.iter() {
-            match variable.clone() {
-                AppFormValue::TypeSymbol(value) => {
-                    vars.push(value);
-                }
-                AppFormValue::ValueSymbol(value) => {
-                    vars.push(value);
-                }
-                AppFormValue::TypePathSymbol(value) => {
-                    vars.push(value);
-                }
-                AppFormValue::ValuePathSymbol(value) => {
-                    vars.push(value);
-                }
-                AppFormValue::TypesForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                AppFormValue::ProdForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                AppFormValue::FunForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                AppFormValue::LetForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                AppFormValue::CaseForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                AppFormValue::AppForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                _ => {}
-            }
+            vars.extend(variable.all_variables());
         }
 
         vars

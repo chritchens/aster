@@ -1,11 +1,16 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::app_form::AppForm;
+use crate::form::app_form::AppFormValue;
 use crate::form::attrs_form::AttrsForm;
+use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormTailElement};
+use crate::form::fun_form::FunForm;
 use crate::form::import_form::ImportForm;
+use crate::form::prod_form::ProdForm;
 use crate::form::sig_form::SigForm;
 use crate::form::simple_value::SimpleValue;
 use crate::form::type_form::TypeForm;
+use crate::form::types_form::TypesForm;
 use crate::form::val_form::ValForm;
 use crate::loc::Loc;
 use crate::result::Result;
@@ -48,11 +53,13 @@ impl fmt::Display for LetFormEntry {
     }
 }
 
+pub type LetFormValue = AppFormValue;
+
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct LetForm {
     pub tokens: Box<Tokens>,
     pub entries: Vec<LetFormEntry>,
-    pub value: AppForm,
+    pub value: LetFormValue,
 }
 
 impl LetForm {
@@ -219,15 +226,60 @@ impl LetForm {
 
         if len == 1 {
             match form.tail[0].clone() {
+                FormTailElement::Simple(value) => match value {
+                    SimpleValue::Ignore(_) => {
+                        let_form.value = LetFormValue::Ignore(value);
+                    }
+                    SimpleValue::Empty(_) => {
+                        let_form.value = LetFormValue::Empty(value);
+                    }
+                    SimpleValue::Panic(_) => {
+                        let_form.value = LetFormValue::Panic(value);
+                    }
+                    SimpleValue::Prim(_) => {
+                        let_form.value = LetFormValue::Prim(value);
+                    }
+                    SimpleValue::TypeKeyword(_) => {
+                        let_form.value = LetFormValue::TypeKeyword(value);
+                    }
+                    SimpleValue::TypeSymbol(_) => {
+                        let_form.value = LetFormValue::TypeSymbol(value);
+                    }
+                    SimpleValue::ValueSymbol(_) => {
+                        let_form.value = LetFormValue::ValueSymbol(value);
+                    }
+                    SimpleValue::TypePathSymbol(_) => {
+                        let_form.value = LetFormValue::TypePathSymbol(value);
+                    }
+                    SimpleValue::ValuePathSymbol(_) => {
+                        let_form.value = LetFormValue::ValuePathSymbol(value);
+                    }
+                    x => {
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: form.loc(),
+                            desc: format!("expected value: {}", x),
+                        }));
+                    }
+                },
                 FormTailElement::Form(form) => {
-                    let form = AppForm::from_form(&form)?;
-                    let_form.value = form;
-                }
-                _ => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a function application".into(),
-                    }));
+                    if let Ok(form) = TypesForm::from_form(&form) {
+                        let_form.value = LetFormValue::TypesForm(Box::new(form));
+                    } else if let Ok(form) = ProdForm::from_form(&form) {
+                        let_form.value = LetFormValue::ProdForm(Box::new(form));
+                    } else if let Ok(form) = FunForm::from_form(&form) {
+                        let_form.value = LetFormValue::FunForm(Box::new(form));
+                    } else if let Ok(form) = LetForm::from_form(&form) {
+                        let_form.value = LetFormValue::LetForm(Box::new(form));
+                    } else if let Ok(form) = CaseForm::from_form(&form) {
+                        let_form.value = LetFormValue::CaseForm(Box::new(form));
+                    } else if let Ok(form) = AppForm::from_form(&form) {
+                        let_form.value = LetFormValue::AppForm(Box::new(form));
+                    } else {
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: form.loc(),
+                            desc: "unexpected form".into(),
+                        }));
+                    }
                 }
             }
         }
@@ -269,21 +321,60 @@ impl LetForm {
             }
 
             match form.tail[len - 1].clone() {
+                FormTailElement::Simple(value) => match value {
+                    SimpleValue::Ignore(_) => {
+                        let_form.value = LetFormValue::Ignore(value);
+                    }
+                    SimpleValue::Empty(_) => {
+                        let_form.value = LetFormValue::Empty(value);
+                    }
+                    SimpleValue::Panic(_) => {
+                        let_form.value = LetFormValue::Panic(value);
+                    }
+                    SimpleValue::Prim(_) => {
+                        let_form.value = LetFormValue::Prim(value);
+                    }
+                    SimpleValue::TypeKeyword(_) => {
+                        let_form.value = LetFormValue::TypeKeyword(value);
+                    }
+                    SimpleValue::TypeSymbol(_) => {
+                        let_form.value = LetFormValue::TypeSymbol(value);
+                    }
+                    SimpleValue::ValueSymbol(_) => {
+                        let_form.value = LetFormValue::ValueSymbol(value);
+                    }
+                    SimpleValue::TypePathSymbol(_) => {
+                        let_form.value = LetFormValue::TypePathSymbol(value);
+                    }
+                    SimpleValue::ValuePathSymbol(_) => {
+                        let_form.value = LetFormValue::ValuePathSymbol(value);
+                    }
+                    x => {
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: form.loc(),
+                            desc: format!("expected value: {}", x),
+                        }));
+                    }
+                },
                 FormTailElement::Form(form) => {
-                    if let Ok(form) = AppForm::from_form(&form) {
-                        let_form.value = form;
+                    if let Ok(form) = TypesForm::from_form(&form) {
+                        let_form.value = LetFormValue::TypesForm(Box::new(form));
+                    } else if let Ok(form) = ProdForm::from_form(&form) {
+                        let_form.value = LetFormValue::ProdForm(Box::new(form));
+                    } else if let Ok(form) = FunForm::from_form(&form) {
+                        let_form.value = LetFormValue::FunForm(Box::new(form));
+                    } else if let Ok(form) = LetForm::from_form(&form) {
+                        let_form.value = LetFormValue::LetForm(Box::new(form));
+                    } else if let Ok(form) = CaseForm::from_form(&form) {
+                        let_form.value = LetFormValue::CaseForm(Box::new(form));
+                    } else if let Ok(form) = AppForm::from_form(&form) {
+                        let_form.value = LetFormValue::AppForm(Box::new(form));
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
-                            desc: "expected an application form".into(),
+                            desc: "unexpected form".into(),
                         }));
                     }
-                }
-                _ => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a form".into(),
-                    }));
                 }
             }
         }
