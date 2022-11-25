@@ -176,15 +176,21 @@ impl ProdForm {
                 ProdFormValue::AppForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ProdFormValue::TypeForm(_form) => {}
+                ProdFormValue::TypeForm(form) => {
+                    vars.extend(form.all_variables());
+                }
                 ProdFormValue::SigForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 ProdFormValue::ValForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ProdFormValue::ImportForm(_form) => {}
-                ProdFormValue::ExportForm(_form) => {}
+                ProdFormValue::ImportForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::ExportForm(form) => {
+                    vars.extend(form.all_variables());
+                }
             }
         }
 
