@@ -233,7 +233,7 @@ impl AppForm {
         if form.tail.len() != 1 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "a parameter or product of parameters".into(),
+                desc: "expected a variable or a product of variables".into(),
             }));
         }
 
@@ -255,10 +255,10 @@ impl AppForm {
             SimpleValue::ValuePathSymbol(_) => {
                 app.name = name;
             }
-            _ => {
+            x => {
                 return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: "expected a value keyword, a value symbol or a value path symbol".into(),
+                    loc: x.loc(),
+                    desc: "unexpected value".into(),
                 }));
             }
         }
@@ -294,8 +294,8 @@ impl AppForm {
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected parameter: {}", x.to_string()),
+                        loc: x.loc(),
+                        desc: "unexpected variable".into(),
                     }));
                 }
             },
@@ -345,7 +345,7 @@ impl AppForm {
                             _ => {
                                 return Err(Error::Syntactic(SyntacticError {
                                     loc: form.loc(),
-                                    desc: "expected a product of keywords or symbols".into(),
+                                    desc: "unexpected form".into(),
                                 }));
                             }
                         }
@@ -363,7 +363,7 @@ impl AppForm {
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a product of keywords or symbols".into(),
+                        desc: "unexpected form".into(),
                     }));
                 }
             }

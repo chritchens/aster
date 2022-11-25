@@ -145,9 +145,9 @@ impl ImportForm {
                 SimpleValue::ValueSymbol(_) => {
                     self.qualifier = Some(value);
                 }
-                _ => {
+                x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
+                        loc: x.loc(),
                         desc: "expected an unqualified value symbol".into(),
                     }));
                 }
@@ -155,7 +155,7 @@ impl ImportForm {
             _ => {
                 return Err(Error::Syntactic(SyntacticError {
                     loc: form.loc(),
-                    desc: "expected a value symbol".into(),
+                    desc: "expected an unqualified value symbol".into(),
                 }));
             }
         }
@@ -188,8 +188,8 @@ impl ImportForm {
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected type parameter: {}", x.to_string()),
+                        loc: x.loc(),
+                        desc: "unexpected type variable".into(),
                     }));
                 }
             },
@@ -213,10 +213,10 @@ impl ImportForm {
                                 self.type_parameters
                                     .push(ImportFormTypeParameter::Form(form));
                             }
-                            _ => {
+                            x => {
                                 return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "expected a product of type symbols or type forms".into(),
+                                    loc: x.loc(),
+                                    desc: "expected a type".into(),
                                 }));
                             }
                         }
@@ -224,7 +224,7 @@ impl ImportForm {
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a product of type symbols".into(),
+                        desc: "expected a product of types".into(),
                     }));
                 }
             }
@@ -250,8 +250,8 @@ impl ImportForm {
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected value: {}", x.to_string()),
+                        loc: x.loc(),
+                        desc: "unexpected value".into(),
                     }));
                 }
             },
@@ -266,10 +266,10 @@ impl ImportForm {
                         ProdFormValue::TypeSymbol(symbol) => {
                             self.defs.push(ImportFormDef::TypeSymbol(symbol));
                         }
-                        _ => {
+                        x => {
                             return Err(Error::Syntactic(SyntacticError {
-                                loc: form.loc(),
-                                desc: "expected a product of value or type symbols".into(),
+                                loc: x.loc(),
+                                desc: "expected an unqualified symbol".into(),
                             }));
                         }
                     }
@@ -283,7 +283,7 @@ impl ImportForm {
     pub fn from_form(form: &Form) -> Result<ImportForm> {
         if form.head.to_string() != "import" {
             return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
+                loc: form.head.loc(),
                 desc: "expected an import keyword".into(),
             }));
         }
@@ -303,8 +303,9 @@ impl ImportForm {
         if len > 4 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected at most a module, an optional product of types, a product of value symbols or a value symbol, and a value symbol"
-                    .into(),
+                desc:
+                    "expected at most a module, type variables, imported symbols, and a qualifier"
+                        .into(),
             }));
         }
 
@@ -316,17 +317,17 @@ impl ImportForm {
                 SimpleValue::ValuePathSymbol(_) => {
                     import.module = value;
                 }
-                _ => {
+                x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a value symbol or a value path symbol".into(),
+                        loc: x.loc(),
+                        desc: "expected a value symbol".into(),
                     }));
                 }
             },
-            _ => {
+            x => {
                 return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: "expected a value symbol or a value path symbol".into(),
+                    loc: x.loc(),
+                    desc: "unexpected form".into(),
                 }));
             }
         }

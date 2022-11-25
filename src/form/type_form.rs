@@ -83,7 +83,7 @@ impl TypeForm {
         if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a name and a type keyword or a type symbol or a types form".into(),
+                desc: "expected a name and a type".into(),
             }));
         }
 
@@ -95,17 +95,17 @@ impl TypeForm {
                 SimpleValue::TypeSymbol(_) => {
                     type_form.name = value;
                 }
-                _ => {
+                x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a type symbol".into(),
+                        loc: x.loc(),
+                        desc: "expected an unqualified type symbol".into(),
                     }));
                 }
             },
-            _ => {
+            x => {
                 return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: "expected a type symbol".into(),
+                    loc: x.loc(),
+                    desc: "unexpected form".into(),
                 }));
             }
         }
@@ -131,8 +131,8 @@ impl TypeForm {
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected value: {}", x.to_string()),
+                        loc: x.loc(),
+                        desc: "unexpected value".into(),
                     }));
                 }
             },

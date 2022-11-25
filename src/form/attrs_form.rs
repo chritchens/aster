@@ -129,7 +129,7 @@ impl AttrsForm {
     pub fn from_form(form: &Form) -> Result<AttrsForm> {
         if form.head.to_string() != "attrs" {
             return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
+                loc: form.head.loc(),
                 desc: "expected a attrs keyword".into(),
             }));
         }
@@ -137,9 +137,7 @@ impl AttrsForm {
         if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc:
-                    "expected a name and a keyword or symbol or a product of keywords or products"
-                        .into(),
+                desc: "expected a name and a value".into(),
             }));
         }
 
@@ -154,17 +152,17 @@ impl AttrsForm {
                 SimpleValue::TypeSymbol(_) => {
                     attrs.name = value;
                 }
-                _ => {
+                x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a type or value symbol".into(),
+                        loc: x.loc(),
+                        desc: "expected an unqualified symbol".into(),
                     }));
                 }
             },
-            _ => {
+            x => {
                 return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: "expected a type or value symbol".into(),
+                    loc: x.loc(),
+                    desc: "unexpected form".into(),
                 }));
             }
         }
@@ -194,8 +192,8 @@ impl AttrsForm {
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected value: {}", x.to_string()),
+                        loc: x.loc(),
+                        desc: "unexpected value".into(),
                     }));
                 }
             },
@@ -221,10 +219,10 @@ impl AttrsForm {
                             ProdFormValue::ValuePathSymbol(symbol) => {
                                 attrs.values.push(AttrsFormValue::ValuePathSymbol(symbol));
                             }
-                            _ => {
+                            x => {
                                 return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "expected a product of symbols".into(),
+                                    loc: x.loc(),
+                                    desc: "unexpected value".into(),
                                 }));
                             }
                         }
@@ -232,7 +230,7 @@ impl AttrsForm {
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a product of symbols".into(),
+                        desc: "unexpected form".into(),
                     }));
                 }
             }

@@ -339,7 +339,7 @@ impl FunForm {
     pub fn from_form(form: &Form) -> Result<FunForm> {
         if form.head.to_string() != "fun" {
             return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
+                loc: form.head.loc(),
                 desc: "expected a fun keyword".into(),
             }));
         }
@@ -347,7 +347,7 @@ impl FunForm {
         if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a symbol or form and an atomic, or a symbol or a form".into(),
+                desc: "expected one or more function parameters and a function body".into(),
             }));
         }
 
@@ -365,8 +365,8 @@ impl FunForm {
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected function param: {}", x.to_string()),
+                        loc: x.loc(),
+                        desc: "unexpected function parameter".into(),
                     }));
                 }
             },
@@ -380,10 +380,10 @@ impl FunForm {
                             ProdFormValue::ValueSymbol(symbol) => {
                                 fun.parameters.push(FunFormParameter::ValueSymbol(symbol));
                             }
-                            _ => {
+                            x => {
                                 return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "expected a product of unqualified symbols".into(),
+                                    loc: x.loc(),
+                                    desc: "expected an unqualified symbol".into(),
                                 }));
                             }
                         }
@@ -391,7 +391,7 @@ impl FunForm {
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a product of symbols".into(),
+                        desc: "expected a product of unqualified symbols".into(),
                     }));
                 }
             }
@@ -425,8 +425,8 @@ impl FunForm {
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected function body: {}", x.to_string()),
+                        loc: x.loc(),
+                        desc: "unexpected function body".into(),
                     }));
                 }
             },
@@ -446,7 +446,7 @@ impl FunForm {
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a type form, a let form or an application form".into(),
+                        desc: "unexpected form".into(),
                     }));
                 }
             }

@@ -331,7 +331,7 @@ impl CaseFormMatch {
     pub fn from_form(form: &Form) -> Result<CaseFormMatch> {
         if form.head.to_string() != "match" {
             return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
+                loc: form.head.loc(),
                 desc: "expected a match keyword".into(),
             }));
         }
@@ -371,14 +371,14 @@ impl CaseFormMatch {
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected value: {}", x),
+                        loc: x.loc(),
+                        desc: "unexpected value".into(),
                     }));
                 }
             },
-            _ => {
+            x => {
                 return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
+                    loc: x.loc(),
                     desc: "unexpected form".into(),
                 }));
             }
@@ -427,7 +427,7 @@ impl CaseFormMatch {
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a product, case, let or function form".into(),
+                        desc: "unexpected form".into(),
                     }));
                 }
             }
@@ -534,7 +534,7 @@ impl CaseForm {
     pub fn from_form(form: &Form) -> Result<CaseForm> {
         if form.head.to_string() != "case" {
             return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
+                loc: form.head.loc(),
                 desc: "expected a case keyword".into(),
             }));
         }
@@ -568,8 +568,8 @@ impl CaseForm {
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected value: {}", x),
+                        loc: x.loc(),
+                        desc: "unexpected value".into(),
                     }));
                 }
             },
@@ -581,7 +581,7 @@ impl CaseForm {
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a let form or an application form".into(),
+                        desc: "unexpected form".into(),
                     }));
                 }
             }
@@ -602,7 +602,7 @@ impl CaseForm {
                 _ => {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a form".into(),
+                        desc: "expected a case match form".into(),
                     }));
                 }
             }

@@ -112,7 +112,7 @@ impl ExportForm {
     pub fn from_form(form: &Form) -> Result<ExportForm> {
         if form.head.to_string() != "export" {
             return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
+                loc: form.head.loc(),
                 desc: "expected an export keyword".into(),
             }));
         }
@@ -120,7 +120,7 @@ impl ExportForm {
         if form.tail.len() != 1 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a product of exported symbols or an empty literal".into(),
+                desc: "expected one or more exported symbols".into(),
             }));
         }
 
@@ -139,10 +139,10 @@ impl ExportForm {
                     SimpleValue::ValueSymbol(_) => {
                         export.defs.push(ExportFormDef::ValueSymbol(value));
                     }
-                    _ => {
+                    x => {
                         return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: "expected a product of symbols or an empty literal".into(),
+                            loc: x.loc(),
+                            desc: "unexpected an unqualified symbol or an empty literal".into(),
                         }));
                     }
                 },
@@ -157,10 +157,10 @@ impl ExportForm {
                             ProdFormValue::TypeSymbol(symbol) => {
                                 export.defs.push(ExportFormDef::TypeSymbol(symbol));
                             }
-                            _ => {
+                            x => {
                                 return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "expected a product of value or type symbols".into(),
+                                    loc: x.loc(),
+                                    desc: "expected an unqualified symbol".into(),
                                 }));
                             }
                         }

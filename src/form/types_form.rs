@@ -155,10 +155,10 @@ impl TypesForm {
             SimpleValue::TypePathSymbol(_) => {
                 types_form.head = name;
             }
-            _ => {
+            x => {
                 return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: "expected a type keyword, a type symbol or a type path symbol".into(),
+                    loc: x.loc(),
+                    desc: "expected a simple type".into(),
                 }));
             }
         }
@@ -185,8 +185,8 @@ impl TypesForm {
                     }
                     x => {
                         return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: format!("unexpected type value: {}", x.to_string()),
+                            loc: x.loc(),
+                            desc: "expected a simple type".into(),
                         }));
                     }
                 },

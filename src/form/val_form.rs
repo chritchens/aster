@@ -233,7 +233,7 @@ impl ValForm {
     pub fn from_form(form: &Form) -> Result<ValForm> {
         if form.head.to_string() != "val" {
             return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
+                loc: form.head.loc(),
                 desc: "expected a val keyword".into(),
             }));
         }
@@ -241,8 +241,7 @@ impl ValForm {
         if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a name and an empty literal or an atomic or a symbol or a form"
-                    .into(),
+                desc: "expected a name and a value".into(),
             }));
         }
 
@@ -257,17 +256,17 @@ impl ValForm {
                 SimpleValue::TypeSymbol(_) => {
                     val.name = value;
                 }
-                _ => {
+                x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a type or value symbol".into(),
+                        loc: x.loc(),
+                        desc: "expected an unqualified symbol".into(),
                     }));
                 }
             },
-            _ => {
+            x => {
                 return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: "expected a type or value symbol".into(),
+                    loc: x.loc(),
+                    desc: "unexpected form".into(),
                 }));
             }
         }
@@ -288,8 +287,8 @@ impl ValForm {
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected value: {}", x.to_string()),
+                        loc: x.loc(),
+                        desc: "unexpected value".into(),
                     }));
                 }
             },
@@ -317,7 +316,7 @@ impl ValForm {
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
-                            desc: "unexpected form with types".to_string(),
+                            desc: "unexpected form".into(),
                         }));
                     }
                 }

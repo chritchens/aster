@@ -229,7 +229,7 @@ impl LetForm {
     pub fn from_form(form: &Form) -> Result<LetForm> {
         if form.head.to_string() != "let" {
             return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
+                loc: form.head.loc(),
                 desc: "expected a let keyword".into(),
             }));
         }
@@ -239,7 +239,7 @@ impl LetForm {
         if len == 0 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected at least a function application".into(),
+                desc: "expected at least a value".into(),
             }));
         }
 
@@ -278,8 +278,8 @@ impl LetForm {
                     }
                     x => {
                         return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: format!("expected value: {}", x),
+                            loc: x.loc(),
+                            desc: "unexpected value".into(),
                         }));
                     }
                 },
@@ -329,7 +329,7 @@ impl LetForm {
                         } else {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
-                                desc: "expected a definition form".into(),
+                                desc: "unexpected form".into(),
                             }));
                         }
                     }
@@ -373,8 +373,8 @@ impl LetForm {
                     }
                     x => {
                         return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: format!("expected value: {}", x),
+                            loc: x.loc(),
+                            desc: "unexpected value".into(),
                         }));
                     }
                 },

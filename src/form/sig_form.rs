@@ -75,7 +75,7 @@ impl SigForm {
     pub fn from_form(form: &Form) -> Result<SigForm> {
         if form.head.to_string() != "sig" {
             return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
+                loc: form.head.loc(),
                 desc: "expected a sig keyword".into(),
             }));
         }
@@ -83,7 +83,7 @@ impl SigForm {
         if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a name and a type keyword or a type symbol or a types form".into(),
+                desc: "expected a name and a type".into(),
             }));
         }
 
@@ -98,14 +98,14 @@ impl SigForm {
                 _ => {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a value symbol".into(),
+                        desc: "expected an unqualified value symbol".into(),
                     }));
                 }
             },
-            _ => {
+            x => {
                 return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: "expected a value symbol".into(),
+                    loc: x.loc(),
+                    desc: "unexpected form".into(),
                 }));
             }
         }

@@ -281,8 +281,8 @@ impl ModuleForm {
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: format!("unexpected type parameter: {}", x.to_string()),
+                        loc: x.loc(),
+                        desc: "unexpected type parameter".into(),
                     }));
                 }
             },
@@ -306,10 +306,10 @@ impl ModuleForm {
                                 self.type_parameters
                                     .push(ModuleFormTypeParameter::Form(form));
                             }
-                            _ => {
+                            x => {
                                 return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "expected a product of type symbols or type forms".into(),
+                                    loc: x.loc(),
+                                    desc: "expected a type".into(),
                                 }));
                             }
                         }
@@ -317,7 +317,7 @@ impl ModuleForm {
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a product of type symbols".into(),
+                        desc: "expected a product of types".into(),
                     }));
                 }
             }
@@ -332,10 +332,10 @@ impl ModuleForm {
                 SimpleValue::Empty(_) => {
                     self.entries.push(ModuleFormEntry::Empty(value));
                 }
-                _ => {
+                x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected an empty literal or a product of value forms".into(),
+                        loc: x.loc(),
+                        desc: "expected an empty literal".into(),
                     }));
                 }
             },
@@ -365,7 +365,7 @@ impl ModuleForm {
                         _ => {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
-                                desc: "expected a product of import, export, attributes, type, signature or value forms".into(),
+                                desc: "unexpected form".into(),
                             }));
                         }
                     }
@@ -379,7 +379,7 @@ impl ModuleForm {
     pub fn from_form(form: &Form) -> Result<ModuleForm> {
         if form.head.to_string() != "module" {
             return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
+                loc: form.head.loc(),
                 desc: "expected a module keyword".into(),
             }));
         }
@@ -389,7 +389,7 @@ impl ModuleForm {
         if len < 2 || len > 3 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a name, an optional product of type parameters and a product of values".into(),
+                desc: "expected a name, optional type parameters and a product of forms".into(),
             }));
         }
 
@@ -401,17 +401,17 @@ impl ModuleForm {
                 SimpleValue::ValueSymbol(_) => {
                     module.name = value;
                 }
-                _ => {
+                x => {
                     return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a value symbol".into(),
+                        loc: x.loc(),
+                        desc: "expected an unqualified value symbol".into(),
                     }));
                 }
             },
-            _ => {
+            x => {
                 return Err(Error::Syntactic(SyntacticError {
-                    loc: form.loc(),
-                    desc: "expected a value symbol".into(),
+                    loc: x.loc(),
+                    desc: "unexpected form".into(),
                 }));
             }
         }
