@@ -1,4 +1,4 @@
-use crate::error::{Error, SyntacticError};
+use crate::error::{Error, SemanticError, SyntacticError};
 use crate::form::app_form::AppForm;
 use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormTailElement};
@@ -228,6 +228,82 @@ impl ValForm {
         }
 
         vars
+    }
+
+    pub fn all_bound_variables(&self) -> Vec<SimpleValue> {
+        let all_parameters = self.all_parameters();
+
+        self.all_variables()
+            .iter()
+            .filter(|v| {
+                all_parameters
+                    .iter()
+                    .any(|p| v.to_string() == p.to_string())
+            })
+            .map(|v| v.to_owned())
+            .collect::<Vec<SimpleValue>>()
+    }
+
+    pub fn all_unbound_variables(&self) -> Vec<SimpleValue> {
+        let all_parameters = self.all_parameters();
+
+        self.all_variables()
+            .iter()
+            .filter(|v| {
+                !all_parameters
+                    .iter()
+                    .any(|p| v.to_string() == p.to_string())
+            })
+            .map(|v| v.to_owned())
+            .collect::<Vec<SimpleValue>>()
+    }
+
+    pub fn check_parameters_use(&self) -> Result<()> {
+        let mut params = self.all_parameters();
+        params.remove(0);
+
+        let params_len = params.len();
+
+        let bound_vars = self.all_bound_variables();
+        let bound_vars_len = bound_vars.len();
+
+        if params_len == 0 && bound_vars_len == 0 {
+            return Ok(());
+        }
+
+        if params_len > bound_vars_len {
+            if params_len == 1 && bound_vars_len == 0 {
+                return Ok(());
+            }
+
+            return Err(Error::Semantic(SemanticError {
+                loc: self.loc(),
+                desc: "non-linear use of parameters: unused parameters".into(),
+            }));
+        }
+
+        if params_len < bound_vars_len {
+            return Err(Error::Semantic(SemanticError {
+                loc: self.loc(),
+                desc: "non-linear use of parameters: reused parameters".into(),
+            }));
+        }
+
+        for (idx, param) in params.iter().enumerate() {
+            let bound_var = bound_vars[idx].clone();
+
+            if param.to_string() != bound_var.to_string() {
+                return Err(Error::Semantic(SemanticError {
+                    loc: bound_var.loc(),
+                    desc: format!(
+                        "non-ordered use of parameters: expected variable {}",
+                        param.to_string()
+                    ),
+                }));
+            }
+        }
+
+        Ok(())
     }
 
     pub fn from_form(form: &Form) -> Result<ValForm> {
@@ -488,5 +564,191 @@ mod tests {
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_function_form());
         assert!(form.is_value());
+    }
+
+    #[test]
+    fn val_form_check_parameters_use() {
+        use super::ValForm;
+
+        let mut s = "(val x (fun a (case a (match T id) (match F (fun bool (printBool bool))))))";
+
+        let mut form = ValForm::from_str(s).unwrap();
+
+        let mut all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "x, a, bool".to_string());
+
+        let mut all_variables = form
+            .all_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_variables, "a, printBool, bool".to_string());
+
+        let mut all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a, bool".to_string());
+
+        let mut all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "printBool".to_string());
+
+        assert!(form.check_parameters_use().is_ok());
+
+        s = "
+            (val x (fun a (case a
+                (match T id)
+                (match F (fun bool (let
+                    (val f (fun () (printBool bool)))
+                    (f ())))))))";
+
+        form = ValForm::from_str(s).unwrap();
+
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "x, a, bool, f".to_string());
+
+        all_variables = form
+            .all_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_variables, "a, printBool, bool, f".to_string());
+
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a, bool, f".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "printBool".to_string());
+
+        assert!(form.check_parameters_use().is_ok());
+
+        s = "(val x (fun (prod a b) (case a
+                (match T id)
+                (match F (fun bool (let
+                    (val f (fun () (printBool bool)))
+                    (f ())))))))";
+
+        form = ValForm::from_str(s).unwrap();
+
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "x, a, b, bool, f".to_string());
+
+        all_variables = form
+            .all_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_variables, "a, printBool, bool, f".to_string());
+
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a, bool, f".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "printBool".to_string());
+
+        assert!(form.check_parameters_use().is_err());
+
+        s = "(val x (fun (prod b a) (case a
+                (match T id)
+                (match F (fun bool (let
+                    (val f (fun () (printBool bool)))
+                    (f ())))))))";
+
+        form = ValForm::from_str(s).unwrap();
+
+        all_parameters = form
+            .all_parameters()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_parameters, "x, b, a, bool, f".to_string());
+
+        all_variables = form
+            .all_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_variables, "a, printBool, bool, f".to_string());
+
+        all_bound_variables = form
+            .all_bound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_bound_variables, "a, bool, f".to_string());
+
+        all_unbound_variables = form
+            .all_unbound_variables()
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        assert_eq!(all_unbound_variables, "printBool".to_string());
+
+        assert!(form.check_parameters_use().is_err());
     }
 }
