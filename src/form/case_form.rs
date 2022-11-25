@@ -19,6 +19,7 @@ pub enum CaseFormVariable {
     ValueSymbol(SimpleValue),
     AppForm(Box<AppForm>),
     LetForm(Box<LetForm>),
+    CaseForm(Box<CaseForm>),
 }
 
 impl Default for CaseFormVariable {
@@ -37,6 +38,7 @@ impl CaseFormVariable {
             CaseFormVariable::ValueSymbol(symbol) => symbol.file(),
             CaseFormVariable::AppForm(form) => form.file(),
             CaseFormVariable::LetForm(form) => form.file(),
+            CaseFormVariable::CaseForm(form) => form.file(),
         }
     }
 
@@ -49,6 +51,7 @@ impl CaseFormVariable {
             CaseFormVariable::ValueSymbol(symbol) => symbol.loc(),
             CaseFormVariable::AppForm(form) => form.loc(),
             CaseFormVariable::LetForm(form) => form.loc(),
+            CaseFormVariable::CaseForm(form) => form.loc(),
         }
     }
 
@@ -60,6 +63,9 @@ impl CaseFormVariable {
                 params.extend(form.all_parameters());
             }
             CaseFormVariable::LetForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            CaseFormVariable::CaseForm(form) => {
                 params.extend(form.all_parameters());
             }
             _ => {}
@@ -84,6 +90,9 @@ impl CaseFormVariable {
             CaseFormVariable::LetForm(form) => {
                 vars.extend(form.all_variables());
             }
+            CaseFormVariable::CaseForm(form) => {
+                vars.extend(form.all_variables());
+            }
             _ => {}
         }
 
@@ -100,6 +109,7 @@ impl CaseFormVariable {
             CaseFormVariable::ValueSymbol(symbol) => symbol.to_string(),
             CaseFormVariable::AppForm(form) => form.to_string(),
             CaseFormVariable::LetForm(form) => form.to_string(),
+            CaseFormVariable::CaseForm(form) => form.to_string(),
         }
     }
 }
@@ -578,6 +588,8 @@ impl CaseForm {
                     case.variable = CaseFormVariable::LetForm(Box::new(form));
                 } else if let Ok(form) = AppForm::from_form(&form) {
                     case.variable = CaseFormVariable::AppForm(Box::new(form));
+                } else if let Ok(form) = CaseForm::from_form(&form) {
+                    case.variable = CaseFormVariable::CaseForm(Box::new(form));
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
