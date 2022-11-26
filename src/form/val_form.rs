@@ -5,11 +5,11 @@ use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::prod_form::ProdForm;
-use crate::form::simple_value::SimpleValue;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_value_symbol;
 use crate::token::Tokens;
+use crate::value::SimpleValue;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]

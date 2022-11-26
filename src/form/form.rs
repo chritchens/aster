@@ -1,10 +1,10 @@
 use crate::error::{Error, SyntacticError};
-use crate::form::simple_value::SimpleValue;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::{is_keyword, is_type_keyword};
 use crate::syntax::{is_symbol, is_type_symbol, is_value_symbol, symbol_name};
 use crate::token::{TokenKind, Tokens};
+use crate::value::SimpleValue;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]

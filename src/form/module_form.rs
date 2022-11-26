@@ -5,12 +5,12 @@ use crate::form::form::{Form, FormTailElement};
 use crate::form::import_form::ImportForm;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
 use crate::form::sig_form::SigForm;
-use crate::form::simple_value::SimpleValue;
 use crate::form::type_form::TypeForm;
 use crate::form::val_form::ValForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
+use crate::value::SimpleValue;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]

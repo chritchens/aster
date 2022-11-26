@@ -1,9 +1,9 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormTailElement};
-use crate::form::simple_value::SimpleValue;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
+use crate::value::SimpleValue;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]

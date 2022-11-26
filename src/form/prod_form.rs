@@ -8,13 +8,13 @@ use crate::form::fun_form::FunForm;
 use crate::form::import_form::ImportForm;
 use crate::form::let_form::LetForm;
 use crate::form::sig_form::SigForm;
-use crate::form::simple_value::SimpleValue;
 use crate::form::type_form::TypeForm;
 use crate::form::types_form::TypesForm;
 use crate::form::val_form::ValForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
+use crate::value::SimpleValue;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
