@@ -185,6 +185,7 @@ impl LetForm {
                     params.extend(form.all_parameters());
                 }
                 LetFormEntry::ValForm(form) => {
+                    params.push(form.name.clone());
                     params.extend(form.all_parameters());
                 }
                 _ => {}

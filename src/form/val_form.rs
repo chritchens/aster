@@ -178,7 +178,6 @@ impl ValForm {
 
     pub fn all_parameters(&self) -> Vec<SimpleValue> {
         let mut params = vec![];
-        params.push(self.name.clone());
 
         match self.value.clone() {
             ValFormValue::ProdForm(form) => {
@@ -259,8 +258,7 @@ impl ValForm {
     }
 
     pub fn check_parameters_use(&self) -> Result<()> {
-        let mut params = self.all_parameters();
-        params.remove(0);
+        let params = self.all_parameters();
 
         let params_len = params.len();
 
@@ -581,7 +579,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_parameters, "x, a, bool".to_string());
+        assert_eq!(all_parameters, "a, bool".to_string());
 
         let mut all_variables = form
             .all_variables()
@@ -628,7 +626,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_parameters, "x, a, bool, f".to_string());
+        assert_eq!(all_parameters, "a, bool, f".to_string());
 
         all_variables = form
             .all_variables()
@@ -674,7 +672,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_parameters, "x, a, b, bool, f".to_string());
+        assert_eq!(all_parameters, "a, b, bool, f".to_string());
 
         all_variables = form
             .all_variables()
@@ -720,7 +718,7 @@ mod tests {
             .collect::<Vec<String>>()
             .join(", ");
 
-        assert_eq!(all_parameters, "x, b, a, bool, f".to_string());
+        assert_eq!(all_parameters, "b, a, bool, f".to_string());
 
         all_variables = form
             .all_variables()
