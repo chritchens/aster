@@ -1,8 +1,8 @@
 [package]
-name = "sophia"
+name = "aster"
 version = "0.1.0"
 authors = ["Christian Nyumbayire <chritchens@gmail.com>"]
-repository = "https://github.com/chritchens/sophia"
+repository = "https://github.com/chritchens/aster"
 readme = "README.md"
 keywords = ["development"]
 license = "MIT OR Apache-2.0"
