@@ -3,12 +3,12 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 48] = [
+pub const KEYWORDS: [&str; 47] = [
     "module", "_", "builtin", "import", "export", "val", "type", "atomic", "prod", "sig", "fun",
     "attrs", "app", "case", "id", "return", "match", "size", "load", "store", "ref", "deref",
     "cast", "dup", "drop", "panic", "Builtin", "Empty", "Atomic", "UInt", "Int", "Float", "Size",
     "Pointer", "Ref", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod", "Sig", "Fun",
-    "App", "Attrs", "Type",
+    "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -76,7 +76,6 @@ pub enum Keyword {
     ProdT,
     SigT,
     FunT,
-    AppT,
     AttrsT,
     TypeT,
 }
@@ -129,7 +128,6 @@ impl fmt::Display for Keyword {
             Keyword::ProdT => write!(f, "Prod"),
             Keyword::SigT => write!(f, "Sig"),
             Keyword::FunT => write!(f, "Fun"),
-            Keyword::AppT => write!(f, "App"),
             Keyword::AttrsT => write!(f, "Attrs"),
             Keyword::TypeT => write!(f, "Type"),
         }
@@ -185,7 +183,6 @@ impl Keyword {
             "Prod" => Ok(Keyword::ProdT),
             "Sig" => Ok(Keyword::SigT),
             "Fun" => Ok(Keyword::FunT),
-            "App" => Ok(Keyword::AppT),
             "Attrs" => Ok(Keyword::AttrsT),
             "Type" => Ok(Keyword::TypeT),
             _ => Err(Error::Syntactic(SyntacticError {
