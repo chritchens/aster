@@ -3,12 +3,12 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 46] = [
-    "module", "_", "builtin", "import", "export", "val", "type", "atomic", "prod", "sig", "fun",
-    "attrs", "app", "case", "id", "match", "size", "load", "store", "ref", "deref", "cast", "dup",
-    "drop", "panic", "Builtin", "Empty", "Atomic", "UInt", "Int", "Float", "Size", "Pointer",
-    "Ref", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod", "Sig", "Fun", "Attrs",
-    "Type",
+pub const KEYWORDS: [&str; 47] = [
+    "module", "block", "_", "builtin", "import", "export", "val", "type", "atomic", "prod", "sig",
+    "fun", "attrs", "app", "case", "id", "match", "size", "load", "store", "ref", "deref", "cast",
+    "dup", "drop", "panic", "Builtin", "Empty", "Atomic", "UInt", "Int", "Float", "Size",
+    "Pointer", "Ref", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod", "Sig", "Fun",
+    "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -32,6 +32,7 @@ pub fn is_ignore_keyword(s: &str) -> bool {
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum Keyword {
     Module,
+    Block,
     Ignore,
     Builtin,
     Import,
@@ -83,6 +84,7 @@ impl fmt::Display for Keyword {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Keyword::Module => write!(f, "module"),
+            Keyword::Block => write!(f, "block"),
             Keyword::Ignore => write!(f, "_"),
             Keyword::Builtin => write!(f, "builtin"),
             Keyword::Import => write!(f, "import"),
@@ -137,6 +139,7 @@ impl Keyword {
     pub fn from_str(s: &str) -> Result<Self> {
         match s {
             "module" => Ok(Keyword::Module),
+            "block" => Ok(Keyword::Block),
             "_" => Ok(Keyword::Ignore),
             "builtin" => Ok(Keyword::Builtin),
             "import" => Ok(Keyword::Import),
