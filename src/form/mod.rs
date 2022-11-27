@@ -1,5 +1,6 @@
 pub mod app_form;
 pub mod attrs_form;
+pub mod block_form;
 pub mod case_form;
 pub mod export_form;
 #[allow(clippy::module_inception)]
@@ -16,6 +17,7 @@ pub mod val_form;
 
 pub use app_form::*;
 pub use attrs_form::*;
+pub use block_form::*;
 pub use case_form::*;
 pub use export_form::*;
 pub use form::*;
