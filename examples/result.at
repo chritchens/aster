@@ -1,0 +1,22 @@
+(module result (prod T E) (prod 
+  #! An example on how Result and unwrap can be implemented.
+            
+  (type Result (Sum T E))
+  
+  (sig unwrap (Fun (Result T E) T))
+  (val unwrap (fun res 
+    (case res 
+      (match t id)
+      (match e panic))))))
+
+(module main (prod 
+  #! An example on how Result and unwrap can be used.
+            
+  (type StringError String)
+  (import result (prod String StringError) (Result unwrap))
+
+  (sig main (Fun IO IO))
+  (val main (fun io (let 
+    (sig msg String)
+    (val msg "Hello, World!")
+    (println (prod io (unwrap msg))))))))
