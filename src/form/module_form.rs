@@ -1,7 +1,7 @@
 use crate::error::{Error, SyntacticError};
+use crate::form::block_form::{BlockForm, BlockFormEntry};
 use crate::form::form::{Form, FormTailElement};
 use crate::form::prod_form::{ProdForm, ProdFormValue};
-use crate::form::block_form::{BlockForm, BlockFormEntry};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -117,7 +117,7 @@ impl ModuleForm {
         let mut entries = vec![];
 
         match self.block.clone() {
-            ModuleFormBlock::Empty(_) => {},
+            ModuleFormBlock::Empty(_) => {}
             ModuleFormBlock::Form(form) => {
                 entries = form.entries;
             }
@@ -189,19 +189,17 @@ impl ModuleForm {
 
     fn parse_block(&mut self, form: &Form, idx: usize) -> Result<()> {
         match form.tail[idx].clone() {
-            FormTailElement::Simple(value) => {
-                match value {
-                    SimpleValue::Empty(_) => {
-                        self.block = ModuleFormBlock::Empty(value);
-                    }
-                    x => {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: x.loc(),
-                            desc: "unexpected value".into(),
-                        }));
-                    }
+            FormTailElement::Simple(value) => match value {
+                SimpleValue::Empty(_) => {
+                    self.block = ModuleFormBlock::Empty(value);
                 }
-            }
+                x => {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: x.loc(),
+                        desc: "unexpected value".into(),
+                    }));
+                }
+            },
             FormTailElement::Form(form) => {
                 let form = BlockForm::from_form(&form)?;
                 self.block = ModuleFormBlock::Form(Box::new(form));
@@ -357,7 +355,7 @@ mod tests {
 
         assert_eq!(form.name.to_string(), "x".to_string());
         assert_eq!(form.type_parameters_to_string(), "(prod T E)".to_string());
-        
+
         let mut block_entries = form.block_entries();
 
         assert_eq!(form.block_entries().len(), 3);
