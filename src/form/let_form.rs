@@ -152,19 +152,11 @@ impl LetForm {
     }
 
     pub fn entries_to_string(&self) -> String {
-        let len = self.entries.len();
-
-        match len {
-            1 => self.entries[0].to_string(),
-            _ => format!(
-                "(prod {})",
-                self.entries
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<String>>()
-                    .join(" ")
-            ),
-        }
+        self.entries
+            .iter()
+            .map(|p| p.to_string())
+            .collect::<Vec<String>>()
+            .join(" ")
     }
 
     pub fn all_parameters(&self) -> Vec<SimpleValue> {
