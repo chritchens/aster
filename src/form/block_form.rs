@@ -3,6 +3,7 @@ use crate::form::app_form::AppFormValue;
 use crate::form::attrs_form::AttrsForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::import_form::ImportForm;
+use crate::form::export_form::ExportForm;
 use crate::form::sig_form::SigForm;
 use crate::form::type_form::TypeForm;
 use crate::form::val_form::ValForm;
@@ -16,6 +17,7 @@ use std::fmt;
 pub enum BlockFormEntry {
     Empty(SimpleValue),
     ImportForm(Box<ImportForm>),
+    ExportForm(Box<ExportForm>),
     AttrsForm(Box<AttrsForm>),
     TypeForm(Box<TypeForm>),
     SigForm(Box<SigForm>),
@@ -33,6 +35,7 @@ impl BlockFormEntry {
         match self {
             BlockFormEntry::Empty(empty) => empty.file(),
             BlockFormEntry::ImportForm(form) => form.file(),
+            BlockFormEntry::ExportForm(form) => form.file(),
             BlockFormEntry::AttrsForm(form) => form.file(),
             BlockFormEntry::TypeForm(form) => form.file(),
             BlockFormEntry::SigForm(form) => form.file(),
@@ -44,6 +47,7 @@ impl BlockFormEntry {
         match self {
             BlockFormEntry::Empty(empty) => empty.loc(),
             BlockFormEntry::ImportForm(form) => form.loc(),
+            BlockFormEntry::ExportForm(form) => form.loc(),
             BlockFormEntry::AttrsForm(form) => form.loc(),
             BlockFormEntry::TypeForm(form) => form.loc(),
             BlockFormEntry::SigForm(form) => form.loc(),
@@ -56,6 +60,7 @@ impl BlockFormEntry {
         match self {
             BlockFormEntry::Empty(_) => "()".into(),
             BlockFormEntry::ImportForm(form) => form.to_string(),
+            BlockFormEntry::ExportForm(form) => form.to_string(),
             BlockFormEntry::AttrsForm(form) => form.to_string(),
             BlockFormEntry::TypeForm(form) => form.to_string(),
             BlockFormEntry::SigForm(form) => form.to_string(),
@@ -98,6 +103,17 @@ impl BlockForm {
 
         match self.entries[idx].clone() {
             BlockFormEntry::ImportForm(form) => Some(form),
+            _ => None,
+        }
+    }
+
+    pub fn entry_as_export(&self, idx: usize) -> Option<Box<ExportForm>> {
+        if idx > self.entries.len() - 1 {
+            return None;
+        }
+
+        match self.entries[idx].clone() {
+            BlockFormEntry::ExportForm(form) => Some(form),
             _ => None,
         }
     }
@@ -168,6 +184,9 @@ impl BlockForm {
                 BlockFormEntry::ImportForm(form) => {
                     params.extend(form.all_parameters());
                 }
+                BlockFormEntry::ExportForm(form) => {
+                    params.extend(form.all_parameters());
+                }
                 BlockFormEntry::AttrsForm(form) => {
                     params.extend(form.all_parameters());
                 }
@@ -194,6 +213,9 @@ impl BlockForm {
         for entry in self.entries.iter() {
             match entry.clone() {
                 BlockFormEntry::ImportForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                BlockFormEntry::ExportForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 BlockFormEntry::AttrsForm(form) => {
@@ -240,6 +262,10 @@ impl BlockForm {
                         block_form
                             .entries
                             .push(BlockFormEntry::ImportForm(Box::new(form)));
+                    } else if let Ok(form) = ExportForm::from_form(&form) {
+                        block_form
+                            .entries
+                            .push(BlockFormEntry::ExportForm(Box::new(form)));
                     } else if let Ok(form) = AttrsForm::from_form(&form) {
                         block_form
                             .entries
@@ -264,6 +290,7 @@ impl BlockForm {
                     }
                 }
                 _ => {
+                    println!("{}", form.to_string());
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: "expected a form".into(),

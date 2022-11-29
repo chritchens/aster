@@ -1,4 +1,4 @@
-(module main (prod
+(module main (block
   #! Sum example
 
   (import std.io _ _ io)

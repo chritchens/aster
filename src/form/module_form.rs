@@ -1,12 +1,7 @@
 use crate::error::{Error, SyntacticError};
-use crate::form::attrs_form::AttrsForm;
-use crate::form::export_form::ExportForm;
 use crate::form::form::{Form, FormTailElement};
-use crate::form::import_form::ImportForm;
 use crate::form::prod_form::{ProdForm, ProdFormValue};
-use crate::form::sig_form::SigForm;
-use crate::form::type_form::TypeForm;
-use crate::form::val_form::ValForm;
+use crate::form::block_form::{BlockForm, BlockFormEntry};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -56,62 +51,42 @@ impl fmt::Display for ModuleFormTypeParameter {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum ModuleFormEntry {
+pub enum ModuleFormBlock {
     Empty(SimpleValue),
-    ImportForm(Box<ImportForm>),
-    ExportForm(Box<ExportForm>),
-    AttrsForm(Box<AttrsForm>),
-    TypeForm(Box<TypeForm>),
-    SigForm(Box<SigForm>),
-    ValForm(Box<ValForm>),
+    Form(Box<BlockForm>),
 }
 
-impl Default for ModuleFormEntry {
-    fn default() -> ModuleFormEntry {
-        ModuleFormEntry::Empty(SimpleValue::new())
+impl Default for ModuleFormBlock {
+    fn default() -> ModuleFormBlock {
+        ModuleFormBlock::Empty(SimpleValue::new())
     }
 }
 
-impl ModuleFormEntry {
+impl ModuleFormBlock {
     pub fn file(&self) -> String {
         match self {
-            ModuleFormEntry::Empty(empty) => empty.file(),
-            ModuleFormEntry::ImportForm(form) => form.file(),
-            ModuleFormEntry::ExportForm(form) => form.file(),
-            ModuleFormEntry::AttrsForm(form) => form.file(),
-            ModuleFormEntry::TypeForm(form) => form.file(),
-            ModuleFormEntry::SigForm(form) => form.file(),
-            ModuleFormEntry::ValForm(form) => form.file(),
+            ModuleFormBlock::Empty(empty) => empty.file(),
+            ModuleFormBlock::Form(form) => form.file(),
         }
     }
 
     pub fn loc(&self) -> Option<Loc> {
         match self {
-            ModuleFormEntry::Empty(empty) => empty.loc(),
-            ModuleFormEntry::ImportForm(form) => form.loc(),
-            ModuleFormEntry::ExportForm(form) => form.loc(),
-            ModuleFormEntry::AttrsForm(form) => form.loc(),
-            ModuleFormEntry::TypeForm(form) => form.loc(),
-            ModuleFormEntry::SigForm(form) => form.loc(),
-            ModuleFormEntry::ValForm(form) => form.loc(),
+            ModuleFormBlock::Empty(empty) => empty.loc(),
+            ModuleFormBlock::Form(form) => form.loc(),
         }
     }
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            ModuleFormEntry::Empty(_) => "()".into(),
-            ModuleFormEntry::ImportForm(form) => form.to_string(),
-            ModuleFormEntry::ExportForm(form) => form.to_string(),
-            ModuleFormEntry::AttrsForm(form) => form.to_string(),
-            ModuleFormEntry::TypeForm(form) => form.to_string(),
-            ModuleFormEntry::SigForm(form) => form.to_string(),
-            ModuleFormEntry::ValForm(form) => form.to_string(),
+            ModuleFormBlock::Empty(_) => "()".into(),
+            ModuleFormBlock::Form(form) => form.to_string(),
         }
     }
 }
 
-impl fmt::Display for ModuleFormEntry {
+impl fmt::Display for ModuleFormBlock {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
@@ -122,7 +97,7 @@ pub struct ModuleForm {
     pub tokens: Box<Tokens>,
     pub name: SimpleValue,
     pub type_parameters: Vec<ModuleFormTypeParameter>,
-    pub entries: Vec<ModuleFormEntry>,
+    pub block: ModuleFormBlock,
 }
 
 impl ModuleForm {
@@ -138,70 +113,17 @@ impl ModuleForm {
         self.tokens[0].loc()
     }
 
-    pub fn entry_as_import(&self, idx: usize) -> Option<Box<ImportForm>> {
-        if idx > self.entries.len() - 1 {
-            return None;
+    pub fn block_entries(&self) -> Vec<BlockFormEntry> {
+        let mut entries = vec![];
+
+        match self.block.clone() {
+            ModuleFormBlock::Empty(_) => {},
+            ModuleFormBlock::Form(form) => {
+                entries = form.entries;
+            }
         }
 
-        match self.entries[idx].clone() {
-            ModuleFormEntry::ImportForm(form) => Some(form),
-            _ => None,
-        }
-    }
-
-    pub fn entry_as_export(&self, idx: usize) -> Option<Box<ExportForm>> {
-        if idx > self.entries.len() - 1 {
-            return None;
-        }
-
-        match self.entries[idx].clone() {
-            ModuleFormEntry::ExportForm(form) => Some(form),
-            _ => None,
-        }
-    }
-
-    pub fn entry_as_type(&self, idx: usize) -> Option<Box<TypeForm>> {
-        if idx > self.entries.len() - 1 {
-            return None;
-        }
-
-        match self.entries[idx].clone() {
-            ModuleFormEntry::TypeForm(form) => Some(form),
-            _ => None,
-        }
-    }
-
-    pub fn entry_as_attributes(&self, idx: usize) -> Option<Box<AttrsForm>> {
-        if idx > self.entries.len() - 1 {
-            return None;
-        }
-
-        match self.entries[idx].clone() {
-            ModuleFormEntry::AttrsForm(form) => Some(form),
-            _ => None,
-        }
-    }
-
-    pub fn entry_as_signature(&self, idx: usize) -> Option<Box<SigForm>> {
-        if idx > self.entries.len() - 1 {
-            return None;
-        }
-
-        match self.entries[idx].clone() {
-            ModuleFormEntry::SigForm(form) => Some(form),
-            _ => None,
-        }
-    }
-
-    pub fn entry_as_value(&self, idx: usize) -> Option<Box<ValForm>> {
-        if idx > self.entries.len() - 1 {
-            return None;
-        }
-
-        match self.entries[idx].clone() {
-            ModuleFormEntry::ValForm(form) => Some(form),
-            _ => None,
-        }
+        entries
     }
 
     pub fn type_parameters_to_string(&self) -> String {
@@ -216,22 +138,6 @@ impl ModuleForm {
                     .join(" ")
             ),
             _ => "".to_string(),
-        }
-    }
-
-    pub fn entries_to_string(&self) -> String {
-        let len = self.entries.len();
-
-        match len {
-            1 => self.entries[0].to_string(),
-            _ => format!(
-                "(prod {})",
-                self.entries
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<String>>()
-                    .join(" ")
-            ),
         }
     }
 
@@ -281,50 +187,24 @@ impl ModuleForm {
         Ok(())
     }
 
-    fn parse_entries(&mut self, form: &Form, idx: usize) -> Result<()> {
+    fn parse_block(&mut self, form: &Form, idx: usize) -> Result<()> {
         match form.tail[idx].clone() {
-            FormTailElement::Simple(value) => match value {
-                SimpleValue::Empty(_) => {
-                    self.entries.push(ModuleFormEntry::Empty(value));
-                }
-                x => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: x.loc(),
-                        desc: "expected an empty literal".into(),
-                    }));
-                }
-            },
-            FormTailElement::Form(form) => {
-                let prod = ProdForm::from_form(&form)?;
-
-                for value in prod.values {
-                    match value {
-                        ProdFormValue::ImportForm(form) => {
-                            self.entries.push(ModuleFormEntry::ImportForm(form));
-                        }
-                        ProdFormValue::ExportForm(form) => {
-                            self.entries.push(ModuleFormEntry::ExportForm(form));
-                        }
-                        ProdFormValue::AttrsForm(form) => {
-                            self.entries.push(ModuleFormEntry::AttrsForm(form));
-                        }
-                        ProdFormValue::TypeForm(form) => {
-                            self.entries.push(ModuleFormEntry::TypeForm(form));
-                        }
-                        ProdFormValue::SigForm(form) => {
-                            self.entries.push(ModuleFormEntry::SigForm(form));
-                        }
-                        ProdFormValue::ValForm(form) => {
-                            self.entries.push(ModuleFormEntry::ValForm(form));
-                        }
-                        _ => {
-                            return Err(Error::Syntactic(SyntacticError {
-                                loc: form.loc(),
-                                desc: "unexpected form".into(),
-                            }));
-                        }
+            FormTailElement::Simple(value) => {
+                match value {
+                    SimpleValue::Empty(_) => {
+                        self.block = ModuleFormBlock::Empty(value);
+                    }
+                    x => {
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: x.loc(),
+                            desc: "unexpected value".into(),
+                        }));
                     }
                 }
+            }
+            FormTailElement::Form(form) => {
+                let form = BlockForm::from_form(&form)?;
+                self.block = ModuleFormBlock::Form(Box::new(form));
             }
         }
 
@@ -373,11 +253,11 @@ impl ModuleForm {
 
         match len {
             2 => {
-                module.parse_entries(form, 1)?;
+                module.parse_block(form, 1)?;
             }
             3 => {
                 module.parse_type_parameters(form, 1)?;
-                module.parse_entries(form, 2)?;
+                module.parse_block(form, 2)?;
             }
             _ => unreachable!(),
         }
@@ -401,13 +281,13 @@ impl ModuleForm {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         if self.type_parameters.is_empty() {
-            format!("(module {} {})", self.name, self.entries_to_string(),)
+            format!("(module {} {})", self.name, self.block.to_string(),)
         } else {
             format!(
                 "(module {} {} {})",
                 self.name,
                 self.type_parameters_to_string(),
-                self.entries_to_string(),
+                self.block.to_string(),
             )
         }
     }
@@ -459,7 +339,7 @@ mod tests {
         assert_eq!(form.to_string(), s.to_string());
 
         s = "
-        (module x (prod T E) (prod
+        (module x (prod T E) (block
             (type Result (Sum T E))
             
             (sig unwrap (Fun (Result T E) T))
@@ -477,38 +357,25 @@ mod tests {
 
         assert_eq!(form.name.to_string(), "x".to_string());
         assert_eq!(form.type_parameters_to_string(), "(prod T E)".to_string());
-        assert_eq!(form.entries.len(), 3);
+        
+        let mut block_entries = form.block_entries();
+
+        assert_eq!(form.block_entries().len(), 3);
         assert_eq!(
-            form.entries[0].to_string(),
+            block_entries[0].to_string(),
             "(type Result (Sum T E))".to_string()
         );
-        assert!(form.entry_as_import(0).is_none());
-        assert!(form.entry_as_export(0).is_none());
-        assert!(form.entry_as_type(0).is_some());
-        assert!(form.entry_as_type(0).unwrap().is_types_form());
-        assert!(form.entry_as_value(0).is_none());
         assert_eq!(
-            form.entries[1].to_string(),
+            block_entries[1].to_string(),
             "(sig unwrap (Fun (Result T E) T))".to_string()
         );
-        assert!(form.entry_as_import(1).is_none());
-        assert!(form.entry_as_export(1).is_none());
-        assert!(form.entry_as_type(1).is_none());
-        assert!(form.entry_as_signature(1).is_some());
-        assert!(form.entry_as_signature(1).is_some());
-        assert!(form.entry_as_value(1).is_none());
         assert_eq!(
-            form.entries[2].to_string(),
+            block_entries[2].to_string(),
             "(val unwrap (fun res (case res (match t id) (match e panic))))".to_string()
         );
-        assert!(form.entry_as_import(2).is_none());
-        assert!(form.entry_as_export(2).is_none());
-        assert!(form.entry_as_value(2).is_some());
-        assert!(form.entry_as_value(2).unwrap().is_value());
-        assert!(form.entry_as_value(2).unwrap().is_function_form());
 
         s = "
-        (module main () (prod
+        (module main () (block
             (type StringErr String)
             (import x (prod String StringErr) (prod Result unwrap))
             (import std.io _ println)
@@ -528,33 +395,25 @@ mod tests {
 
         assert_eq!(form.name.to_string(), "main".to_string());
         assert_eq!(form.type_parameters_to_string(), "()".to_string());
-        assert_eq!(form.entries.len(), 5);
+
+        block_entries = form.block_entries();
+
+        assert_eq!(block_entries.len(), 5);
         assert_eq!(
-            form.entries[0].to_string(),
+            block_entries[0].to_string(),
             "(type StringErr String)".to_string()
         );
-        assert!(form.entry_as_import(0).is_none());
-        assert!(form.entry_as_export(0).is_none());
-        assert!(form.entry_as_type(0).is_some());
-        assert!(form.entry_as_type(0).unwrap().is_type_keyword());
-        assert!(form.entry_as_value(0).is_none());
         assert_eq!(
-            form.entries[1].to_string(),
+            block_entries[1].to_string(),
             "(import x (prod String StringErr) (prod Result unwrap))".to_string()
         );
-        assert!(form.entry_as_import(1).is_some());
-        assert!(form.entry_as_export(1).is_none());
-        assert!(form.entry_as_value(1).is_none());
         assert_eq!(
-            form.entries[2].to_string(),
+            block_entries[2].to_string(),
             "(import std.io _ println)".to_string()
         );
-        assert!(form.entry_as_import(2).is_some());
-        assert!(form.entry_as_export(2).is_none());
-        assert!(form.entry_as_value(2).is_none());
 
         s = "
-        (module main (prod
+        (module main (block
             (type StringErr String)
             (import x (prod String StringErr) (prod Result unwrap))
             (import std.io _ println)
@@ -574,17 +433,20 @@ mod tests {
 
         assert_eq!(form.name.to_string(), "main".to_string());
         assert!(form.type_parameters.is_empty());
-        assert_eq!(form.entries.len(), 5);
+
+        block_entries = form.block_entries();
+
+        assert_eq!(block_entries.len(), 5);
         assert_eq!(
-            form.entries[0].to_string(),
+            block_entries[0].to_string(),
             "(type StringErr String)".to_string()
         );
         assert_eq!(
-            form.entries[1].to_string(),
+            block_entries[1].to_string(),
             "(import x (prod String StringErr) (prod Result unwrap))".to_string()
         );
         assert_eq!(
-            form.entries[2].to_string(),
+            block_entries[2].to_string(),
             "(import std.io _ println)".to_string()
         );
     }

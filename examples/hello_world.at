@@ -1,4 +1,4 @@
-(module main (prod
+(module main (block
   #! Hello World example
 
   (import std.io)

@@ -1,4 +1,4 @@
-(module main (prod 
+(module main (block 
   #! An example on how booleans can be built using atomics
 
   (import std.io _ printf)

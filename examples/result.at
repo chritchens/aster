@@ -1,4 +1,4 @@
-(module result (prod T E) (prod 
+(module result (prod T E) (block 
   #! An example on how Result and unwrap can be implemented.
             
   (type Result (Sum T E))
@@ -9,7 +9,7 @@
       (match t id)
       (match e panic))))))
 
-(module main (prod 
+(module main (block 
   #! An example on how Result and unwrap can be used.
             
   (type StringError String)
