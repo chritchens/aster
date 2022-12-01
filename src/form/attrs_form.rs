@@ -1,6 +1,6 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormTailElement};
-use crate::form::prod_form::{ProdForm, ProdFormValue};
+use crate::form::list_form::{ListForm, ListFormValue};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -107,7 +107,7 @@ impl AttrsForm {
         match self.values.len() {
             1 => self.values[0].to_string(),
             x if x > 1 => format!(
-                "(prod {})",
+                "(list {})",
                 self.values
                     .iter()
                     .map(|p| p.to_string())
@@ -198,25 +198,25 @@ impl AttrsForm {
                 }
             },
             FormTailElement::Form(form) => {
-                if let Ok(prod) = ProdForm::from_form(&form) {
-                    for value in prod.values.iter() {
+                if let Ok(list) = ListForm::from_form(&form) {
+                    for value in list.values.iter() {
                         match value.clone() {
-                            ProdFormValue::TypeKeyword(keyword) => {
+                            ListFormValue::TypeKeyword(keyword) => {
                                 attrs.values.push(AttrsFormValue::TypeKeyword(keyword));
                             }
-                            ProdFormValue::ValueKeyword(keyword) => {
+                            ListFormValue::ValueKeyword(keyword) => {
                                 attrs.values.push(AttrsFormValue::ValueKeyword(keyword));
                             }
-                            ProdFormValue::TypeSymbol(symbol) => {
+                            ListFormValue::TypeSymbol(symbol) => {
                                 attrs.values.push(AttrsFormValue::TypeSymbol(symbol));
                             }
-                            ProdFormValue::ValueSymbol(symbol) => {
+                            ListFormValue::ValueSymbol(symbol) => {
                                 attrs.values.push(AttrsFormValue::ValueSymbol(symbol));
                             }
-                            ProdFormValue::TypePathSymbol(symbol) => {
+                            ListFormValue::TypePathSymbol(symbol) => {
                                 attrs.values.push(AttrsFormValue::TypePathSymbol(symbol));
                             }
-                            ProdFormValue::ValuePathSymbol(symbol) => {
+                            ListFormValue::ValuePathSymbol(symbol) => {
                                 attrs.values.push(AttrsFormValue::ValuePathSymbol(symbol));
                             }
                             x => {
@@ -317,7 +317,7 @@ mod tests {
         assert_eq!(form.values_to_string(), "moduleX.X".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(attrs x (prod union a moduleA.A Type))";
+        s = "(attrs x (list union a moduleA.A Type))";
 
         res = AttrsForm::from_str(s);
 
@@ -329,7 +329,7 @@ mod tests {
         assert!(form.is_value_attributes());
         assert_eq!(
             form.values_to_string(),
-            "(prod union a moduleA.A Type)".to_string()
+            "(list union a moduleA.A Type)".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
     }
