@@ -502,7 +502,7 @@ mod tests {
         assert_eq!(form.body.to_string(), "moduleX.x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(fun a b c d (math.+ (prod a b 10 (math.* (prod c d 10)))))";
+        s = "(fun a b c d (math.+ a b 10 (math.* c d 10)))";
 
         res = FunForm::from_str(s);
 
@@ -513,11 +513,11 @@ mod tests {
         assert_eq!(form.parameters_to_string(), "a b c d".to_string());
         assert_eq!(
             form.body.to_string(),
-            "(math.+ (prod a b 10 (math.* (prod c d 10))))".to_string()
+            "(math.+ a b 10 (math.* c d 10))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(fun a b c d (fun e (math.+ (prod a b 10 (math.* (prod c d e))))))";
+        s = "(fun a b c d (fun e (math.+ a b 10 (math.* c d e))))";
 
         res = FunForm::from_str(s);
 
@@ -528,7 +528,7 @@ mod tests {
         assert_eq!(form.parameters_to_string(), "a b c d".to_string());
         assert_eq!(
             form.body.to_string(),
-            "(fun e (math.+ (prod a b 10 (math.* (prod c d e)))))".to_string()
+            "(fun e (math.+ a b 10 (math.* c d e)))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
     }
@@ -747,7 +747,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_ok());
 
-        s = "(fun a (+ (prod a 1)))";
+        s = "(fun a (+ a 1))";
 
         form = FunForm::from_str(s).unwrap();
 
@@ -789,7 +789,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_ok());
 
-        s = "(fun a b c d (+ (prod a b c d 1)))";
+        s = "(fun a b c d (+ a b c d 1))";
 
         form = FunForm::from_str(s).unwrap();
 
@@ -831,7 +831,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_ok());
 
-        s = "(fun a b d c (+ (prod a b c d 1)))";
+        s = "(fun a b d c (+ a b c d 1))";
 
         form = FunForm::from_str(s).unwrap();
 
@@ -873,7 +873,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_err());
 
-        s = "(fun a b c d e (+ (prod a b c d 1)))";
+        s = "(fun a b c d e (+ a b c d 1))";
 
         form = FunForm::from_str(s).unwrap();
 
@@ -915,7 +915,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_err());
 
-        s = "(fun a b c d e (+ (prod a b c d e f)))";
+        s = "(fun a b c d e (+ a b c d e f))";
 
         form = FunForm::from_str(s).unwrap();
 

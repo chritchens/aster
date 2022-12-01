@@ -341,7 +341,7 @@ mod tests {
     fn block_form_from_str() {
         use super::BlockForm;
 
-        let mut s = "(block (val e10 (math.exp (prod math.e 10))))";
+        let mut s = "(block (val e10 (math.exp math.e 10)))";
 
         let mut res = BlockForm::from_str(s);
 
@@ -351,11 +351,11 @@ mod tests {
 
         assert_eq!(
             form.entries_to_string(),
-            "(val e10 (math.exp (prod math.e 10)))".to_string()
+            "(val e10 (math.exp math.e 10))".to_string()
         );
         assert_eq!(
             form.to_string(),
-            "(block (val e10 (math.exp (prod math.e 10))))".to_string()
+            "(block (val e10 (math.exp math.e 10)))".to_string()
         );
 
         s = "

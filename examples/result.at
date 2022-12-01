@@ -20,4 +20,4 @@
   (val main (fun io (let 
     (sig msg String)
     (val msg "Hello, World!")
-    (println (prod io (unwrap msg))))))))
+    (println io (unwrap msg)))))))

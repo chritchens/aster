@@ -3,7 +3,7 @@ use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
-use crate::form::prod_form::{ProdForm, ProdFormValue};
+use crate::form::prod_form::ProdForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -165,18 +165,11 @@ impl AppForm {
     }
 
     pub fn variables_to_string(&self) -> String {
-        match self.variables.len() {
-            1 => self.variables[0].to_string(),
-            x if x > 1 => format!(
-                "(prod {})",
-                self.variables
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<String>>()
-                    .join(" ")
-            ),
-            _ => "()".to_string(),
-        }
+        self.variables
+            .iter()
+            .map(|p| p.to_string())
+            .collect::<Vec<String>>()
+            .join(" ")
     }
 
     pub fn all_parameters(&self) -> Vec<SimpleValue> {
@@ -200,11 +193,71 @@ impl AppForm {
         vars
     }
 
-    pub fn from_form(form: &Form) -> Result<AppForm> {
-        if form.tail.len() != 1 {
+    pub fn parse_variables(&mut self, form: &Form) -> Result<()> {
+        if form.tail.is_empty() {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a variable or a product of variables".into(),
+                desc: "expected at least a variable".into(),
+            }));
+        }
+
+        for var in form.tail[0..].iter() {
+            match var.clone() {
+                FormTailElement::Simple(value) => match value {
+                    SimpleValue::Ignore(_) => {
+                        self.variables.push(AppFormValue::Ignore(value));
+                    }
+                    SimpleValue::Empty(_) => {
+                        self.variables.push(AppFormValue::Empty(value));
+                    }
+                    SimpleValue::Panic(_) => {
+                        self.variables.push(AppFormValue::Panic(value));
+                    }
+                    SimpleValue::Atomic(_) => {
+                        self.variables.push(AppFormValue::Atomic(value));
+                    }
+                    SimpleValue::ValueSymbol(_) => {
+                        self.variables.push(AppFormValue::ValueSymbol(value));
+                    }
+                    SimpleValue::ValuePathSymbol(_) => {
+                        self.variables.push(AppFormValue::ValuePathSymbol(value));
+                    }
+                    x => {
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: x.loc(),
+                            desc: "unexpected variable".into(),
+                        }));
+                    }
+                },
+                FormTailElement::Form(form) => {
+                    if let Ok(form) = ProdForm::from_form(&form) {
+                        self.variables.push(AppFormValue::ProdForm(Box::new(form)));
+                    } else if let Ok(form) = FunForm::from_form(&form) {
+                        self.variables.push(AppFormValue::FunForm(Box::new(form)));
+                    } else if let Ok(form) = LetForm::from_form(&form) {
+                        self.variables.push(AppFormValue::LetForm(Box::new(form)));
+                    } else if let Ok(form) = CaseForm::from_form(&form) {
+                        self.variables.push(AppFormValue::CaseForm(Box::new(form)));
+                    } else if let Ok(form) = AppForm::from_form(&form) {
+                        self.variables.push(AppFormValue::AppForm(Box::new(form)));
+                    } else {
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: form.loc(),
+                            desc: "unexpected form".into(),
+                        }));
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn from_form(form: &Form) -> Result<AppForm> {
+        if form.tail.is_empty() {
+            return Err(Error::Syntactic(SyntacticError {
+                loc: form.loc(),
+                desc: "expected at least a variable".into(),
             }));
         }
 
@@ -234,88 +287,7 @@ impl AppForm {
             }
         }
 
-        match form.tail[0].clone() {
-            FormTailElement::Simple(value) => match value {
-                SimpleValue::Ignore(_) => {
-                    app.variables.push(AppFormValue::Ignore(value));
-                }
-                SimpleValue::Empty(_) => {
-                    app.variables.push(AppFormValue::Empty(value));
-                }
-                SimpleValue::Panic(_) => {
-                    app.variables.push(AppFormValue::Panic(value));
-                }
-                SimpleValue::Atomic(_) => {
-                    app.variables.push(AppFormValue::Atomic(value));
-                }
-                SimpleValue::ValueSymbol(_) => {
-                    app.variables.push(AppFormValue::ValueSymbol(value));
-                }
-                SimpleValue::ValuePathSymbol(_) => {
-                    app.variables.push(AppFormValue::ValuePathSymbol(value));
-                }
-                x => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: x.loc(),
-                        desc: "unexpected variable".into(),
-                    }));
-                }
-            },
-            FormTailElement::Form(form) => {
-                if let Ok(prod) = ProdForm::from_form(&form) {
-                    for value in prod.values.iter() {
-                        match value.clone() {
-                            ProdFormValue::Ignore(atomic) => {
-                                app.variables.push(AppFormValue::Ignore(atomic));
-                            }
-                            ProdFormValue::Panic(atomic) => {
-                                app.variables.push(AppFormValue::Panic(atomic));
-                            }
-                            ProdFormValue::Atomic(atomic) => {
-                                app.variables.push(AppFormValue::Atomic(atomic));
-                            }
-                            ProdFormValue::ValueSymbol(symbol) => {
-                                app.variables.push(AppFormValue::ValueSymbol(symbol));
-                            }
-                            ProdFormValue::ValuePathSymbol(symbol) => {
-                                app.variables.push(AppFormValue::ValuePathSymbol(symbol));
-                            }
-                            ProdFormValue::FunForm(form) => {
-                                app.variables.push(AppFormValue::FunForm(form));
-                            }
-                            ProdFormValue::LetForm(form) => {
-                                app.variables.push(AppFormValue::LetForm(form));
-                            }
-                            ProdFormValue::CaseForm(form) => {
-                                app.variables.push(AppFormValue::CaseForm(form));
-                            }
-                            ProdFormValue::AppForm(form) => {
-                                app.variables.push(AppFormValue::AppForm(form));
-                            }
-                            _ => {
-                                return Err(Error::Syntactic(SyntacticError {
-                                    loc: form.loc(),
-                                    desc: "unexpected form".into(),
-                                }));
-                            }
-                        }
-                    }
-                } else if let Ok(form) = FunForm::from_form(&form) {
-                    app.variables.push(AppFormValue::FunForm(Box::new(form)));
-                } else if let Ok(form) = LetForm::from_form(&form) {
-                    app.variables.push(AppFormValue::LetForm(Box::new(form)));
-                } else if let Ok(form) = CaseForm::from_form(&form) {
-                    app.variables.push(AppFormValue::CaseForm(Box::new(form)));
-                } else if let Ok(form) = AppForm::from_form(&form) {
-                    app.variables.push(AppFormValue::AppForm(Box::new(form)));
-                } else {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "unexpected form".into(),
-                    }));
-                }
-            }
-        }
+        app.parse_variables(&form)?;
 
         Ok(app)
     }
@@ -359,7 +331,7 @@ mod tests {
     fn app_form_from_str() {
         use super::AppForm;
 
-        let mut s = "(math.+ (prod 0 1 2 3))";
+        let mut s = "(math.+ 0 1 2 3)";
 
         let mut res = AppForm::from_str(s);
 
@@ -368,7 +340,7 @@ mod tests {
         let mut form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "math.+".to_string());
-        assert_eq!(form.variables_to_string(), "(prod 0 1 2 3)".to_string());
+        assert_eq!(form.variables_to_string(), "0 1 2 3".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(unwrap ())";
@@ -428,7 +400,7 @@ mod tests {
         assert_eq!(form.variables_to_string(), "stdIO".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(unwrap (fun a b (math.+ (prod a b))))";
+        s = "(unwrap (fun a b (math.+ a b)))";
 
         res = AppForm::from_str(s);
 
@@ -438,7 +410,7 @@ mod tests {
 
         assert_eq!(
             form.variables_to_string(),
-            "(fun a b (math.+ (prod a b)))".to_string()
+            "(fun a b (math.+ a b))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
     }

@@ -421,7 +421,7 @@ mod tests {
     fn let_form_from_str() {
         use super::LetForm;
 
-        let mut s = "(let (math.exp (prod math.e 10)))";
+        let mut s = "(let (math.exp math.e 10))";
 
         let mut res = LetForm::from_str(s);
 
@@ -430,14 +430,8 @@ mod tests {
         let mut form = res.unwrap();
 
         assert!(form.entries.is_empty());
-        assert_eq!(
-            form.value.to_string(),
-            "(math.exp (prod math.e 10))".to_string()
-        );
-        assert_eq!(
-            form.to_string(),
-            "(let (math.exp (prod math.e 10)))".to_string()
-        );
+        assert_eq!(form.value.to_string(), "(math.exp math.e 10)".to_string());
+        assert_eq!(form.to_string(), "(let (math.exp math.e 10))".to_string());
 
         s = "
         (let

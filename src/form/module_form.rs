@@ -382,8 +382,7 @@ mod tests {
             (val main (fun io (let 
                 (sig text String)
                 (val text \"Hello, World!\")
-                (println (prod io (unwrap text))))))
-        ))";
+                (println io (unwrap text)))))))";
 
         res = ModuleForm::from_str(s);
 
@@ -420,8 +419,7 @@ mod tests {
             (val main (fun io (let
                 (sig text String)
                 (val text \"Hello, World!\")
-                (println (prod io (unwrap text))))))
-        ))";
+                (println io (unwrap text)))))))";
 
         res = ModuleForm::from_str(s);
 

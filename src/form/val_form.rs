@@ -481,7 +481,7 @@ mod tests {
         assert!(form.is_value_symbol());
         assert!(form.is_value());
 
-        s = "(val s (math.+ (prod 10.323 1)))";
+        s = "(val s (math.+ 10.323 1))";
 
         res = ValForm::from_str(s);
 
@@ -490,10 +490,7 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "s".to_string());
-        assert_eq!(
-            form.value.to_string(),
-            "(math.+ (prod 10.323 1))".to_string()
-        );
+        assert_eq!(form.value.to_string(), "(math.+ 10.323 1)".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_application_form());
         assert!(form.is_value());
@@ -512,7 +509,7 @@ mod tests {
         assert!(form.is_product_form());
         assert!(form.is_value());
 
-        s = "(val p (prod a b (f (prod x y 10)) 11))";
+        s = "(val p (prod a b (f x y 10) 11))";
 
         res = ValForm::from_str(s);
 
@@ -523,7 +520,7 @@ mod tests {
         assert_eq!(form.name.to_string(), "p".to_string());
         assert_eq!(
             form.value.to_string(),
-            "(prod a b (f (prod x y 10)) 11)".to_string()
+            "(prod a b (f x y 10) 11)".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_product_form());
