@@ -32,5 +32,4 @@
         (printf (prod io "false as uint: {}\n" (boolToUInt f))))))))
 
   (sig main (Fun IO IO))
-  (val main (fun io (printBoolAsUInt (prod false io))))
-))
+  (val main (fun io (printBoolAsUInt (prod false io))))))
