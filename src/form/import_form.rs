@@ -283,7 +283,7 @@ impl ImportForm {
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a listuct of types".into(),
+                        desc: "expected a list of types".into(),
                     }));
                 }
             }
