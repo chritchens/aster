@@ -290,10 +290,10 @@ impl ProdForm {
             }));
         }
 
-        if form.tail.len() < 2 {
+        if form.tail.len() != 2 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected at least two values".into(),
+                desc: "expected two values".into(),
             }));
         }
 

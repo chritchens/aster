@@ -495,7 +495,7 @@ mod tests {
         assert!(form.is_application_form());
         assert!(form.is_value());
 
-        s = "(val p (prod a b c d))";
+        s = "(val p (prod a (prod b c)))";
 
         res = ValForm::from_str(s);
 
@@ -504,12 +504,12 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "p".to_string());
-        assert_eq!(form.value.to_string(), "(prod a b c d)".to_string());
+        assert_eq!(form.value.to_string(), "(prod a (prod b c))".to_string());
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_product_form());
         assert!(form.is_value());
 
-        s = "(val p (prod a b (f x y 10) 11))";
+        s = "(val p (prod a (prod (f x y 10) 11)))";
 
         res = ValForm::from_str(s);
 
@@ -520,7 +520,7 @@ mod tests {
         assert_eq!(form.name.to_string(), "p".to_string());
         assert_eq!(
             form.value.to_string(),
-            "(prod a b (f x y 10) 11)".to_string()
+            "(prod a (prod (f x y 10) 11))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
         assert!(form.is_product_form());
