@@ -3,12 +3,12 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 55] = [
+pub const KEYWORDS: [&str; 57] = [
     "module", "block", "_", "builtin", "import", "export", "val", "type", "atomic", "prod", "list",
-    "arr", "vec", "sig", "fun", "attrs", "app", "case", "id", "default", "match", "others", "size",
-    "load", "store", "ref", "deref", "cast", "dup", "drop", "panic", "Builtin", "Empty", "Atomic",
-    "UInt", "Int", "Float", "Size", "Pointer", "Ref", "Char", "String", "Mem", "Path", "IO", "Ctx",
-    "Sum", "Prod", "List", "Arr", "Vec", "Sig", "Fun", "Attrs", "Type",
+    "arr", "vec", "map", "sig", "fun", "attrs", "app", "case", "id", "default", "match", "others",
+    "size", "load", "store", "ref", "deref", "cast", "dup", "drop", "panic", "Builtin", "Empty",
+    "Atomic", "UInt", "Int", "Float", "Size", "Pointer", "Ref", "Char", "String", "Mem", "Path",
+    "IO", "Ctx", "Sum", "Prod", "List", "Arr", "Vec", "Map", "Sig", "Fun", "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -44,6 +44,7 @@ pub enum Keyword {
     List,
     Arr,
     Vec,
+    Map,
     Sig,
     Fun,
     Attrs,
@@ -82,6 +83,7 @@ pub enum Keyword {
     ListT,
     ArrT,
     VecT,
+    MapT,
     SigT,
     FunT,
     AttrsT,
@@ -104,6 +106,7 @@ impl fmt::Display for Keyword {
             Keyword::List => write!(f, "list"),
             Keyword::Arr => write!(f, "arr"),
             Keyword::Vec => write!(f, "vec"),
+            Keyword::Map => write!(f, "map"),
             Keyword::Sig => write!(f, "sig"),
             Keyword::Fun => write!(f, "fun"),
             Keyword::Attrs => write!(f, "attrs"),
@@ -142,6 +145,7 @@ impl fmt::Display for Keyword {
             Keyword::ListT => write!(f, "List"),
             Keyword::ArrT => write!(f, "Arr"),
             Keyword::VecT => write!(f, "Vec"),
+            Keyword::MapT => write!(f, "Map"),
             Keyword::SigT => write!(f, "Sig"),
             Keyword::FunT => write!(f, "Fun"),
             Keyword::AttrsT => write!(f, "Attrs"),
@@ -167,6 +171,7 @@ impl Keyword {
             "list" => Ok(Keyword::List),
             "arr" => Ok(Keyword::Arr),
             "vec" => Ok(Keyword::Vec),
+            "map" => Ok(Keyword::Map),
             "sig" => Ok(Keyword::Sig),
             "fun" => Ok(Keyword::Fun),
             "attrs" => Ok(Keyword::Attrs),
@@ -205,6 +210,7 @@ impl Keyword {
             "List" => Ok(Keyword::ListT),
             "Arr" => Ok(Keyword::ArrT),
             "Vec" => Ok(Keyword::VecT),
+            "Map" => Ok(Keyword::MapT),
             "Sig" => Ok(Keyword::SigT),
             "Fun" => Ok(Keyword::FunT),
             "Attrs" => Ok(Keyword::AttrsT),
