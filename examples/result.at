@@ -1,4 +1,4 @@
-(module result (prod T E) (block 
+(module result (list T E) (block 
   #! An example on how Result and unwrap can be implemented.
             
   (type Result (Sum T E))

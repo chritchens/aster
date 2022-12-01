@@ -1,7 +1,7 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::block_form::{BlockForm, BlockFormEntry};
 use crate::form::form::{Form, FormTailElement};
-use crate::form::prod_form::{ProdForm, ProdFormValue};
+use crate::form::list_form::{ListForm, ListFormValue};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -130,7 +130,7 @@ impl ModuleForm {
         match self.type_parameters.len() {
             1 => self.type_parameters[0].to_string(),
             x if x > 1 => format!(
-                "(prod {})",
+                "(list {})",
                 self.type_parameters
                     .iter()
                     .map(|p| p.to_string())
@@ -160,10 +160,10 @@ impl ModuleForm {
                 }
             },
             FormTailElement::Form(form) => {
-                if let Ok(prod) = ProdForm::from_form(&form) {
-                    for value in prod.values.iter() {
+                if let Ok(list) = ListForm::from_form(&form) {
+                    for value in list.values.iter() {
                         match value.clone() {
-                            ProdFormValue::TypeSymbol(symbol) => {
+                            ListFormValue::TypeSymbol(symbol) => {
                                 self.type_parameters
                                     .push(ModuleFormTypeParameter::Symbol(symbol));
                             }
@@ -178,7 +178,7 @@ impl ModuleForm {
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a product of types".into(),
+                        desc: "expected a list of types".into(),
                     }));
                 }
             }
@@ -222,7 +222,7 @@ impl ModuleForm {
         if len < 2 || len > 3 {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected a name, optional type parameters and a product of forms".into(),
+                desc: "expected a name, optional type parameters and a list of forms".into(),
             }));
         }
 
@@ -337,7 +337,7 @@ mod tests {
         assert_eq!(form.to_string(), s.to_string());
 
         s = "
-        (module x (prod T E) (block
+        (module x (list T E) (block
             (type Result (Sum T E))
             
             (sig unwrap (Fun (Result T E) T))
@@ -354,7 +354,7 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "x".to_string());
-        assert_eq!(form.type_parameters_to_string(), "(prod T E)".to_string());
+        assert_eq!(form.type_parameters_to_string(), "(list T E)".to_string());
 
         let mut block_entries = form.block_entries();
 
