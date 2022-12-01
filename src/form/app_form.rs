@@ -428,7 +428,7 @@ mod tests {
         assert_eq!(form.variables_to_string(), "stdIO".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(unwrap (fun (prod a b) (math.+ (prod a b))))";
+        s = "(unwrap (fun a b (math.+ (prod a b))))";
 
         res = AppForm::from_str(s);
 
@@ -438,7 +438,7 @@ mod tests {
 
         assert_eq!(
             form.variables_to_string(),
-            "(fun (prod a b) (math.+ (prod a b)))".to_string()
+            "(fun a b (math.+ (prod a b)))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
     }

@@ -286,7 +286,7 @@ mod tests {
         assert!(form.is_value_form());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(Fun (Prod T Q) (Fun (Prod moduleA.A T Q) B))";
+        s = "(Fun T Q (Fun moduleA.A T Q B))";
 
         res = Form::from_str(s);
 
@@ -301,13 +301,14 @@ mod tests {
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>(),
             vec![
-                "(Prod T Q)".to_string(),
-                "(Fun (Prod moduleA.A T Q) B)".into()
+                "T".to_string(),
+                "Q".to_string(),
+                "(Fun moduleA.A T Q B)".into()
             ]
         );
         assert_eq!(
             form.tail_to_string(),
-            "(Prod T Q) (Fun (Prod moduleA.A T Q) B)".to_string()
+            "T Q (Fun moduleA.A T Q B)".to_string()
         );
         assert!(form.is_types_form());
 

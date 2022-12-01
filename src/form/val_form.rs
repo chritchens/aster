@@ -657,7 +657,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_ok());
 
-        s = "(val x (fun (prod a b) (case a
+        s = "(val x (fun a b (case a
                 (match T id)
                 (match F (fun bool (let
                     (val f (fun () (printBool bool)))
@@ -703,7 +703,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_err());
 
-        s = "(val x (fun (prod b a) (case a
+        s = "(val x (fun b a (case a
                 (match T id)
                 (match F (fun bool (let
                     (val f (fun () (printBool bool)))

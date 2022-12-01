@@ -23,8 +23,8 @@
       (match true (fun p 1))
       (match false (fun p 0)))))
 
-  (sig printBoolAsUInt (Fun (Prod IO Bool) IO))
-  (val printBoolAsUInt (fun (prod pred io)
+  (sig printBoolAsUInt (Fun IO Bool IO))
+  (val printBoolAsUInt (fun pred io
     (case pred
       (match true (fun t 
         (printf (prod io "true as uint: {}\n" (boolToUInt t)))))

@@ -3,7 +3,7 @@ use crate::form::app_form::AppForm;
 use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::let_form::LetForm;
-use crate::form::prod_form::{ProdForm, ProdFormValue};
+use crate::form::prod_form::ProdForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -147,18 +147,11 @@ impl FunForm {
     }
 
     pub fn parameters_to_string(&self) -> String {
-        match self.parameters.len() {
-            1 => self.parameters[0].to_string(),
-            x if x > 1 => format!(
-                "(prod {})",
-                self.parameters
-                    .iter()
-                    .map(|p| p.to_string())
-                    .collect::<Vec<String>>()
-                    .join(" ")
-            ),
-            _ => "()".to_string(),
-        }
+        self.parameters
+            .iter()
+            .map(|p| p.to_string())
+            .collect::<Vec<String>>()
+            .join(" ")
     }
 
     pub fn all_parameters(&self) -> Vec<SimpleValue> {
@@ -297,77 +290,83 @@ impl FunForm {
         Ok(())
     }
 
-    pub fn from_form(form: &Form) -> Result<FunForm> {
-        if form.head.to_string() != "fun" {
-            return Err(Error::Syntactic(SyntacticError {
-                loc: form.head.loc(),
-                desc: "expected a fun keyword".into(),
-            }));
-        }
+    pub fn parse_params(&mut self, form: &Form) -> Result<()> {
+        let len = form.tail.len();
 
-        if form.tail.len() != 2 {
-            return Err(Error::Syntactic(SyntacticError {
-                loc: form.loc(),
-                desc: "expected one or more function parameters and a function body".into(),
-            }));
-        }
-
-        let mut fun = FunForm::new();
-        fun.tokens = form.tokens.clone();
-
-        match form.tail[0].clone() {
-            FormTailElement::Simple(value) => match value {
-                SimpleValue::Empty(_) => fun.parameters.push(FunFormParameter::Empty(value)),
-                SimpleValue::ValueSymbol(_) => {
-                    fun.parameters.push(FunFormParameter::ValueSymbol(value));
-                }
+        match len {
+            2 => match form.tail[0].clone() {
+                FormTailElement::Simple(value) => match value {
+                    SimpleValue::Empty(_) => self.parameters.push(FunFormParameter::Empty(value)),
+                    SimpleValue::ValueSymbol(_) => {
+                        self.parameters.push(FunFormParameter::ValueSymbol(value));
+                    }
+                    x => {
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: x.loc(),
+                            desc: "expected an unqualified value symbol or an empty literal".into(),
+                        }));
+                    }
+                },
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: x.loc(),
-                        desc: "expected an unqualified value symbol or an empty literal".into(),
+                        desc: "unexpected form".into(),
                     }));
                 }
             },
-            FormTailElement::Form(form) => {
-                if let Ok(prod) = ProdForm::from_form(&form) {
-                    for value in prod.values.iter() {
-                        match value.clone() {
-                            ProdFormValue::ValueSymbol(symbol) => {
-                                fun.parameters.push(FunFormParameter::ValueSymbol(symbol));
-                            }
-                            x => {
-                                return Err(Error::Syntactic(SyntacticError {
+            x if x > 2 => {
+                for param in form.tail[0..len - 1].iter() {
+                    match param.clone() {
+                        FormTailElement::Simple(value) => {
+                            match value {
+                                SimpleValue::ValueSymbol(_) => {
+                                    self.parameters.push(FunFormParameter::ValueSymbol(value));
+                                }
+                                x => {
+                                    return Err(Error::Syntactic(SyntacticError {
                                     loc: x.loc(),
-                                    desc: "expected an unqualified value symbol".into(),
+                                    desc: "expected an unqualified value symbol or an empty literal".into(),
                                 }));
+                                }
                             }
                         }
+                        x => {
+                            return Err(Error::Syntactic(SyntacticError {
+                                loc: x.loc(),
+                                desc: "unexpected form".into(),
+                            }));
+                        }
                     }
-                } else {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a product of unqualified symbols".into(),
-                    }));
                 }
+            }
+            _ => {
+                return Err(Error::Syntactic(SyntacticError {
+                    loc: form.loc(),
+                    desc: "expected at least a parameter and a function body".into(),
+                }));
             }
         }
 
-        match form.tail[1].clone() {
+        Ok(())
+    }
+
+    pub fn parse_body(&mut self, form: &Form) -> Result<()> {
+        match form.tail[form.tail.len() - 1].clone() {
             FormTailElement::Simple(value) => match value.clone() {
                 SimpleValue::Empty(_) => {
-                    fun.body = FunFormBody::Empty(value);
+                    self.body = FunFormBody::Empty(value);
                 }
                 SimpleValue::Atomic(_) => {
-                    fun.body = FunFormBody::Atomic(value);
+                    self.body = FunFormBody::Atomic(value);
                 }
                 SimpleValue::Panic(_) => {
-                    fun.body = FunFormBody::Panic(value);
+                    self.body = FunFormBody::Panic(value);
                 }
                 SimpleValue::ValueSymbol(_) => {
-                    fun.body = FunFormBody::ValueSymbol(value);
+                    self.body = FunFormBody::ValueSymbol(value);
                 }
                 SimpleValue::ValuePathSymbol(_) => {
-                    fun.body = FunFormBody::ValuePathSymbol(value);
+                    self.body = FunFormBody::ValuePathSymbol(value);
                 }
                 x => {
                     return Err(Error::Syntactic(SyntacticError {
@@ -378,15 +377,15 @@ impl FunForm {
             },
             FormTailElement::Form(form) => {
                 if let Ok(form) = ProdForm::from_form(&form) {
-                    fun.body = FunFormBody::ProdForm(Box::new(form));
+                    self.body = FunFormBody::ProdForm(Box::new(form));
                 } else if let Ok(form) = LetForm::from_form(&form) {
-                    fun.body = FunFormBody::LetForm(Box::new(form));
+                    self.body = FunFormBody::LetForm(Box::new(form));
                 } else if let Ok(form) = CaseForm::from_form(&form) {
-                    fun.body = FunFormBody::CaseForm(Box::new(form));
+                    self.body = FunFormBody::CaseForm(Box::new(form));
                 } else if let Ok(form) = FunForm::from_form(&form) {
-                    fun.body = FunFormBody::FunForm(Box::new(form));
+                    self.body = FunFormBody::FunForm(Box::new(form));
                 } else if let Ok(form) = AppForm::from_form(&form) {
-                    fun.body = FunFormBody::AppForm(Box::new(form));
+                    self.body = FunFormBody::AppForm(Box::new(form));
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
@@ -395,6 +394,31 @@ impl FunForm {
                 }
             }
         }
+
+        Ok(())
+    }
+
+    pub fn from_form(form: &Form) -> Result<FunForm> {
+        if form.head.to_string() != "fun" {
+            return Err(Error::Syntactic(SyntacticError {
+                loc: form.head.loc(),
+                desc: "expected a fun keyword".into(),
+            }));
+        }
+
+        if form.tail.len() < 2 {
+            return Err(Error::Syntactic(SyntacticError {
+                loc: form.loc(),
+                desc: "expected at least a parameter and a function body".into(),
+            }));
+        }
+
+        let mut fun = FunForm::new();
+        fun.tokens = form.tokens.clone();
+
+        fun.parse_params(&form)?;
+
+        fun.parse_body(&form)?;
 
         Ok(fun)
     }
@@ -478,7 +502,7 @@ mod tests {
         assert_eq!(form.body.to_string(), "moduleX.x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(fun (prod a b c d) (math.+ (prod a b 10 (math.* (prod c d 10)))))";
+        s = "(fun a b c d (math.+ (prod a b 10 (math.* (prod c d 10)))))";
 
         res = FunForm::from_str(s);
 
@@ -486,14 +510,14 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.parameters_to_string(), "(prod a b c d)".to_string());
+        assert_eq!(form.parameters_to_string(), "a b c d".to_string());
         assert_eq!(
             form.body.to_string(),
             "(math.+ (prod a b 10 (math.* (prod c d 10))))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(fun (prod a b c d) (fun e (math.+ (prod a b 10 (math.* (prod c d e))))))";
+        s = "(fun a b c d (fun e (math.+ (prod a b 10 (math.* (prod c d e))))))";
 
         res = FunForm::from_str(s);
 
@@ -501,7 +525,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.parameters_to_string(), "(prod a b c d)".to_string());
+        assert_eq!(form.parameters_to_string(), "a b c d".to_string());
         assert_eq!(
             form.body.to_string(),
             "(fun e (math.+ (prod a b 10 (math.* (prod c d e)))))".to_string()
@@ -765,7 +789,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_ok());
 
-        s = "(fun (prod a b c d) (+ (prod a b c d 1)))";
+        s = "(fun a b c d (+ (prod a b c d 1)))";
 
         form = FunForm::from_str(s).unwrap();
 
@@ -807,7 +831,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_ok());
 
-        s = "(fun (prod a b d c) (+ (prod a b c d 1)))";
+        s = "(fun a b d c (+ (prod a b c d 1)))";
 
         form = FunForm::from_str(s).unwrap();
 
@@ -849,7 +873,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_err());
 
-        s = "(fun (prod a b c d e) (+ (prod a b c d 1)))";
+        s = "(fun a b c d e (+ (prod a b c d 1)))";
 
         form = FunForm::from_str(s).unwrap();
 
@@ -891,7 +915,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_err());
 
-        s = "(fun (prod a b c d e) (+ (prod a b c d e f)))";
+        s = "(fun a b c d e (+ (prod a b c d e f)))";
 
         form = FunForm::from_str(s).unwrap();
 
@@ -1064,7 +1088,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_ok());
 
-        s = "(fun (prod a b) (case a
+        s = "(fun a b (case a
                 (match T id)
                 (match F (fun bool (let
                     (val f (fun () (printBool bool)))
@@ -1110,7 +1134,7 @@ mod tests {
 
         assert!(form.check_parameters_use().is_err());
 
-        s = "(fun (prod b a) (case a
+        s = "(fun b a (case a
                 (match T id)
                 (match F (fun bool (let
                     (val f (fun () (printBool bool)))
