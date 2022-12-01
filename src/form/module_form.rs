@@ -375,7 +375,7 @@ mod tests {
         s = "
         (module main () (block
             (type StringErr String)
-            (import x (prod String StringErr) (prod Result unwrap))
+            (import x (list String StringErr) (list Result unwrap))
             (import std.io _ println)
 
             (sig main (Fun IO IO))
@@ -402,7 +402,7 @@ mod tests {
         );
         assert_eq!(
             block_entries[1].to_string(),
-            "(import x (prod String StringErr) (prod Result unwrap))".to_string()
+            "(import x (list String StringErr) (list Result unwrap))".to_string()
         );
         assert_eq!(
             block_entries[2].to_string(),
@@ -412,7 +412,7 @@ mod tests {
         s = "
         (module main (block
             (type StringErr String)
-            (import x (prod String StringErr) (prod Result unwrap))
+            (import x (list String StringErr) (list Result unwrap))
             (import std.io _ println)
 
             (sig main (Fun IO IO))
@@ -439,7 +439,7 @@ mod tests {
         );
         assert_eq!(
             block_entries[1].to_string(),
-            "(import x (prod String StringErr) (prod Result unwrap))".to_string()
+            "(import x (list String StringErr) (list Result unwrap))".to_string()
         );
         assert_eq!(
             block_entries[2].to_string(),

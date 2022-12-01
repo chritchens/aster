@@ -1,6 +1,6 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormTailElement};
-use crate::form::prod_form::{ProdForm, ProdFormValue};
+use crate::form::list_form::{ListForm, ListFormValue};
 use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
@@ -146,7 +146,7 @@ impl ImportForm {
         match self.type_variables.len() {
             1 => self.type_variables[0].to_string(),
             x if x > 1 => format!(
-                "(prod {})",
+                "(list {})",
                 self.type_variables
                     .iter()
                     .map(|p| p.to_string())
@@ -161,7 +161,7 @@ impl ImportForm {
         match self.defs.len() {
             1 => self.defs[0].to_string(),
             x if x > 1 => format!(
-                "(prod {})",
+                "(list {})",
                 self.defs
                     .iter()
                     .map(|p| p.to_string())
@@ -254,22 +254,22 @@ impl ImportForm {
                 }
             },
             FormTailElement::Form(form) => {
-                if let Ok(prod) = ProdForm::from_form(&form) {
-                    for value in prod.values.iter() {
+                if let Ok(list) = ListForm::from_form(&form) {
+                    for value in list.values.iter() {
                         match value.clone() {
-                            ProdFormValue::TypeKeyword(keyword) => {
+                            ListFormValue::TypeKeyword(keyword) => {
                                 self.type_variables
                                     .push(ImportFormTypeVariable::Keyword(keyword));
                             }
-                            ProdFormValue::TypeSymbol(symbol) => {
+                            ListFormValue::TypeSymbol(symbol) => {
                                 self.type_variables
                                     .push(ImportFormTypeVariable::Symbol(symbol));
                             }
-                            ProdFormValue::TypePathSymbol(symbol) => {
+                            ListFormValue::TypePathSymbol(symbol) => {
                                 self.type_variables
                                     .push(ImportFormTypeVariable::PathSymbol(symbol));
                             }
-                            ProdFormValue::TypesForm(form) => {
+                            ListFormValue::TypesForm(form) => {
                                 self.type_variables.push(ImportFormTypeVariable::Form(form));
                             }
                             x => {
@@ -283,7 +283,7 @@ impl ImportForm {
                 } else {
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
-                        desc: "expected a product of types".into(),
+                        desc: "expected a listuct of types".into(),
                     }));
                 }
             }
@@ -315,14 +315,14 @@ impl ImportForm {
                 }
             },
             FormTailElement::Form(form) => {
-                let prod = ProdForm::from_form(&form)?;
+                let list = ListForm::from_form(&form)?;
 
-                for value in prod.values {
+                for value in list.values {
                     match value {
-                        ProdFormValue::ValueSymbol(symbol) => {
+                        ListFormValue::ValueSymbol(symbol) => {
                             self.defs.push(ImportFormDef::ValueSymbol(symbol));
                         }
-                        ProdFormValue::TypeSymbol(symbol) => {
+                        ListFormValue::TypeSymbol(symbol) => {
                             self.defs.push(ImportFormDef::TypeSymbol(symbol));
                         }
                         x => {
@@ -476,7 +476,7 @@ mod tests {
     fn import_form_from_str() {
         use super::ImportForm;
 
-        let mut s = "(import std.x _ (prod a B c D) x)";
+        let mut s = "(import std.x _ (list a B c D) x)";
 
         let mut res = ImportForm::from_str(s);
 
@@ -490,7 +490,7 @@ mod tests {
             Some("x".into())
         );
         assert_eq!(form.type_variables_to_string(), "_".to_string());
-        assert_eq!(form.defs_to_string(), "(prod a B c D)".to_string());
+        assert_eq!(form.defs_to_string(), "(list a B c D)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(import std.x _ () x)";
@@ -617,7 +617,7 @@ mod tests {
         assert_eq!(form.defs_to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x (prod T Q) x x)";
+        s = "(import std.x (list T Q) x x)";
 
         res = ImportForm::from_str(s);
 
@@ -630,11 +630,11 @@ mod tests {
             form.qualifier.as_ref().map(|q| q.to_string()),
             Some("x".into())
         );
-        assert_eq!(form.type_variables_to_string(), "(prod T Q)");
+        assert_eq!(form.type_variables_to_string(), "(list T Q)");
         assert_eq!(form.defs_to_string(), "x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x (prod T Q) (prod A b C) x)";
+        s = "(import std.x (list T Q) (list A b C) x)";
 
         res = ImportForm::from_str(s);
 
@@ -647,11 +647,11 @@ mod tests {
             form.qualifier.as_ref().map(|q| q.to_string()),
             Some("x".into())
         );
-        assert_eq!(form.type_variables_to_string(), "(prod T Q)");
-        assert_eq!(form.defs_to_string(), "(prod A b C)".to_string());
+        assert_eq!(form.type_variables_to_string(), "(list T Q)");
+        assert_eq!(form.defs_to_string(), "(list A b C)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(import std.x (prod Char Float) _ x)";
+        s = "(import std.x (list Char Float) _ x)";
 
         res = ImportForm::from_str(s);
 
@@ -664,7 +664,7 @@ mod tests {
             form.qualifier.as_ref().map(|q| q.to_string()),
             Some("x".into())
         );
-        assert_eq!(form.type_variables_to_string(), "(prod Char Float)");
+        assert_eq!(form.type_variables_to_string(), "(list Char Float)");
         assert_eq!(form.defs_to_string(), "_".to_string());
         assert_eq!(form.to_string(), s.to_string());
     }

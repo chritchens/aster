@@ -13,8 +13,8 @@
   #! An example on how Result and unwrap can be used.
             
   (type StringError String)
-  (import result (prod String StringError) (Result unwrap))
-  (import std.io println)
+  (import result (list String StringError) (list Result unwrap))
+  (import std.io _ println)
 
   (sig main (Fun IO IO))
   (val main (fun io (let 

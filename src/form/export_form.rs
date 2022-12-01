@@ -1,6 +1,6 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormTailElement};
-use crate::form::prod_form::{ProdForm, ProdFormValue};
+use crate::form::list_form::{ListForm, ListFormValue};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -76,7 +76,7 @@ impl ExportForm {
         match self.defs.len() {
             1 => self.defs[0].to_string(),
             x if x > 1 => format!(
-                "(prod {})",
+                "(list {})",
                 self.defs
                     .iter()
                     .map(|p| p.to_string())
@@ -147,14 +147,14 @@ impl ExportForm {
                     }
                 },
                 FormTailElement::Form(form) => {
-                    let prod = ProdForm::from_form(&form)?;
+                    let list = ListForm::from_form(&form)?;
 
-                    for value in prod.values {
+                    for value in list.values {
                         match value {
-                            ProdFormValue::ValueSymbol(symbol) => {
+                            ListFormValue::ValueSymbol(symbol) => {
                                 export.defs.push(ExportFormDef::ValueSymbol(symbol));
                             }
-                            ProdFormValue::TypeSymbol(symbol) => {
+                            ListFormValue::TypeSymbol(symbol) => {
                                 export.defs.push(ExportFormDef::TypeSymbol(symbol));
                             }
                             x => {
@@ -222,7 +222,7 @@ mod tests {
         assert_eq!(form.defs_to_string(), "A".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(export (prod b C d E))";
+        s = "(export (list b C d E))";
 
         res = ExportForm::from_str(s);
 
@@ -230,7 +230,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.defs_to_string(), "(prod b C d E)".to_string());
+        assert_eq!(form.defs_to_string(), "(list b C d E)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(export ())";
