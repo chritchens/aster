@@ -3,12 +3,12 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 53] = [
+pub const KEYWORDS: [&str; 55] = [
     "module", "block", "_", "builtin", "import", "export", "val", "type", "atomic", "prod", "list",
-    "arr", "vec", "sig", "fun", "attrs", "app", "case", "id", "match", "size", "load", "store",
-    "ref", "deref", "cast", "dup", "drop", "panic", "Builtin", "Empty", "Atomic", "UInt", "Int",
-    "Float", "Size", "Pointer", "Ref", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod",
-    "List", "Arr", "Vec", "Sig", "Fun", "Attrs", "Type",
+    "arr", "vec", "sig", "fun", "attrs", "app", "case", "id", "default", "match", "others", "size",
+    "load", "store", "ref", "deref", "cast", "dup", "drop", "panic", "Builtin", "Empty", "Atomic",
+    "UInt", "Int", "Float", "Size", "Pointer", "Ref", "Char", "String", "Mem", "Path", "IO", "Ctx",
+    "Sum", "Prod", "List", "Arr", "Vec", "Sig", "Fun", "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -49,8 +49,10 @@ pub enum Keyword {
     Attrs,
     App,
     Id,
+    Default,
     Case,
     Match,
+    Others,
     Size,
     Ref,
     Deref,
@@ -107,8 +109,10 @@ impl fmt::Display for Keyword {
             Keyword::Attrs => write!(f, "attrs"),
             Keyword::App => write!(f, "app"),
             Keyword::Id => write!(f, "id"),
+            Keyword::Default => write!(f, "default"),
             Keyword::Case => write!(f, "case"),
             Keyword::Match => write!(f, "match"),
+            Keyword::Others => write!(f, "others"),
             Keyword::Size => write!(f, "size"),
             Keyword::Ref => write!(f, "ref"),
             Keyword::Deref => write!(f, "deref"),
@@ -168,8 +172,10 @@ impl Keyword {
             "attrs" => Ok(Keyword::Attrs),
             "app" => Ok(Keyword::App),
             "id" => Ok(Keyword::Id),
+            "default" => Ok(Keyword::Default),
             "case" => Ok(Keyword::Case),
             "match" => Ok(Keyword::Match),
+            "others" => Ok(Keyword::Others),
             "size" => Ok(Keyword::Size),
             "ref" => Ok(Keyword::Ref),
             "deref" => Ok(Keyword::Deref),
