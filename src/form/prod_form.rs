@@ -1,16 +1,10 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::app_form::AppForm;
-use crate::form::attrs_form::AttrsForm;
 use crate::form::case_form::CaseForm;
-use crate::form::export_form::ExportForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
-use crate::form::import_form::ImportForm;
 use crate::form::let_form::LetForm;
-use crate::form::sig_form::SigForm;
-use crate::form::type_form::TypeForm;
 use crate::form::types_form::TypesForm;
-use crate::form::val_form::ValForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -30,17 +24,11 @@ pub enum ProdFormValue {
     ValuePathSymbol(SimpleValue),
     TypePathSymbol(SimpleValue),
     TypesForm(Box<TypesForm>),
-    AttrsForm(Box<AttrsForm>),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
     AppForm(Box<AppForm>),
-    TypeForm(Box<TypeForm>),
-    SigForm(Box<SigForm>),
-    ValForm(Box<ValForm>),
-    ImportForm(Box<ImportForm>),
-    ExportForm(Box<ExportForm>),
 }
 
 impl Default for ProdFormValue {
@@ -63,17 +51,11 @@ impl ProdFormValue {
             ProdFormValue::ValuePathSymbol(symbol) => symbol.file(),
             ProdFormValue::TypePathSymbol(symbol) => symbol.file(),
             ProdFormValue::TypesForm(form) => form.file(),
-            ProdFormValue::AttrsForm(form) => form.file(),
             ProdFormValue::ProdForm(form) => form.file(),
             ProdFormValue::FunForm(form) => form.file(),
             ProdFormValue::CaseForm(form) => form.file(),
             ProdFormValue::LetForm(form) => form.file(),
             ProdFormValue::AppForm(form) => form.file(),
-            ProdFormValue::TypeForm(form) => form.file(),
-            ProdFormValue::SigForm(form) => form.file(),
-            ProdFormValue::ValForm(form) => form.file(),
-            ProdFormValue::ImportForm(form) => form.file(),
-            ProdFormValue::ExportForm(form) => form.file(),
         }
     }
 
@@ -90,17 +72,11 @@ impl ProdFormValue {
             ProdFormValue::ValuePathSymbol(symbol) => symbol.loc(),
             ProdFormValue::TypePathSymbol(symbol) => symbol.loc(),
             ProdFormValue::TypesForm(form) => form.loc(),
-            ProdFormValue::AttrsForm(form) => form.loc(),
             ProdFormValue::ProdForm(form) => form.loc(),
             ProdFormValue::FunForm(form) => form.loc(),
             ProdFormValue::CaseForm(form) => form.loc(),
             ProdFormValue::LetForm(form) => form.loc(),
             ProdFormValue::AppForm(form) => form.loc(),
-            ProdFormValue::TypeForm(form) => form.loc(),
-            ProdFormValue::SigForm(form) => form.loc(),
-            ProdFormValue::ValForm(form) => form.loc(),
-            ProdFormValue::ImportForm(form) => form.loc(),
-            ProdFormValue::ExportForm(form) => form.loc(),
         }
     }
 
@@ -118,17 +94,11 @@ impl ProdFormValue {
             ProdFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
             ProdFormValue::TypePathSymbol(symbol) => symbol.to_string(),
             ProdFormValue::TypesForm(form) => form.to_string(),
-            ProdFormValue::AttrsForm(form) => form.to_string(),
             ProdFormValue::ProdForm(form) => form.to_string(),
             ProdFormValue::FunForm(form) => form.to_string(),
             ProdFormValue::CaseForm(form) => form.to_string(),
             ProdFormValue::LetForm(form) => form.to_string(),
             ProdFormValue::AppForm(form) => form.to_string(),
-            ProdFormValue::TypeForm(form) => form.to_string(),
-            ProdFormValue::SigForm(form) => form.to_string(),
-            ProdFormValue::ValForm(form) => form.to_string(),
-            ProdFormValue::ImportForm(form) => form.to_string(),
-            ProdFormValue::ExportForm(form) => form.to_string(),
         }
     }
 }
@@ -182,9 +152,6 @@ impl ProdForm {
                 ProdFormValue::TypesForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ProdFormValue::AttrsForm(form) => {
-                    params.extend(form.all_parameters());
-                }
                 ProdFormValue::ProdForm(form) => {
                     params.extend(form.all_parameters());
                 }
@@ -198,21 +165,6 @@ impl ProdForm {
                     params.extend(form.all_parameters());
                 }
                 ProdFormValue::AppForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                ProdFormValue::TypeForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                ProdFormValue::SigForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                ProdFormValue::ValForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                ProdFormValue::ImportForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                ProdFormValue::ExportForm(form) => {
                     params.extend(form.all_parameters());
                 }
                 _ => {}
@@ -242,9 +194,6 @@ impl ProdForm {
                 ProdFormValue::TypesForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ProdFormValue::AttrsForm(form) => {
-                    vars.extend(form.all_variables());
-                }
                 ProdFormValue::ProdForm(form) => {
                     vars.extend(form.all_variables());
                 }
@@ -258,21 +207,6 @@ impl ProdForm {
                     vars.extend(form.all_variables());
                 }
                 ProdFormValue::AppForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                ProdFormValue::TypeForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                ProdFormValue::SigForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                ProdFormValue::ValForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                ProdFormValue::ImportForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                ProdFormValue::ExportForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 _ => {}
@@ -347,18 +281,6 @@ impl ProdForm {
                         prod.values.push(ProdFormValue::LetForm(Box::new(form)));
                     } else if let Ok(form) = AppForm::from_form(&form) {
                         prod.values.push(ProdFormValue::AppForm(Box::new(form)))
-                    } else if let Ok(form) = TypeForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::TypeForm(Box::new(form)))
-                    } else if let Ok(form) = SigForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::SigForm(Box::new(form)))
-                    } else if let Ok(form) = ValForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::ValForm(Box::new(form)))
-                    } else if let Ok(form) = ImportForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::ImportForm(Box::new(form)))
-                    } else if let Ok(form) = ExportForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::ExportForm(Box::new(form)))
-                    } else if let Ok(form) = AttrsForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::AttrsForm(Box::new(form)))
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
