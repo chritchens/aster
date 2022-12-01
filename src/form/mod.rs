@@ -1,4 +1,5 @@
 pub mod app_form;
+pub mod arr_form;
 pub mod attrs_form;
 pub mod block_form;
 pub mod case_form;
@@ -15,8 +16,10 @@ pub mod sig_form;
 pub mod type_form;
 pub mod types_form;
 pub mod val_form;
+pub mod vec_form;
 
 pub use app_form::*;
+pub use arr_form::*;
 pub use attrs_form::*;
 pub use block_form::*;
 pub use case_form::*;
@@ -32,3 +35,4 @@ pub use sig_form::*;
 pub use type_form::*;
 pub use types_form::*;
 pub use val_form::*;
+pub use vec_form::*;

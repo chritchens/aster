@@ -5,8 +5,8 @@ use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
+use crate::form::list_form::ListForm;
 use crate::form::types_form::TypesForm;
-use crate::form::vec_form::VecForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -14,7 +14,7 @@ use crate::value::SimpleValue;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum ListFormValue {
+pub enum VecFormValue {
     Empty(SimpleValue),
     Panic(SimpleValue),
     Atomic(SimpleValue),
@@ -29,101 +29,101 @@ pub enum ListFormValue {
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
     AppForm(Box<AppForm>),
+    ListForm(Box<ListForm>),
     ArrForm(Box<ArrForm>),
     VecForm(Box<VecForm>),
-    ListForm(Box<ListForm>),
 }
 
-impl Default for ListFormValue {
-    fn default() -> ListFormValue {
-        ListFormValue::Empty(SimpleValue::new())
+impl Default for VecFormValue {
+    fn default() -> VecFormValue {
+        VecFormValue::Empty(SimpleValue::new())
     }
 }
 
-impl ListFormValue {
+impl VecFormValue {
     pub fn file(&self) -> String {
         match self {
-            ListFormValue::Empty(empty) => empty.file(),
-            ListFormValue::Panic(panic) => panic.file(),
-            ListFormValue::Atomic(atomic) => atomic.file(),
-            ListFormValue::ValueKeyword(keyword) => keyword.file(),
-            ListFormValue::TypeKeyword(keyword) => keyword.file(),
-            ListFormValue::ValueSymbol(symbol) => symbol.file(),
-            ListFormValue::TypeSymbol(symbol) => symbol.file(),
-            ListFormValue::ValuePathSymbol(symbol) => symbol.file(),
-            ListFormValue::TypePathSymbol(symbol) => symbol.file(),
-            ListFormValue::TypesForm(form) => form.file(),
-            ListFormValue::FunForm(form) => form.file(),
-            ListFormValue::CaseForm(form) => form.file(),
-            ListFormValue::LetForm(form) => form.file(),
-            ListFormValue::AppForm(form) => form.file(),
-            ListFormValue::ArrForm(form) => form.file(),
-            ListFormValue::VecForm(form) => form.file(),
-            ListFormValue::ListForm(form) => form.file(),
+            VecFormValue::Empty(empty) => empty.file(),
+            VecFormValue::Panic(panic) => panic.file(),
+            VecFormValue::Atomic(atomic) => atomic.file(),
+            VecFormValue::ValueKeyword(keyword) => keyword.file(),
+            VecFormValue::TypeKeyword(keyword) => keyword.file(),
+            VecFormValue::ValueSymbol(symbol) => symbol.file(),
+            VecFormValue::TypeSymbol(symbol) => symbol.file(),
+            VecFormValue::ValuePathSymbol(symbol) => symbol.file(),
+            VecFormValue::TypePathSymbol(symbol) => symbol.file(),
+            VecFormValue::TypesForm(form) => form.file(),
+            VecFormValue::FunForm(form) => form.file(),
+            VecFormValue::CaseForm(form) => form.file(),
+            VecFormValue::LetForm(form) => form.file(),
+            VecFormValue::AppForm(form) => form.file(),
+            VecFormValue::ListForm(form) => form.file(),
+            VecFormValue::ArrForm(form) => form.file(),
+            VecFormValue::VecForm(form) => form.file(),
         }
     }
 
     pub fn loc(&self) -> Option<Loc> {
         match self {
-            ListFormValue::Empty(empty) => empty.loc(),
-            ListFormValue::Panic(panic) => panic.loc(),
-            ListFormValue::Atomic(atomic) => atomic.loc(),
-            ListFormValue::ValueKeyword(keyword) => keyword.loc(),
-            ListFormValue::TypeKeyword(keyword) => keyword.loc(),
-            ListFormValue::ValueSymbol(symbol) => symbol.loc(),
-            ListFormValue::TypeSymbol(symbol) => symbol.loc(),
-            ListFormValue::ValuePathSymbol(symbol) => symbol.loc(),
-            ListFormValue::TypePathSymbol(symbol) => symbol.loc(),
-            ListFormValue::TypesForm(form) => form.loc(),
-            ListFormValue::FunForm(form) => form.loc(),
-            ListFormValue::CaseForm(form) => form.loc(),
-            ListFormValue::LetForm(form) => form.loc(),
-            ListFormValue::AppForm(form) => form.loc(),
-            ListFormValue::ArrForm(form) => form.loc(),
-            ListFormValue::VecForm(form) => form.loc(),
-            ListFormValue::ListForm(form) => form.loc(),
+            VecFormValue::Empty(empty) => empty.loc(),
+            VecFormValue::Panic(panic) => panic.loc(),
+            VecFormValue::Atomic(atomic) => atomic.loc(),
+            VecFormValue::ValueKeyword(keyword) => keyword.loc(),
+            VecFormValue::TypeKeyword(keyword) => keyword.loc(),
+            VecFormValue::ValueSymbol(symbol) => symbol.loc(),
+            VecFormValue::TypeSymbol(symbol) => symbol.loc(),
+            VecFormValue::ValuePathSymbol(symbol) => symbol.loc(),
+            VecFormValue::TypePathSymbol(symbol) => symbol.loc(),
+            VecFormValue::TypesForm(form) => form.loc(),
+            VecFormValue::FunForm(form) => form.loc(),
+            VecFormValue::CaseForm(form) => form.loc(),
+            VecFormValue::LetForm(form) => form.loc(),
+            VecFormValue::AppForm(form) => form.loc(),
+            VecFormValue::ListForm(form) => form.loc(),
+            VecFormValue::ArrForm(form) => form.loc(),
+            VecFormValue::VecForm(form) => form.loc(),
         }
     }
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            ListFormValue::Empty(_) => "()".into(),
-            ListFormValue::Panic(_) => "panic".into(),
-            ListFormValue::Atomic(atomic) => atomic.to_string(),
-            ListFormValue::ValueKeyword(keyword) => keyword.to_string(),
-            ListFormValue::TypeKeyword(keyword) => keyword.to_string(),
-            ListFormValue::ValueSymbol(symbol) => symbol.to_string(),
-            ListFormValue::TypeSymbol(symbol) => symbol.to_string(),
-            ListFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
-            ListFormValue::TypePathSymbol(symbol) => symbol.to_string(),
-            ListFormValue::TypesForm(form) => form.to_string(),
-            ListFormValue::FunForm(form) => form.to_string(),
-            ListFormValue::CaseForm(form) => form.to_string(),
-            ListFormValue::LetForm(form) => form.to_string(),
-            ListFormValue::AppForm(form) => form.to_string(),
-            ListFormValue::ArrForm(form) => form.to_string(),
-            ListFormValue::VecForm(form) => form.to_string(),
-            ListFormValue::ListForm(form) => form.to_string(),
+            VecFormValue::Empty(_) => "()".into(),
+            VecFormValue::Panic(_) => "panic".into(),
+            VecFormValue::Atomic(atomic) => atomic.to_string(),
+            VecFormValue::ValueKeyword(keyword) => keyword.to_string(),
+            VecFormValue::TypeKeyword(keyword) => keyword.to_string(),
+            VecFormValue::ValueSymbol(symbol) => symbol.to_string(),
+            VecFormValue::TypeSymbol(symbol) => symbol.to_string(),
+            VecFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
+            VecFormValue::TypePathSymbol(symbol) => symbol.to_string(),
+            VecFormValue::TypesForm(form) => form.to_string(),
+            VecFormValue::FunForm(form) => form.to_string(),
+            VecFormValue::CaseForm(form) => form.to_string(),
+            VecFormValue::LetForm(form) => form.to_string(),
+            VecFormValue::AppForm(form) => form.to_string(),
+            VecFormValue::ListForm(form) => form.to_string(),
+            VecFormValue::ArrForm(form) => form.to_string(),
+            VecFormValue::VecForm(form) => form.to_string(),
         }
     }
 }
 
-impl fmt::Display for ListFormValue {
+impl fmt::Display for VecFormValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
-pub struct ListForm {
+pub struct VecForm {
     pub tokens: Box<Tokens>,
-    pub values: Vec<ListFormValue>,
+    pub values: Vec<VecFormValue>,
 }
 
-impl ListForm {
-    pub fn new() -> ListForm {
-        ListForm::default()
+impl VecForm {
+    pub fn new() -> VecForm {
+        VecForm::default()
     }
 
     pub fn file(&self) -> String {
@@ -155,28 +155,28 @@ impl ListForm {
 
         for value in self.values.iter() {
             match value.clone() {
-                ListFormValue::TypesForm(form) => {
+                VecFormValue::TypesForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ListFormValue::FunForm(form) => {
+                VecFormValue::FunForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ListFormValue::CaseForm(form) => {
+                VecFormValue::CaseForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ListFormValue::LetForm(form) => {
+                VecFormValue::LetForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ListFormValue::AppForm(form) => {
+                VecFormValue::AppForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ListFormValue::ArrForm(form) => {
+                VecFormValue::ListForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ListFormValue::VecForm(form) => {
+                VecFormValue::ArrForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ListFormValue::ListForm(form) => {
+                VecFormValue::VecForm(form) => {
                     params.extend(form.all_parameters());
                 }
                 _ => {}
@@ -191,40 +191,40 @@ impl ListForm {
 
         for value in self.values.iter() {
             match value.clone() {
-                ListFormValue::ValueSymbol(value) => {
+                VecFormValue::ValueSymbol(value) => {
                     vars.push(value);
                 }
-                ListFormValue::TypeSymbol(value) => {
+                VecFormValue::TypeSymbol(value) => {
                     vars.push(value);
                 }
-                ListFormValue::ValuePathSymbol(value) => {
+                VecFormValue::ValuePathSymbol(value) => {
                     vars.push(value);
                 }
-                ListFormValue::TypePathSymbol(value) => {
+                VecFormValue::TypePathSymbol(value) => {
                     vars.push(value);
                 }
-                ListFormValue::TypesForm(form) => {
+                VecFormValue::TypesForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ListFormValue::FunForm(form) => {
+                VecFormValue::FunForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ListFormValue::CaseForm(form) => {
+                VecFormValue::CaseForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ListFormValue::LetForm(form) => {
+                VecFormValue::LetForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ListFormValue::AppForm(form) => {
+                VecFormValue::AppForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ListFormValue::ArrForm(form) => {
+                VecFormValue::ListForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ListFormValue::VecForm(form) => {
+                VecFormValue::ArrForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ListFormValue::ListForm(form) => {
+                VecFormValue::VecForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 _ => {}
@@ -234,11 +234,11 @@ impl ListForm {
         vars
     }
 
-    pub fn from_form(form: &Form) -> Result<ListForm> {
-        if form.head.to_string() != "list" {
+    pub fn from_form(form: &Form) -> Result<VecForm> {
+        if form.head.to_string() != "vec" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.head.loc(),
-                desc: "expected a list keyword".into(),
+                desc: "expected a vec keyword".into(),
             }));
         }
 
@@ -249,35 +249,35 @@ impl ListForm {
             }));
         }
 
-        let mut list = ListForm::new();
-        list.tokens = form.tokens.clone();
+        let mut vec = VecForm::new();
+        vec.tokens = form.tokens.clone();
 
         for param in form.tail.iter() {
             match param.clone() {
                 FormTailElement::Simple(value) => match value {
                     SimpleValue::Empty(_) => {
-                        list.values.push(ListFormValue::Empty(value));
+                        vec.values.push(VecFormValue::Empty(value));
                     }
                     SimpleValue::Atomic(_) => {
-                        list.values.push(ListFormValue::Atomic(value));
+                        vec.values.push(VecFormValue::Atomic(value));
                     }
                     SimpleValue::ValueKeyword(_) => {
-                        list.values.push(ListFormValue::ValueKeyword(value));
+                        vec.values.push(VecFormValue::ValueKeyword(value));
                     }
                     SimpleValue::TypeKeyword(_) => {
-                        list.values.push(ListFormValue::TypeKeyword(value));
+                        vec.values.push(VecFormValue::TypeKeyword(value));
                     }
                     SimpleValue::ValueSymbol(_) => {
-                        list.values.push(ListFormValue::ValueSymbol(value));
+                        vec.values.push(VecFormValue::ValueSymbol(value));
                     }
                     SimpleValue::TypeSymbol(_) => {
-                        list.values.push(ListFormValue::TypeSymbol(value));
+                        vec.values.push(VecFormValue::TypeSymbol(value));
                     }
                     SimpleValue::ValuePathSymbol(_) => {
-                        list.values.push(ListFormValue::ValuePathSymbol(value));
+                        vec.values.push(VecFormValue::ValuePathSymbol(value));
                     }
                     SimpleValue::TypePathSymbol(_) => {
-                        list.values.push(ListFormValue::TypePathSymbol(value));
+                        vec.values.push(VecFormValue::TypePathSymbol(value));
                     }
                     x => {
                         return Err(Error::Syntactic(SyntacticError {
@@ -288,21 +288,21 @@ impl ListForm {
                 },
                 FormTailElement::Form(form) => {
                     if let Ok(form) = TypesForm::from_form(&form) {
-                        list.values.push(ListFormValue::TypesForm(Box::new(form)));
-                    } else if let Ok(form) = ArrForm::from_form(&form) {
-                        list.values.push(ListFormValue::ArrForm(Box::new(form)));
-                    } else if let Ok(form) = VecForm::from_form(&form) {
-                        list.values.push(ListFormValue::VecForm(Box::new(form)));
+                        vec.values.push(VecFormValue::TypesForm(Box::new(form)));
                     } else if let Ok(form) = ListForm::from_form(&form) {
-                        list.values.push(ListFormValue::ListForm(Box::new(form)));
+                        vec.values.push(VecFormValue::ListForm(Box::new(form)));
+                    } else if let Ok(form) = ArrForm::from_form(&form) {
+                        vec.values.push(VecFormValue::ArrForm(Box::new(form)));
+                    } else if let Ok(form) = VecForm::from_form(&form) {
+                        vec.values.push(VecFormValue::VecForm(Box::new(form)));
                     } else if let Ok(form) = FunForm::from_form(&form) {
-                        list.values.push(ListFormValue::FunForm(Box::new(form)));
+                        vec.values.push(VecFormValue::FunForm(Box::new(form)));
                     } else if let Ok(form) = CaseForm::from_form(&form) {
-                        list.values.push(ListFormValue::CaseForm(Box::new(form)));
+                        vec.values.push(VecFormValue::CaseForm(Box::new(form)));
                     } else if let Ok(form) = LetForm::from_form(&form) {
-                        list.values.push(ListFormValue::LetForm(Box::new(form)));
+                        vec.values.push(VecFormValue::LetForm(Box::new(form)));
                     } else if let Ok(form) = AppForm::from_form(&form) {
-                        list.values.push(ListFormValue::AppForm(Box::new(form)))
+                        vec.values.push(VecFormValue::AppForm(Box::new(form)))
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
@@ -313,35 +313,35 @@ impl ListForm {
             }
         }
 
-        Ok(list)
+        Ok(vec)
     }
 
-    pub fn from_tokens(tokens: &Tokens) -> Result<ListForm> {
+    pub fn from_tokens(tokens: &Tokens) -> Result<VecForm> {
         let form = Form::from_tokens(tokens)?;
 
-        ListForm::from_form(&form)
+        VecForm::from_form(&form)
     }
 
     #[allow(clippy::should_implement_trait)]
-    pub fn from_str(s: &str) -> Result<ListForm> {
+    pub fn from_str(s: &str) -> Result<VecForm> {
         let tokens = Tokens::from_str(s)?;
 
-        ListForm::from_tokens(&tokens)
+        VecForm::from_tokens(&tokens)
     }
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        format!("(list {})", self.values_to_string())
+        format!("(vec {})", self.values_to_string())
     }
 }
 
-impl fmt::Display for ListForm {
+impl fmt::Display for VecForm {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
 
-impl std::str::FromStr for ListForm {
+impl std::str::FromStr for VecForm {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self> {
@@ -352,12 +352,12 @@ impl std::str::FromStr for ListForm {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn list_form_from_str() {
-        use super::ListForm;
+    fn vec_form_from_str() {
+        use super::VecForm;
 
-        let mut s = "(list a A)";
+        let mut s = "(vec a A)";
 
-        let mut res = ListForm::from_str(s);
+        let mut res = VecForm::from_str(s);
 
         assert!(res.is_ok());
 
@@ -373,9 +373,9 @@ mod tests {
         assert_eq!(form.values_to_string(), "a A".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(list moduleX.X y)";
+        s = "(vec moduleX.X y)";
 
-        res = ListForm::from_str(s);
+        res = VecForm::from_str(s);
 
         assert!(res.is_ok());
 
@@ -391,9 +391,9 @@ mod tests {
         assert_eq!(form.values_to_string(), "moduleX.X y".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(list 0 (Fun A B))";
+        s = "(vec 0 (Fun A B))";
 
-        res = ListForm::from_str(s);
+        res = VecForm::from_str(s);
 
         assert!(res.is_ok());
 

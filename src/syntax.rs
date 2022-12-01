@@ -3,12 +3,12 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 49] = [
+pub const KEYWORDS: [&str; 53] = [
     "module", "block", "_", "builtin", "import", "export", "val", "type", "atomic", "prod", "list",
-    "sig", "fun", "attrs", "app", "case", "id", "match", "size", "load", "store", "ref", "deref",
-    "cast", "dup", "drop", "panic", "Builtin", "Empty", "Atomic", "UInt", "Int", "Float", "Size",
-    "Pointer", "Ref", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod", "List", "Sig",
-    "Fun", "Attrs", "Type",
+    "arr", "vec", "sig", "fun", "attrs", "app", "case", "id", "match", "size", "load", "store",
+    "ref", "deref", "cast", "dup", "drop", "panic", "Builtin", "Empty", "Atomic", "UInt", "Int",
+    "Float", "Size", "Pointer", "Ref", "Char", "String", "Mem", "Path", "IO", "Ctx", "Sum", "Prod",
+    "List", "Arr", "Vec", "Sig", "Fun", "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -42,6 +42,8 @@ pub enum Keyword {
     Atomic,
     Prod,
     List,
+    Arr,
+    Vec,
     Sig,
     Fun,
     Attrs,
@@ -76,6 +78,8 @@ pub enum Keyword {
     SumT,
     ProdT,
     ListT,
+    ArrT,
+    VecT,
     SigT,
     FunT,
     AttrsT,
@@ -96,6 +100,8 @@ impl fmt::Display for Keyword {
             Keyword::Atomic => write!(f, "atomic"),
             Keyword::Prod => write!(f, "prod"),
             Keyword::List => write!(f, "list"),
+            Keyword::Arr => write!(f, "arr"),
+            Keyword::Vec => write!(f, "vec"),
             Keyword::Sig => write!(f, "sig"),
             Keyword::Fun => write!(f, "fun"),
             Keyword::Attrs => write!(f, "attrs"),
@@ -130,6 +136,8 @@ impl fmt::Display for Keyword {
             Keyword::SumT => write!(f, "Sum"),
             Keyword::ProdT => write!(f, "Prod"),
             Keyword::ListT => write!(f, "List"),
+            Keyword::ArrT => write!(f, "Arr"),
+            Keyword::VecT => write!(f, "Vec"),
             Keyword::SigT => write!(f, "Sig"),
             Keyword::FunT => write!(f, "Fun"),
             Keyword::AttrsT => write!(f, "Attrs"),
@@ -153,6 +161,8 @@ impl Keyword {
             "atomic" => Ok(Keyword::Atomic),
             "prod" => Ok(Keyword::Prod),
             "list" => Ok(Keyword::List),
+            "arr" => Ok(Keyword::Arr),
+            "vec" => Ok(Keyword::Vec),
             "sig" => Ok(Keyword::Sig),
             "fun" => Ok(Keyword::Fun),
             "attrs" => Ok(Keyword::Attrs),
@@ -187,6 +197,8 @@ impl Keyword {
             "Sum" => Ok(Keyword::SumT),
             "Prod" => Ok(Keyword::ProdT),
             "List" => Ok(Keyword::ListT),
+            "Arr" => Ok(Keyword::ArrT),
+            "Vec" => Ok(Keyword::VecT),
             "Sig" => Ok(Keyword::SigT),
             "Fun" => Ok(Keyword::FunT),
             "Attrs" => Ok(Keyword::AttrsT),
