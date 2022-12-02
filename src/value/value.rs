@@ -145,7 +145,7 @@ mod tests {
 
             (sig printProd (Fun IO (Prod Int Char) IO))
             (val printProd (fun io (prod a b)
-                (printf io \"a: {}, b: {}\n\" a b))))";
+                (printf io \"a: {}, b: {}\n\" (prod (+ a 100) b)))))";
 
         res = Value::from_str(s);
 

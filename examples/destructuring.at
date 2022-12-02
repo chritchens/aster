@@ -5,4 +5,4 @@
 
   (sig main (Fun IO (Prod String String) IO))
   (val main (fun io (prod nameA nameB)
-    (println io "Hello {} and {}!" nameA nameB)))))
+    (println io "Hello {} and {}!" (prod nameA nameB))))))
