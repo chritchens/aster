@@ -141,6 +141,7 @@ mod tests {
         s = "
         (block
             (import std.io _ printf)
+            (import std.math _ +)
             (export printProd)
 
             (sig printProd (Fun IO (Prod Int Char) IO))
