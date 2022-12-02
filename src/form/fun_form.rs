@@ -1,9 +1,13 @@
 use crate::error::{Error, SemanticError, SyntacticError};
 use crate::form::app_form::AppForm;
+use crate::form::arr_form::ArrForm;
 use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::let_form::LetForm;
+use crate::form::list_form::ListForm;
+use crate::form::map_form::MapForm;
 use crate::form::prod_form::ProdForm;
+use crate::form::vec_form::VecForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -14,6 +18,11 @@ use std::fmt;
 pub enum FunFormParameter {
     Empty(SimpleValue),
     ValueSymbol(SimpleValue),
+    MapForm(Box<MapForm>),
+    VecForm(Box<VecForm>),
+    ArrForm(Box<ArrForm>),
+    ListForm(Box<ListForm>),
+    ProdForm(Box<ProdForm>),
 }
 
 impl Default for FunFormParameter {
@@ -27,6 +36,11 @@ impl FunFormParameter {
         match self {
             FunFormParameter::Empty(empty) => empty.file(),
             FunFormParameter::ValueSymbol(symbol) => symbol.file(),
+            FunFormParameter::MapForm(form) => form.file(),
+            FunFormParameter::VecForm(form) => form.file(),
+            FunFormParameter::ArrForm(form) => form.file(),
+            FunFormParameter::ListForm(form) => form.file(),
+            FunFormParameter::ProdForm(form) => form.file(),
         }
     }
 
@@ -34,6 +48,11 @@ impl FunFormParameter {
         match self {
             FunFormParameter::Empty(empty) => empty.loc(),
             FunFormParameter::ValueSymbol(symbol) => symbol.loc(),
+            FunFormParameter::MapForm(form) => form.loc(),
+            FunFormParameter::VecForm(form) => form.loc(),
+            FunFormParameter::ArrForm(form) => form.loc(),
+            FunFormParameter::ListForm(form) => form.loc(),
+            FunFormParameter::ProdForm(form) => form.loc(),
         }
     }
 
@@ -42,6 +61,11 @@ impl FunFormParameter {
         match self {
             FunFormParameter::Empty(_) => "()".into(),
             FunFormParameter::ValueSymbol(symbol) => symbol.to_string(),
+            FunFormParameter::MapForm(form) => form.to_string(),
+            FunFormParameter::VecForm(form) => form.to_string(),
+            FunFormParameter::ArrForm(form) => form.to_string(),
+            FunFormParameter::ListForm(form) => form.to_string(),
+            FunFormParameter::ProdForm(form) => form.to_string(),
         }
     }
 }
@@ -59,6 +83,10 @@ pub enum FunFormBody {
     Atomic(SimpleValue),
     ValueSymbol(SimpleValue),
     ValuePathSymbol(SimpleValue),
+    MapForm(Box<MapForm>),
+    VecForm(Box<VecForm>),
+    ArrForm(Box<ArrForm>),
+    ListForm(Box<ListForm>),
     ProdForm(Box<ProdForm>),
     AppForm(Box<AppForm>),
     LetForm(Box<LetForm>),
@@ -80,6 +108,10 @@ impl FunFormBody {
             FunFormBody::Atomic(atomic) => atomic.file(),
             FunFormBody::ValueSymbol(symbol) => symbol.file(),
             FunFormBody::ValuePathSymbol(symbol) => symbol.file(),
+            FunFormBody::MapForm(form) => form.file(),
+            FunFormBody::VecForm(form) => form.file(),
+            FunFormBody::ArrForm(form) => form.file(),
+            FunFormBody::ListForm(form) => form.file(),
             FunFormBody::ProdForm(form) => form.file(),
             FunFormBody::AppForm(form) => form.file(),
             FunFormBody::LetForm(form) => form.file(),
@@ -95,6 +127,10 @@ impl FunFormBody {
             FunFormBody::Atomic(atomic) => atomic.loc(),
             FunFormBody::ValueSymbol(symbol) => symbol.loc(),
             FunFormBody::ValuePathSymbol(symbol) => symbol.loc(),
+            FunFormBody::MapForm(form) => form.loc(),
+            FunFormBody::VecForm(form) => form.loc(),
+            FunFormBody::ArrForm(form) => form.loc(),
+            FunFormBody::ListForm(form) => form.loc(),
             FunFormBody::ProdForm(form) => form.loc(),
             FunFormBody::AppForm(form) => form.loc(),
             FunFormBody::LetForm(form) => form.loc(),
@@ -111,6 +147,10 @@ impl FunFormBody {
             FunFormBody::Atomic(atomic) => atomic.to_string(),
             FunFormBody::ValueSymbol(symbol) => symbol.to_string(),
             FunFormBody::ValuePathSymbol(symbol) => symbol.to_string(),
+            FunFormBody::MapForm(form) => form.to_string(),
+            FunFormBody::VecForm(form) => form.to_string(),
+            FunFormBody::ArrForm(form) => form.to_string(),
+            FunFormBody::ListForm(form) => form.to_string(),
             FunFormBody::ProdForm(form) => form.to_string(),
             FunFormBody::AppForm(form) => form.to_string(),
             FunFormBody::LetForm(form) => form.to_string(),
@@ -158,12 +198,42 @@ impl FunForm {
         let mut params = vec![];
 
         for param in self.parameters.iter() {
-            if let FunFormParameter::ValueSymbol(value) = param.clone() {
-                params.push(value);
+            match param.clone() {
+                FunFormParameter::ValueSymbol(value) => {
+                    params.push(value);
+                }
+                FunFormParameter::MapForm(form) => {
+                    params.extend(form.all_variables());
+                }
+                FunFormParameter::VecForm(form) => {
+                    params.extend(form.all_variables());
+                }
+                FunFormParameter::ArrForm(form) => {
+                    params.extend(form.all_variables());
+                }
+                FunFormParameter::ListForm(form) => {
+                    params.extend(form.all_variables());
+                }
+                FunFormParameter::ProdForm(form) => {
+                    params.extend(form.all_variables());
+                }
+                _ => {}
             }
         }
 
         match self.body.clone() {
+            FunFormBody::MapForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            FunFormBody::VecForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            FunFormBody::ListForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            FunFormBody::ArrForm(form) => {
+                params.extend(form.all_parameters());
+            }
             FunFormBody::ProdForm(form) => {
                 params.extend(form.all_parameters());
             }
@@ -194,6 +264,18 @@ impl FunForm {
             }
             FunFormBody::ValuePathSymbol(value) => {
                 vars.push(value);
+            }
+            FunFormBody::MapForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            FunFormBody::VecForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            FunFormBody::ArrForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            FunFormBody::ListForm(form) => {
+                vars.extend(form.all_variables());
             }
             FunFormBody::ProdForm(form) => {
                 vars.extend(form.all_variables());
@@ -307,11 +389,63 @@ impl FunForm {
                         }));
                     }
                 },
-                x => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: x.loc(),
-                        desc: "unexpected form".into(),
-                    }));
+                FormTailElement::Form(form) => {
+                    if let Ok(form) = MapForm::from_form(&form) {
+                        if !form.is_symbolic() {
+                            return Err(Error::Syntactic(SyntacticError {
+                                loc: form.loc(),
+                                desc: "expected a symbolic map form".into(),
+                            }));
+                        }
+
+                        self.parameters
+                            .push(FunFormParameter::MapForm(Box::new(form)));
+                    } else if let Ok(form) = VecForm::from_form(&form) {
+                        if !form.is_symbolic() {
+                            return Err(Error::Syntactic(SyntacticError {
+                                loc: form.loc(),
+                                desc: "expected a symbolic vec form".into(),
+                            }));
+                        }
+
+                        self.parameters
+                            .push(FunFormParameter::VecForm(Box::new(form)));
+                    } else if let Ok(form) = ArrForm::from_form(&form) {
+                        if !form.is_symbolic() {
+                            return Err(Error::Syntactic(SyntacticError {
+                                loc: form.loc(),
+                                desc: "expected a symbolic arr form".into(),
+                            }));
+                        }
+
+                        self.parameters
+                            .push(FunFormParameter::ArrForm(Box::new(form)));
+                    } else if let Ok(form) = ListForm::from_form(&form) {
+                        if !form.is_symbolic() {
+                            return Err(Error::Syntactic(SyntacticError {
+                                loc: form.loc(),
+                                desc: "expected a symbolic list form".into(),
+                            }));
+                        }
+
+                        self.parameters
+                            .push(FunFormParameter::ListForm(Box::new(form)));
+                    } else if let Ok(form) = ProdForm::from_form(&form) {
+                        if !form.is_symbolic() {
+                            return Err(Error::Syntactic(SyntacticError {
+                                loc: form.loc(),
+                                desc: "expected a symbolic prod form".into(),
+                            }));
+                        }
+
+                        self.parameters
+                            .push(FunFormParameter::ProdForm(Box::new(form)));
+                    } else {
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: form.loc(),
+                            desc: "unexpected form".into(),
+                        }));
+                    }
                 }
             },
             x if x > 2 => {
@@ -330,11 +464,63 @@ impl FunForm {
                                 }
                             }
                         }
-                        x => {
-                            return Err(Error::Syntactic(SyntacticError {
-                                loc: x.loc(),
-                                desc: "unexpected form".into(),
-                            }));
+                        FormTailElement::Form(form) => {
+                            if let Ok(form) = MapForm::from_form(&form) {
+                                if !form.is_symbolic() {
+                                    return Err(Error::Syntactic(SyntacticError {
+                                        loc: form.loc(),
+                                        desc: "expected a symbolic map form".into(),
+                                    }));
+                                }
+
+                                self.parameters
+                                    .push(FunFormParameter::MapForm(Box::new(form)));
+                            } else if let Ok(form) = VecForm::from_form(&form) {
+                                if !form.is_symbolic() {
+                                    return Err(Error::Syntactic(SyntacticError {
+                                        loc: form.loc(),
+                                        desc: "expected a symbolic vec form".into(),
+                                    }));
+                                }
+
+                                self.parameters
+                                    .push(FunFormParameter::VecForm(Box::new(form)));
+                            } else if let Ok(form) = ArrForm::from_form(&form) {
+                                if !form.is_symbolic() {
+                                    return Err(Error::Syntactic(SyntacticError {
+                                        loc: form.loc(),
+                                        desc: "expected a symbolic arr form".into(),
+                                    }));
+                                }
+
+                                self.parameters
+                                    .push(FunFormParameter::ArrForm(Box::new(form)));
+                            } else if let Ok(form) = ListForm::from_form(&form) {
+                                if !form.is_symbolic() {
+                                    return Err(Error::Syntactic(SyntacticError {
+                                        loc: form.loc(),
+                                        desc: "expected a symbolic list form".into(),
+                                    }));
+                                }
+
+                                self.parameters
+                                    .push(FunFormParameter::ListForm(Box::new(form)));
+                            } else if let Ok(form) = ProdForm::from_form(&form) {
+                                if !form.is_symbolic() {
+                                    return Err(Error::Syntactic(SyntacticError {
+                                        loc: form.loc(),
+                                        desc: "expected a symbolic prod form".into(),
+                                    }));
+                                }
+
+                                self.parameters
+                                    .push(FunFormParameter::ProdForm(Box::new(form)));
+                            } else {
+                                return Err(Error::Syntactic(SyntacticError {
+                                    loc: form.loc(),
+                                    desc: "unexpected form".into(),
+                                }));
+                            }
                         }
                     }
                 }
@@ -500,6 +686,45 @@ mod tests {
 
         assert_eq!(form.parameters_to_string(), "x".to_string());
         assert_eq!(form.body.to_string(), "moduleX.x".to_string());
+        assert_eq!(form.to_string(), s.to_string());
+
+        s = "(fun a (prod b c) (math.+ a b c))";
+
+        res = FunForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.parameters_to_string(), "a (prod b c)".to_string());
+        assert_eq!(form.body.to_string(), "(math.+ a b c)".to_string());
+        assert_eq!(form.to_string(), s.to_string());
+
+        s = "(fun a (list b c) (math.+ a b c))";
+
+        res = FunForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(form.parameters_to_string(), "a (list b c)".to_string());
+        assert_eq!(form.body.to_string(), "(math.+ a b c)".to_string());
+        assert_eq!(form.to_string(), s.to_string());
+
+        s = "(fun (map (prod a b) (prod c d)) (math.+ a b c d))";
+
+        res = FunForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert_eq!(
+            form.parameters_to_string(),
+            "(map (prod a b) (prod c d))".to_string()
+        );
+        assert_eq!(form.body.to_string(), "(math.+ a b c d)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(fun a b c d (math.+ a b 10 (math.* c d 10)))";

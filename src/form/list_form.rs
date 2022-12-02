@@ -5,6 +5,8 @@ use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
+use crate::form::map_form::MapForm;
+use crate::form::prod_form::ProdForm;
 use crate::form::types_form::TypesForm;
 use crate::form::vec_form::VecForm;
 use crate::loc::Loc;
@@ -15,6 +17,7 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ListFormValue {
+    Ignore(SimpleValue),
     Empty(SimpleValue),
     Panic(SimpleValue),
     Atomic(SimpleValue),
@@ -29,8 +32,10 @@ pub enum ListFormValue {
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
     AppForm(Box<AppForm>),
+    ProdForm(Box<ProdForm>),
     ArrForm(Box<ArrForm>),
     VecForm(Box<VecForm>),
+    MapForm(Box<MapForm>),
     ListForm(Box<ListForm>),
 }
 
@@ -43,6 +48,7 @@ impl Default for ListFormValue {
 impl ListFormValue {
     pub fn file(&self) -> String {
         match self {
+            ListFormValue::Ignore(ignore) => ignore.file(),
             ListFormValue::Empty(empty) => empty.file(),
             ListFormValue::Panic(panic) => panic.file(),
             ListFormValue::Atomic(atomic) => atomic.file(),
@@ -57,14 +63,17 @@ impl ListFormValue {
             ListFormValue::CaseForm(form) => form.file(),
             ListFormValue::LetForm(form) => form.file(),
             ListFormValue::AppForm(form) => form.file(),
+            ListFormValue::ProdForm(form) => form.file(),
             ListFormValue::ArrForm(form) => form.file(),
             ListFormValue::VecForm(form) => form.file(),
+            ListFormValue::MapForm(form) => form.file(),
             ListFormValue::ListForm(form) => form.file(),
         }
     }
 
     pub fn loc(&self) -> Option<Loc> {
         match self {
+            ListFormValue::Ignore(ignore) => ignore.loc(),
             ListFormValue::Empty(empty) => empty.loc(),
             ListFormValue::Panic(panic) => panic.loc(),
             ListFormValue::Atomic(atomic) => atomic.loc(),
@@ -79,8 +88,10 @@ impl ListFormValue {
             ListFormValue::CaseForm(form) => form.loc(),
             ListFormValue::LetForm(form) => form.loc(),
             ListFormValue::AppForm(form) => form.loc(),
+            ListFormValue::ProdForm(form) => form.loc(),
             ListFormValue::ArrForm(form) => form.loc(),
             ListFormValue::VecForm(form) => form.loc(),
+            ListFormValue::MapForm(form) => form.loc(),
             ListFormValue::ListForm(form) => form.loc(),
         }
     }
@@ -88,6 +99,7 @@ impl ListFormValue {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
+            ListFormValue::Ignore(_) => "_".into(),
             ListFormValue::Empty(_) => "()".into(),
             ListFormValue::Panic(_) => "panic".into(),
             ListFormValue::Atomic(atomic) => atomic.to_string(),
@@ -102,8 +114,10 @@ impl ListFormValue {
             ListFormValue::CaseForm(form) => form.to_string(),
             ListFormValue::LetForm(form) => form.to_string(),
             ListFormValue::AppForm(form) => form.to_string(),
+            ListFormValue::ProdForm(form) => form.to_string(),
             ListFormValue::ArrForm(form) => form.to_string(),
             ListFormValue::VecForm(form) => form.to_string(),
+            ListFormValue::MapForm(form) => form.to_string(),
             ListFormValue::ListForm(form) => form.to_string(),
         }
     }
@@ -142,6 +156,53 @@ impl ListForm {
         self.values.is_empty()
     }
 
+    pub fn is_symbolic(&self) -> bool {
+        for value in self.values.iter() {
+            match value {
+                ListFormValue::Ignore(_)
+                | ListFormValue::Empty(_)
+                | ListFormValue::Atomic(_)
+                | ListFormValue::ValueKeyword(_)
+                | ListFormValue::TypeKeyword(_)
+                | ListFormValue::TypeSymbol(_)
+                | ListFormValue::TypePathSymbol(_)
+                | ListFormValue::FunForm(_)
+                | ListFormValue::TypesForm(_)
+                | ListFormValue::CaseForm(_)
+                | ListFormValue::LetForm(_)
+                | ListFormValue::AppForm(_) => return false,
+                ListFormValue::ProdForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                ListFormValue::MapForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                ListFormValue::ArrForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                ListFormValue::VecForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                ListFormValue::ListForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        true
+    }
+
     pub fn values_to_string(&self) -> String {
         self.values
             .iter()
@@ -170,7 +231,13 @@ impl ListForm {
                 ListFormValue::AppForm(form) => {
                     params.extend(form.all_parameters());
                 }
+                ListFormValue::ProdForm(form) => {
+                    params.extend(form.all_parameters());
+                }
                 ListFormValue::ArrForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ListFormValue::MapForm(form) => {
                     params.extend(form.all_parameters());
                 }
                 ListFormValue::VecForm(form) => {
@@ -218,7 +285,13 @@ impl ListForm {
                 ListFormValue::AppForm(form) => {
                     vars.extend(form.all_variables());
                 }
+                ListFormValue::ProdForm(form) => {
+                    vars.extend(form.all_variables());
+                }
                 ListFormValue::ArrForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ListFormValue::MapForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 ListFormValue::VecForm(form) => {
@@ -255,6 +328,9 @@ impl ListForm {
         for param in form.tail.iter() {
             match param.clone() {
                 FormTailElement::Simple(value) => match value {
+                    SimpleValue::Ignore(_) => {
+                        list.values.push(ListFormValue::Ignore(value));
+                    }
                     SimpleValue::Empty(_) => {
                         list.values.push(ListFormValue::Empty(value));
                     }
@@ -289,8 +365,12 @@ impl ListForm {
                 FormTailElement::Form(form) => {
                     if let Ok(form) = TypesForm::from_form(&form) {
                         list.values.push(ListFormValue::TypesForm(Box::new(form)));
+                    } else if let Ok(form) = ProdForm::from_form(&form) {
+                        list.values.push(ListFormValue::ProdForm(Box::new(form)));
                     } else if let Ok(form) = ArrForm::from_form(&form) {
                         list.values.push(ListFormValue::ArrForm(Box::new(form)));
+                    } else if let Ok(form) = MapForm::from_form(&form) {
+                        list.values.push(ListFormValue::MapForm(Box::new(form)));
                     } else if let Ok(form) = VecForm::from_form(&form) {
                         list.values.push(ListFormValue::VecForm(Box::new(form)));
                     } else if let Ok(form) = ListForm::from_form(&form) {

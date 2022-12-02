@@ -1,10 +1,14 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::app_form::AppForm;
+use crate::form::arr_form::ArrForm;
 use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
+use crate::form::list_form::ListForm;
+use crate::form::map_form::MapForm;
 use crate::form::types_form::TypesForm;
+use crate::form::vec_form::VecForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -24,6 +28,10 @@ pub enum ProdFormValue {
     ValuePathSymbol(SimpleValue),
     TypePathSymbol(SimpleValue),
     TypesForm(Box<TypesForm>),
+    MapForm(Box<MapForm>),
+    VecForm(Box<VecForm>),
+    ArrForm(Box<ArrForm>),
+    ListForm(Box<ListForm>),
     ProdForm(Box<ProdForm>),
     FunForm(Box<FunForm>),
     CaseForm(Box<CaseForm>),
@@ -51,6 +59,10 @@ impl ProdFormValue {
             ProdFormValue::ValuePathSymbol(symbol) => symbol.file(),
             ProdFormValue::TypePathSymbol(symbol) => symbol.file(),
             ProdFormValue::TypesForm(form) => form.file(),
+            ProdFormValue::MapForm(form) => form.file(),
+            ProdFormValue::VecForm(form) => form.file(),
+            ProdFormValue::ArrForm(form) => form.file(),
+            ProdFormValue::ListForm(form) => form.file(),
             ProdFormValue::ProdForm(form) => form.file(),
             ProdFormValue::FunForm(form) => form.file(),
             ProdFormValue::CaseForm(form) => form.file(),
@@ -72,6 +84,10 @@ impl ProdFormValue {
             ProdFormValue::ValuePathSymbol(symbol) => symbol.loc(),
             ProdFormValue::TypePathSymbol(symbol) => symbol.loc(),
             ProdFormValue::TypesForm(form) => form.loc(),
+            ProdFormValue::MapForm(form) => form.loc(),
+            ProdFormValue::VecForm(form) => form.loc(),
+            ProdFormValue::ArrForm(form) => form.loc(),
+            ProdFormValue::ListForm(form) => form.loc(),
             ProdFormValue::ProdForm(form) => form.loc(),
             ProdFormValue::FunForm(form) => form.loc(),
             ProdFormValue::CaseForm(form) => form.loc(),
@@ -94,6 +110,10 @@ impl ProdFormValue {
             ProdFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
             ProdFormValue::TypePathSymbol(symbol) => symbol.to_string(),
             ProdFormValue::TypesForm(form) => form.to_string(),
+            ProdFormValue::MapForm(form) => form.to_string(),
+            ProdFormValue::VecForm(form) => form.to_string(),
+            ProdFormValue::ArrForm(form) => form.to_string(),
+            ProdFormValue::ListForm(form) => form.to_string(),
             ProdFormValue::ProdForm(form) => form.to_string(),
             ProdFormValue::FunForm(form) => form.to_string(),
             ProdFormValue::CaseForm(form) => form.to_string(),
@@ -136,6 +156,54 @@ impl ProdForm {
         self.values.is_empty()
     }
 
+    pub fn is_symbolic(&self) -> bool {
+        for value in self.values.iter() {
+            match value {
+                ProdFormValue::Ignore(_)
+                | ProdFormValue::Empty(_)
+                | ProdFormValue::Panic(_)
+                | ProdFormValue::Atomic(_)
+                | ProdFormValue::ValueKeyword(_)
+                | ProdFormValue::TypeKeyword(_)
+                | ProdFormValue::TypeSymbol(_)
+                | ProdFormValue::TypePathSymbol(_)
+                | ProdFormValue::FunForm(_)
+                | ProdFormValue::TypesForm(_)
+                | ProdFormValue::CaseForm(_)
+                | ProdFormValue::LetForm(_)
+                | ProdFormValue::AppForm(_) => return false,
+                ProdFormValue::ProdForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                ProdFormValue::MapForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                ProdFormValue::ArrForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                ProdFormValue::VecForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                ProdFormValue::ListForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        true
+    }
+
     pub fn values_to_string(&self) -> String {
         self.values
             .iter()
@@ -150,6 +218,18 @@ impl ProdForm {
         for value in self.values.iter() {
             match value.clone() {
                 ProdFormValue::TypesForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::MapForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::VecForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::ArrForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ProdFormValue::ListForm(form) => {
                     params.extend(form.all_parameters());
                 }
                 ProdFormValue::ProdForm(form) => {
@@ -192,6 +272,18 @@ impl ProdForm {
                     vars.push(value);
                 }
                 ProdFormValue::TypesForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::MapForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::VecForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::ArrForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ProdFormValue::ListForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 ProdFormValue::ProdForm(form) => {
@@ -271,6 +363,14 @@ impl ProdForm {
                 FormTailElement::Form(form) => {
                     if let Ok(form) = TypesForm::from_form(&form) {
                         prod.values.push(ProdFormValue::TypesForm(Box::new(form)));
+                    } else if let Ok(form) = MapForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::MapForm(Box::new(form)));
+                    } else if let Ok(form) = VecForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::VecForm(Box::new(form)));
+                    } else if let Ok(form) = ArrForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::ArrForm(Box::new(form)));
+                    } else if let Ok(form) = ListForm::from_form(&form) {
+                        prod.values.push(ProdFormValue::ListForm(Box::new(form)));
                     } else if let Ok(form) = ProdForm::from_form(&form) {
                         prod.values.push(ProdFormValue::ProdForm(Box::new(form)));
                     } else if let Ok(form) = FunForm::from_form(&form) {

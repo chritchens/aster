@@ -122,21 +122,20 @@ mod tests {
 
         res = Value::from_str(s);
 
-        //assert!(res.is_ok());
+        assert!(res.is_ok());
 
         let value = res.unwrap();
 
         assert!(value.is_form());
 
-        /*
         s = "
-        (block (
+        (block
             (import std.io _ printf)
             (export printProd)
 
             (sig printProd (Fun IO (Prod Int Char) IO))
             (val printProd (fun io (prod a b)
-                (printf io \"a: {}, b: {}\n\" a b)))))";
+                (printf io \"a: {}, b: {}\n\" a b))))";
 
         res = Value::from_str(s);
 
@@ -145,6 +144,5 @@ mod tests {
         let value = res.unwrap();
 
         assert!(value.is_form());
-        */
     }
 }

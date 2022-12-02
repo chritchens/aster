@@ -6,6 +6,8 @@ use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::list_form::ListForm;
+use crate::form::map_form::MapForm;
+use crate::form::prod_form::ProdForm;
 use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
@@ -15,6 +17,7 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum VecFormValue {
+    Ignore(SimpleValue),
     Empty(SimpleValue),
     Panic(SimpleValue),
     Atomic(SimpleValue),
@@ -29,8 +32,10 @@ pub enum VecFormValue {
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
     AppForm(Box<AppForm>),
+    ProdForm(Box<ProdForm>),
     ListForm(Box<ListForm>),
     ArrForm(Box<ArrForm>),
+    MapForm(Box<MapForm>),
     VecForm(Box<VecForm>),
 }
 
@@ -43,6 +48,7 @@ impl Default for VecFormValue {
 impl VecFormValue {
     pub fn file(&self) -> String {
         match self {
+            VecFormValue::Ignore(ignore) => ignore.file(),
             VecFormValue::Empty(empty) => empty.file(),
             VecFormValue::Panic(panic) => panic.file(),
             VecFormValue::Atomic(atomic) => atomic.file(),
@@ -57,14 +63,17 @@ impl VecFormValue {
             VecFormValue::CaseForm(form) => form.file(),
             VecFormValue::LetForm(form) => form.file(),
             VecFormValue::AppForm(form) => form.file(),
+            VecFormValue::ProdForm(form) => form.file(),
             VecFormValue::ListForm(form) => form.file(),
             VecFormValue::ArrForm(form) => form.file(),
+            VecFormValue::MapForm(form) => form.file(),
             VecFormValue::VecForm(form) => form.file(),
         }
     }
 
     pub fn loc(&self) -> Option<Loc> {
         match self {
+            VecFormValue::Ignore(ignore) => ignore.loc(),
             VecFormValue::Empty(empty) => empty.loc(),
             VecFormValue::Panic(panic) => panic.loc(),
             VecFormValue::Atomic(atomic) => atomic.loc(),
@@ -79,8 +88,10 @@ impl VecFormValue {
             VecFormValue::CaseForm(form) => form.loc(),
             VecFormValue::LetForm(form) => form.loc(),
             VecFormValue::AppForm(form) => form.loc(),
+            VecFormValue::ProdForm(form) => form.loc(),
             VecFormValue::ListForm(form) => form.loc(),
             VecFormValue::ArrForm(form) => form.loc(),
+            VecFormValue::MapForm(form) => form.loc(),
             VecFormValue::VecForm(form) => form.loc(),
         }
     }
@@ -88,6 +99,7 @@ impl VecFormValue {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
+            VecFormValue::Ignore(_) => "_".into(),
             VecFormValue::Empty(_) => "()".into(),
             VecFormValue::Panic(_) => "panic".into(),
             VecFormValue::Atomic(atomic) => atomic.to_string(),
@@ -102,8 +114,10 @@ impl VecFormValue {
             VecFormValue::CaseForm(form) => form.to_string(),
             VecFormValue::LetForm(form) => form.to_string(),
             VecFormValue::AppForm(form) => form.to_string(),
+            VecFormValue::ProdForm(form) => form.to_string(),
             VecFormValue::ListForm(form) => form.to_string(),
             VecFormValue::ArrForm(form) => form.to_string(),
+            VecFormValue::MapForm(form) => form.to_string(),
             VecFormValue::VecForm(form) => form.to_string(),
         }
     }
@@ -142,6 +156,53 @@ impl VecForm {
         self.values.is_empty()
     }
 
+    pub fn is_symbolic(&self) -> bool {
+        for value in self.values.iter() {
+            match value {
+                VecFormValue::Ignore(_)
+                | VecFormValue::Empty(_)
+                | VecFormValue::Atomic(_)
+                | VecFormValue::ValueKeyword(_)
+                | VecFormValue::TypeKeyword(_)
+                | VecFormValue::TypeSymbol(_)
+                | VecFormValue::TypePathSymbol(_)
+                | VecFormValue::FunForm(_)
+                | VecFormValue::TypesForm(_)
+                | VecFormValue::CaseForm(_)
+                | VecFormValue::LetForm(_)
+                | VecFormValue::AppForm(_) => return false,
+                VecFormValue::ProdForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                VecFormValue::ListForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                VecFormValue::ArrForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                VecFormValue::MapForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                VecFormValue::VecForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        true
+    }
+
     pub fn values_to_string(&self) -> String {
         self.values
             .iter()
@@ -170,10 +231,16 @@ impl VecForm {
                 VecFormValue::AppForm(form) => {
                     params.extend(form.all_parameters());
                 }
+                VecFormValue::ProdForm(form) => {
+                    params.extend(form.all_parameters());
+                }
                 VecFormValue::ListForm(form) => {
                     params.extend(form.all_parameters());
                 }
                 VecFormValue::ArrForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                VecFormValue::MapForm(form) => {
                     params.extend(form.all_parameters());
                 }
                 VecFormValue::VecForm(form) => {
@@ -218,10 +285,16 @@ impl VecForm {
                 VecFormValue::AppForm(form) => {
                     vars.extend(form.all_variables());
                 }
+                VecFormValue::ProdForm(form) => {
+                    vars.extend(form.all_variables());
+                }
                 VecFormValue::ListForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 VecFormValue::ArrForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                VecFormValue::MapForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 VecFormValue::VecForm(form) => {
@@ -255,6 +328,9 @@ impl VecForm {
         for param in form.tail.iter() {
             match param.clone() {
                 FormTailElement::Simple(value) => match value {
+                    SimpleValue::Ignore(_) => {
+                        vec.values.push(VecFormValue::Ignore(value));
+                    }
                     SimpleValue::Empty(_) => {
                         vec.values.push(VecFormValue::Empty(value));
                     }
@@ -289,10 +365,14 @@ impl VecForm {
                 FormTailElement::Form(form) => {
                     if let Ok(form) = TypesForm::from_form(&form) {
                         vec.values.push(VecFormValue::TypesForm(Box::new(form)));
+                    } else if let Ok(form) = ProdForm::from_form(&form) {
+                        vec.values.push(VecFormValue::ProdForm(Box::new(form)));
                     } else if let Ok(form) = ListForm::from_form(&form) {
                         vec.values.push(VecFormValue::ListForm(Box::new(form)));
                     } else if let Ok(form) = ArrForm::from_form(&form) {
                         vec.values.push(VecFormValue::ArrForm(Box::new(form)));
+                    } else if let Ok(form) = MapForm::from_form(&form) {
+                        vec.values.push(VecFormValue::MapForm(Box::new(form)));
                     } else if let Ok(form) = VecForm::from_form(&form) {
                         vec.values.push(VecFormValue::VecForm(Box::new(form)));
                     } else if let Ok(form) = FunForm::from_form(&form) {

@@ -5,6 +5,8 @@ use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::list_form::ListForm;
+use crate::form::map_form::MapForm;
+use crate::form::prod_form::ProdForm;
 use crate::form::types_form::TypesForm;
 use crate::form::vec_form::VecForm;
 use crate::loc::Loc;
@@ -15,6 +17,7 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ArrFormValue {
+    Ignore(SimpleValue),
     Empty(SimpleValue),
     Panic(SimpleValue),
     Atomic(SimpleValue),
@@ -29,8 +32,10 @@ pub enum ArrFormValue {
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
     AppForm(Box<AppForm>),
+    ProdForm(Box<ProdForm>),
     ListForm(Box<ListForm>),
     VecForm(Box<VecForm>),
+    MapForm(Box<MapForm>),
     ArrForm(Box<ArrForm>),
 }
 
@@ -43,6 +48,7 @@ impl Default for ArrFormValue {
 impl ArrFormValue {
     pub fn file(&self) -> String {
         match self {
+            ArrFormValue::Ignore(ignore) => ignore.file(),
             ArrFormValue::Empty(empty) => empty.file(),
             ArrFormValue::Panic(panic) => panic.file(),
             ArrFormValue::Atomic(atomic) => atomic.file(),
@@ -57,14 +63,17 @@ impl ArrFormValue {
             ArrFormValue::CaseForm(form) => form.file(),
             ArrFormValue::LetForm(form) => form.file(),
             ArrFormValue::AppForm(form) => form.file(),
+            ArrFormValue::ProdForm(form) => form.file(),
             ArrFormValue::ListForm(form) => form.file(),
             ArrFormValue::VecForm(form) => form.file(),
+            ArrFormValue::MapForm(form) => form.file(),
             ArrFormValue::ArrForm(form) => form.file(),
         }
     }
 
     pub fn loc(&self) -> Option<Loc> {
         match self {
+            ArrFormValue::Ignore(ignore) => ignore.loc(),
             ArrFormValue::Empty(empty) => empty.loc(),
             ArrFormValue::Panic(panic) => panic.loc(),
             ArrFormValue::Atomic(atomic) => atomic.loc(),
@@ -79,8 +88,10 @@ impl ArrFormValue {
             ArrFormValue::CaseForm(form) => form.loc(),
             ArrFormValue::LetForm(form) => form.loc(),
             ArrFormValue::AppForm(form) => form.loc(),
+            ArrFormValue::ProdForm(form) => form.loc(),
             ArrFormValue::ListForm(form) => form.loc(),
             ArrFormValue::VecForm(form) => form.loc(),
+            ArrFormValue::MapForm(form) => form.loc(),
             ArrFormValue::ArrForm(form) => form.loc(),
         }
     }
@@ -88,6 +99,7 @@ impl ArrFormValue {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
+            ArrFormValue::Ignore(_) => "_".into(),
             ArrFormValue::Empty(_) => "()".into(),
             ArrFormValue::Panic(_) => "panic".into(),
             ArrFormValue::Atomic(atomic) => atomic.to_string(),
@@ -102,8 +114,10 @@ impl ArrFormValue {
             ArrFormValue::CaseForm(form) => form.to_string(),
             ArrFormValue::LetForm(form) => form.to_string(),
             ArrFormValue::AppForm(form) => form.to_string(),
+            ArrFormValue::ProdForm(form) => form.to_string(),
             ArrFormValue::ListForm(form) => form.to_string(),
             ArrFormValue::VecForm(form) => form.to_string(),
+            ArrFormValue::MapForm(form) => form.to_string(),
             ArrFormValue::ArrForm(form) => form.to_string(),
         }
     }
@@ -142,6 +156,53 @@ impl ArrForm {
         self.values.is_empty()
     }
 
+    pub fn is_symbolic(&self) -> bool {
+        for value in self.values.iter() {
+            match value {
+                ArrFormValue::Ignore(_)
+                | ArrFormValue::Empty(_)
+                | ArrFormValue::Atomic(_)
+                | ArrFormValue::ValueKeyword(_)
+                | ArrFormValue::TypeKeyword(_)
+                | ArrFormValue::TypeSymbol(_)
+                | ArrFormValue::TypePathSymbol(_)
+                | ArrFormValue::FunForm(_)
+                | ArrFormValue::TypesForm(_)
+                | ArrFormValue::CaseForm(_)
+                | ArrFormValue::LetForm(_)
+                | ArrFormValue::AppForm(_) => return false,
+                ArrFormValue::ProdForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                ArrFormValue::MapForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                ArrFormValue::VecForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                ArrFormValue::ListForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                ArrFormValue::ArrForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        true
+    }
+
     pub fn values_to_string(&self) -> String {
         self.values
             .iter()
@@ -170,10 +231,16 @@ impl ArrForm {
                 ArrFormValue::AppForm(form) => {
                     params.extend(form.all_parameters());
                 }
+                ArrFormValue::ProdForm(form) => {
+                    params.extend(form.all_parameters());
+                }
                 ArrFormValue::ListForm(form) => {
                     params.extend(form.all_parameters());
                 }
                 ArrFormValue::VecForm(form) => {
+                    params.extend(form.all_parameters());
+                }
+                ArrFormValue::MapForm(form) => {
                     params.extend(form.all_parameters());
                 }
                 ArrFormValue::ArrForm(form) => {
@@ -218,10 +285,16 @@ impl ArrForm {
                 ArrFormValue::AppForm(form) => {
                     vars.extend(form.all_variables());
                 }
+                ArrFormValue::ProdForm(form) => {
+                    vars.extend(form.all_variables());
+                }
                 ArrFormValue::ListForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 ArrFormValue::VecForm(form) => {
+                    vars.extend(form.all_variables());
+                }
+                ArrFormValue::MapForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 ArrFormValue::ArrForm(form) => {
@@ -255,6 +328,9 @@ impl ArrForm {
         for param in form.tail.iter() {
             match param.clone() {
                 FormTailElement::Simple(value) => match value {
+                    SimpleValue::Ignore(_) => {
+                        arr.values.push(ArrFormValue::Ignore(value));
+                    }
                     SimpleValue::Empty(_) => {
                         arr.values.push(ArrFormValue::Empty(value));
                     }
@@ -289,10 +365,14 @@ impl ArrForm {
                 FormTailElement::Form(form) => {
                     if let Ok(form) = TypesForm::from_form(&form) {
                         arr.values.push(ArrFormValue::TypesForm(Box::new(form)));
+                    } else if let Ok(form) = ProdForm::from_form(&form) {
+                        arr.values.push(ArrFormValue::ProdForm(Box::new(form)));
                     } else if let Ok(form) = ListForm::from_form(&form) {
                         arr.values.push(ArrFormValue::ListForm(Box::new(form)));
                     } else if let Ok(form) = VecForm::from_form(&form) {
                         arr.values.push(ArrFormValue::VecForm(Box::new(form)));
+                    } else if let Ok(form) = MapForm::from_form(&form) {
+                        arr.values.push(ArrFormValue::MapForm(Box::new(form)));
                     } else if let Ok(form) = ArrForm::from_form(&form) {
                         arr.values.push(ArrFormValue::ArrForm(Box::new(form)));
                     } else if let Ok(form) = FunForm::from_form(&form) {

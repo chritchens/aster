@@ -290,7 +290,6 @@ impl BlockForm {
                     }
                 }
                 _ => {
-                    println!("{}", form.to_string());
                     return Err(Error::Syntactic(SyntacticError {
                         loc: form.loc(),
                         desc: "expected a form".into(),

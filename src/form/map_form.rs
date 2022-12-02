@@ -9,6 +9,7 @@ use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum MapFormValue {
+    Ignore(SimpleValue),
     Empty(SimpleValue),
     ProdForm(Box<ProdForm>),
 }
@@ -22,6 +23,7 @@ impl Default for MapFormValue {
 impl MapFormValue {
     pub fn file(&self) -> String {
         match self {
+            MapFormValue::Ignore(ignore) => ignore.file(),
             MapFormValue::Empty(empty) => empty.file(),
             MapFormValue::ProdForm(form) => form.file(),
         }
@@ -29,6 +31,7 @@ impl MapFormValue {
 
     pub fn loc(&self) -> Option<Loc> {
         match self {
+            MapFormValue::Ignore(ignore) => ignore.loc(),
             MapFormValue::Empty(empty) => empty.loc(),
             MapFormValue::ProdForm(form) => form.loc(),
         }
@@ -37,6 +40,7 @@ impl MapFormValue {
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
+            MapFormValue::Ignore(_) => "_".into(),
             MapFormValue::Empty(_) => "()".into(),
             MapFormValue::ProdForm(form) => form.to_string(),
         }
@@ -74,6 +78,23 @@ impl MapForm {
 
     pub fn is_empty(&self) -> bool {
         self.values.is_empty()
+    }
+
+    pub fn is_symbolic(&self) -> bool {
+        for value in self.values.iter() {
+            match value {
+                MapFormValue::Ignore(_) | MapFormValue::Empty(_) => {
+                    return false;
+                }
+                MapFormValue::ProdForm(form) => {
+                    if !form.is_symbolic() {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        true
     }
 
     pub fn values_to_string(&self) -> String {
@@ -129,6 +150,9 @@ impl MapForm {
         for param in form.tail.iter() {
             match param.clone() {
                 FormTailElement::Simple(value) => match value {
+                    SimpleValue::Ignore(_) => {
+                        map.values.push(MapFormValue::Ignore(value));
+                    }
                     SimpleValue::Empty(_) => {
                         if form.tail.len() > 1 {
                             return Err(Error::Syntactic(SyntacticError {
