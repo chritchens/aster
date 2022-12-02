@@ -391,7 +391,7 @@ impl FunForm {
                 },
                 FormTailElement::Form(form) => {
                     if let Ok(form) = MapForm::from_form(&form) {
-                        if !form.is_symbolic() {
+                        if !form.can_be_parameter() {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
                                 desc: "expected a symbolic map form".into(),
@@ -401,7 +401,7 @@ impl FunForm {
                         self.parameters
                             .push(FunFormParameter::MapForm(Box::new(form)));
                     } else if let Ok(form) = VecForm::from_form(&form) {
-                        if !form.is_symbolic() {
+                        if !form.can_be_parameter() {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
                                 desc: "expected a symbolic vec form".into(),
@@ -411,7 +411,7 @@ impl FunForm {
                         self.parameters
                             .push(FunFormParameter::VecForm(Box::new(form)));
                     } else if let Ok(form) = ArrForm::from_form(&form) {
-                        if !form.is_symbolic() {
+                        if !form.can_be_parameter() {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
                                 desc: "expected a symbolic arr form".into(),
@@ -421,7 +421,7 @@ impl FunForm {
                         self.parameters
                             .push(FunFormParameter::ArrForm(Box::new(form)));
                     } else if let Ok(form) = ListForm::from_form(&form) {
-                        if !form.is_symbolic() {
+                        if !form.can_be_parameter() {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
                                 desc: "expected a symbolic list form".into(),
@@ -431,7 +431,7 @@ impl FunForm {
                         self.parameters
                             .push(FunFormParameter::ListForm(Box::new(form)));
                     } else if let Ok(form) = ProdForm::from_form(&form) {
-                        if !form.is_symbolic() {
+                        if !form.can_be_parameter() {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
                                 desc: "expected a symbolic prod form".into(),
@@ -466,7 +466,7 @@ impl FunForm {
                         }
                         FormTailElement::Form(form) => {
                             if let Ok(form) = MapForm::from_form(&form) {
-                                if !form.is_symbolic() {
+                                if !form.can_be_parameter() {
                                     return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "expected a symbolic map form".into(),
@@ -476,7 +476,7 @@ impl FunForm {
                                 self.parameters
                                     .push(FunFormParameter::MapForm(Box::new(form)));
                             } else if let Ok(form) = VecForm::from_form(&form) {
-                                if !form.is_symbolic() {
+                                if !form.can_be_parameter() {
                                     return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "expected a symbolic vec form".into(),
@@ -486,7 +486,7 @@ impl FunForm {
                                 self.parameters
                                     .push(FunFormParameter::VecForm(Box::new(form)));
                             } else if let Ok(form) = ArrForm::from_form(&form) {
-                                if !form.is_symbolic() {
+                                if !form.can_be_parameter() {
                                     return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "expected a symbolic arr form".into(),
@@ -496,7 +496,7 @@ impl FunForm {
                                 self.parameters
                                     .push(FunFormParameter::ArrForm(Box::new(form)));
                             } else if let Ok(form) = ListForm::from_form(&form) {
-                                if !form.is_symbolic() {
+                                if !form.can_be_parameter() {
                                     return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "expected a symbolic list form".into(),
@@ -506,7 +506,7 @@ impl FunForm {
                                 self.parameters
                                     .push(FunFormParameter::ListForm(Box::new(form)));
                             } else if let Ok(form) = ProdForm::from_form(&form) {
-                                if !form.is_symbolic() {
+                                if !form.can_be_parameter() {
                                     return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
                                         desc: "expected a symbolic prod form".into(),

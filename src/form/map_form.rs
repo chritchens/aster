@@ -80,14 +80,14 @@ impl MapForm {
         self.values.is_empty()
     }
 
-    pub fn is_symbolic(&self) -> bool {
+    pub fn can_be_parameter(&self) -> bool {
         for value in self.values.iter() {
             match value {
                 MapFormValue::Ignore(_) | MapFormValue::Empty(_) => {
                     return false;
                 }
                 MapFormValue::ProdForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }

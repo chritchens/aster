@@ -156,7 +156,7 @@ impl ProdForm {
         self.values.is_empty()
     }
 
-    pub fn is_symbolic(&self) -> bool {
+    pub fn can_be_parameter(&self) -> bool {
         for value in self.values.iter() {
             match value {
                 ProdFormValue::Ignore(_)
@@ -173,27 +173,27 @@ impl ProdForm {
                 | ProdFormValue::LetForm(_)
                 | ProdFormValue::AppForm(_) => return false,
                 ProdFormValue::ProdForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
                 ProdFormValue::MapForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
                 ProdFormValue::ArrForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
                 ProdFormValue::VecForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
                 ProdFormValue::ListForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }

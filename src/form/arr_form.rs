@@ -156,7 +156,7 @@ impl ArrForm {
         self.values.is_empty()
     }
 
-    pub fn is_symbolic(&self) -> bool {
+    pub fn can_be_parameter(&self) -> bool {
         for value in self.values.iter() {
             match value {
                 ArrFormValue::Ignore(_)
@@ -172,27 +172,27 @@ impl ArrForm {
                 | ArrFormValue::LetForm(_)
                 | ArrFormValue::AppForm(_) => return false,
                 ArrFormValue::ProdForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
                 ArrFormValue::MapForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
                 ArrFormValue::VecForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
                 ArrFormValue::ListForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
                 ArrFormValue::ArrForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }

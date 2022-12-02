@@ -156,7 +156,7 @@ impl VecForm {
         self.values.is_empty()
     }
 
-    pub fn is_symbolic(&self) -> bool {
+    pub fn can_be_parameter(&self) -> bool {
         for value in self.values.iter() {
             match value {
                 VecFormValue::Ignore(_)
@@ -172,27 +172,27 @@ impl VecForm {
                 | VecFormValue::LetForm(_)
                 | VecFormValue::AppForm(_) => return false,
                 VecFormValue::ProdForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
                 VecFormValue::ListForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
                 VecFormValue::ArrForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
                 VecFormValue::MapForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
                 VecFormValue::VecForm(form) => {
-                    if !form.is_symbolic() {
+                    if !form.can_be_parameter() {
                         return false;
                     }
                 }
