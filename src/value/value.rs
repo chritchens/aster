@@ -1,3 +1,4 @@
+use crate::error::Error;
 use crate::form::Form;
 use crate::loc::Loc;
 use crate::result::Result;
@@ -58,6 +59,7 @@ impl Value {
         }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<Value> {
         let tokens = Tokens::from_str(s)?;
 
@@ -92,6 +94,14 @@ impl Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
+    }
+}
+
+impl std::str::FromStr for Value {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
     }
 }
 

@@ -126,6 +126,7 @@ impl FormValue {
         }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<FormValue> {
         let tokens = Tokens::from_str(s)?;
 
@@ -189,5 +190,13 @@ impl FormValue {
 impl fmt::Display for FormValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
+    }
+}
+
+impl std::str::FromStr for FormValue {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
     }
 }
