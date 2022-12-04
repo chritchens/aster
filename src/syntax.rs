@@ -3,12 +3,12 @@ use crate::result::Result;
 use std::convert;
 use std::fmt;
 
-pub const KEYWORDS: [&str; 57] = [
+pub const KEYWORDS: [&str; 55] = [
     "module", "block", "_", "builtin", "import", "export", "val", "type", "atomic", "pair", "list",
     "arr", "vec", "map", "sig", "fun", "attrs", "app", "case", "id", "default", "match", "others",
     "size", "load", "store", "ref", "deref", "cast", "dup", "drop", "panic", "Builtin", "Empty",
     "Atomic", "UInt", "Int", "Float", "Size", "Pointer", "Ref", "Char", "String", "Mem", "Path",
-    "IO", "Ctx", "Enum", "Pair", "List", "Arr", "Vec", "Map", "Sig", "Fun", "Attrs", "Type",
+    "IO", "Ctx", "Enum", "Pair", "List", "Arr", "Vec", "Map", "Fun", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -84,9 +84,7 @@ pub enum Keyword {
     ArrT,
     VecT,
     MapT,
-    SigT,
     FunT,
-    AttrsT,
     TypeT,
 }
 
@@ -146,9 +144,7 @@ impl fmt::Display for Keyword {
             Keyword::ArrT => write!(f, "Arr"),
             Keyword::VecT => write!(f, "Vec"),
             Keyword::MapT => write!(f, "Map"),
-            Keyword::SigT => write!(f, "Sig"),
             Keyword::FunT => write!(f, "Fun"),
-            Keyword::AttrsT => write!(f, "Attrs"),
             Keyword::TypeT => write!(f, "Type"),
         }
     }
@@ -211,9 +207,7 @@ impl Keyword {
             "Arr" => Ok(Keyword::ArrT),
             "Vec" => Ok(Keyword::VecT),
             "Map" => Ok(Keyword::MapT),
-            "Sig" => Ok(Keyword::SigT),
             "Fun" => Ok(Keyword::FunT),
-            "Attrs" => Ok(Keyword::AttrsT),
             "Type" => Ok(Keyword::TypeT),
             _ => Err(Error::Syntactic(SyntacticError {
                 loc: None,
