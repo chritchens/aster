@@ -132,7 +132,8 @@ impl fmt::Display for PairFormValue {
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct PairForm {
     pub tokens: Box<Tokens>,
-    pub values: Vec<PairFormValue>,
+    pub first: PairFormValue,
+    pub second: PairFormValue,
 }
 
 impl PairForm {
@@ -148,107 +149,163 @@ impl PairForm {
         self.tokens[0].loc()
     }
 
-    pub fn len(&self) -> usize {
-        self.values.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.values.is_empty()
-    }
-
     pub fn can_be_parameter(&self) -> bool {
-        for value in self.values.iter() {
-            match value {
-                PairFormValue::Ignore(_)
-                | PairFormValue::Empty(_)
-                | PairFormValue::Panic(_)
-                | PairFormValue::Atomic(_)
-                | PairFormValue::ValueKeyword(_)
-                | PairFormValue::TypeKeyword(_)
-                | PairFormValue::TypeSymbol(_)
-                | PairFormValue::TypePathSymbol(_)
-                | PairFormValue::FunForm(_)
-                | PairFormValue::TypesForm(_)
-                | PairFormValue::CaseForm(_)
-                | PairFormValue::LetForm(_)
-                | PairFormValue::AppForm(_) => return false,
-                PairFormValue::PairForm(form) => {
-                    if !form.can_be_parameter() {
-                        return false;
-                    }
+        match self.first.clone() {
+            PairFormValue::Ignore(_)
+            | PairFormValue::Empty(_)
+            | PairFormValue::Panic(_)
+            | PairFormValue::Atomic(_)
+            | PairFormValue::ValueKeyword(_)
+            | PairFormValue::TypeKeyword(_)
+            | PairFormValue::TypeSymbol(_)
+            | PairFormValue::TypePathSymbol(_)
+            | PairFormValue::FunForm(_)
+            | PairFormValue::TypesForm(_)
+            | PairFormValue::CaseForm(_)
+            | PairFormValue::LetForm(_)
+            | PairFormValue::AppForm(_) => return false,
+            PairFormValue::PairForm(form) => {
+                if !form.can_be_parameter() {
+                    return false;
                 }
-                PairFormValue::MapForm(form) => {
-                    if !form.can_be_parameter() {
-                        return false;
-                    }
-                }
-                PairFormValue::ArrForm(form) => {
-                    if !form.can_be_parameter() {
-                        return false;
-                    }
-                }
-                PairFormValue::VecForm(form) => {
-                    if !form.can_be_parameter() {
-                        return false;
-                    }
-                }
-                PairFormValue::ListForm(form) => {
-                    if !form.can_be_parameter() {
-                        return false;
-                    }
-                }
-                _ => {}
             }
+            PairFormValue::MapForm(form) => {
+                if !form.can_be_parameter() {
+                    return false;
+                }
+            }
+            PairFormValue::ArrForm(form) => {
+                if !form.can_be_parameter() {
+                    return false;
+                }
+            }
+            PairFormValue::VecForm(form) => {
+                if !form.can_be_parameter() {
+                    return false;
+                }
+            }
+            PairFormValue::ListForm(form) => {
+                if !form.can_be_parameter() {
+                    return false;
+                }
+            }
+            _ => {}
+        }
+
+        match self.second.clone() {
+            PairFormValue::Ignore(_)
+            | PairFormValue::Empty(_)
+            | PairFormValue::Panic(_)
+            | PairFormValue::Atomic(_)
+            | PairFormValue::ValueKeyword(_)
+            | PairFormValue::TypeKeyword(_)
+            | PairFormValue::TypeSymbol(_)
+            | PairFormValue::TypePathSymbol(_)
+            | PairFormValue::FunForm(_)
+            | PairFormValue::TypesForm(_)
+            | PairFormValue::CaseForm(_)
+            | PairFormValue::LetForm(_)
+            | PairFormValue::AppForm(_) => return false,
+            PairFormValue::PairForm(form) => {
+                if !form.can_be_parameter() {
+                    return false;
+                }
+            }
+            PairFormValue::MapForm(form) => {
+                if !form.can_be_parameter() {
+                    return false;
+                }
+            }
+            PairFormValue::ArrForm(form) => {
+                if !form.can_be_parameter() {
+                    return false;
+                }
+            }
+            PairFormValue::VecForm(form) => {
+                if !form.can_be_parameter() {
+                    return false;
+                }
+            }
+            PairFormValue::ListForm(form) => {
+                if !form.can_be_parameter() {
+                    return false;
+                }
+            }
+            _ => {}
         }
 
         true
     }
 
-    pub fn values_to_string(&self) -> String {
-        self.values
-            .iter()
-            .map(|v| v.to_string())
-            .collect::<Vec<String>>()
-            .join(" ")
-    }
-
     pub fn all_parameters(&self) -> Vec<SimpleValue> {
         let mut params = vec![];
 
-        for value in self.values.iter() {
-            match value.clone() {
-                PairFormValue::TypesForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                PairFormValue::MapForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                PairFormValue::VecForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                PairFormValue::ArrForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                PairFormValue::ListForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                PairFormValue::PairForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                PairFormValue::FunForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                PairFormValue::CaseForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                PairFormValue::LetForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                PairFormValue::AppForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                _ => {}
+        match self.first.clone() {
+            PairFormValue::TypesForm(form) => {
+                params.extend(form.all_parameters());
             }
+            PairFormValue::MapForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::VecForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::ArrForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::ListForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::PairForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::FunForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::CaseForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::LetForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::AppForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            _ => {}
+        }
+
+        match self.second.clone() {
+            PairFormValue::TypesForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::MapForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::VecForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::ArrForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::ListForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::PairForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::FunForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::CaseForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::LetForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            PairFormValue::AppForm(form) => {
+                params.extend(form.all_parameters());
+            }
+            _ => {}
         }
 
         params
@@ -257,52 +314,96 @@ impl PairForm {
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         let mut vars = vec![];
 
-        for value in self.values.iter() {
-            match value.clone() {
-                PairFormValue::ValueSymbol(value) => {
-                    vars.push(value);
-                }
-                PairFormValue::TypeSymbol(value) => {
-                    vars.push(value);
-                }
-                PairFormValue::ValuePathSymbol(value) => {
-                    vars.push(value);
-                }
-                PairFormValue::TypePathSymbol(value) => {
-                    vars.push(value);
-                }
-                PairFormValue::TypesForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                PairFormValue::MapForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                PairFormValue::VecForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                PairFormValue::ArrForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                PairFormValue::ListForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                PairFormValue::PairForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                PairFormValue::FunForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                PairFormValue::CaseForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                PairFormValue::LetForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                PairFormValue::AppForm(form) => {
-                    vars.extend(form.all_variables());
-                }
-                _ => {}
+        match self.first.clone() {
+            PairFormValue::ValueSymbol(value) => {
+                vars.push(value);
             }
+            PairFormValue::TypeSymbol(value) => {
+                vars.push(value);
+            }
+            PairFormValue::ValuePathSymbol(value) => {
+                vars.push(value);
+            }
+            PairFormValue::TypePathSymbol(value) => {
+                vars.push(value);
+            }
+            PairFormValue::TypesForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::MapForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::VecForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::ArrForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::ListForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::PairForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::FunForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::CaseForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::LetForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::AppForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            _ => {}
+        }
+
+        match self.second.clone() {
+            PairFormValue::ValueSymbol(value) => {
+                vars.push(value);
+            }
+            PairFormValue::TypeSymbol(value) => {
+                vars.push(value);
+            }
+            PairFormValue::ValuePathSymbol(value) => {
+                vars.push(value);
+            }
+            PairFormValue::TypePathSymbol(value) => {
+                vars.push(value);
+            }
+            PairFormValue::TypesForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::MapForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::VecForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::ArrForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::ListForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::PairForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::FunForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::CaseForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::LetForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            PairFormValue::AppForm(form) => {
+                vars.extend(form.all_variables());
+            }
+            _ => {}
         }
 
         vars
@@ -326,67 +427,131 @@ impl PairForm {
         let mut pair = PairForm::new();
         pair.tokens = form.tokens.clone();
 
-        for param in form.tail.iter() {
-            match param.clone() {
-                FormTailElement::Simple(value) => match value {
-                    SimpleValue::Empty(_) => {
-                        pair.values.push(PairFormValue::Empty(value));
-                    }
-                    SimpleValue::Atomic(_) => {
-                        pair.values.push(PairFormValue::Atomic(value));
-                    }
-                    SimpleValue::ValueKeyword(_) => {
-                        pair.values.push(PairFormValue::ValueKeyword(value));
-                    }
-                    SimpleValue::TypeKeyword(_) => {
-                        pair.values.push(PairFormValue::TypeKeyword(value));
-                    }
-                    SimpleValue::ValueSymbol(_) => {
-                        pair.values.push(PairFormValue::ValueSymbol(value));
-                    }
-                    SimpleValue::TypeSymbol(_) => {
-                        pair.values.push(PairFormValue::TypeSymbol(value));
-                    }
-                    SimpleValue::ValuePathSymbol(_) => {
-                        pair.values.push(PairFormValue::ValuePathSymbol(value));
-                    }
-                    SimpleValue::TypePathSymbol(_) => {
-                        pair.values.push(PairFormValue::TypePathSymbol(value));
-                    }
-                    x => {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: x.loc(),
-                            desc: "unxexpected value".into(),
-                        }));
-                    }
-                },
-                FormTailElement::Form(form) => {
-                    if let Ok(form) = TypesForm::from_form(&form) {
-                        pair.values.push(PairFormValue::TypesForm(Box::new(form)));
-                    } else if let Ok(form) = MapForm::from_form(&form) {
-                        pair.values.push(PairFormValue::MapForm(Box::new(form)));
-                    } else if let Ok(form) = VecForm::from_form(&form) {
-                        pair.values.push(PairFormValue::VecForm(Box::new(form)));
-                    } else if let Ok(form) = ArrForm::from_form(&form) {
-                        pair.values.push(PairFormValue::ArrForm(Box::new(form)));
-                    } else if let Ok(form) = ListForm::from_form(&form) {
-                        pair.values.push(PairFormValue::ListForm(Box::new(form)));
-                    } else if let Ok(form) = PairForm::from_form(&form) {
-                        pair.values.push(PairFormValue::PairForm(Box::new(form)));
-                    } else if let Ok(form) = FunForm::from_form(&form) {
-                        pair.values.push(PairFormValue::FunForm(Box::new(form)));
-                    } else if let Ok(form) = CaseForm::from_form(&form) {
-                        pair.values.push(PairFormValue::CaseForm(Box::new(form)));
-                    } else if let Ok(form) = LetForm::from_form(&form) {
-                        pair.values.push(PairFormValue::LetForm(Box::new(form)));
-                    } else if let Ok(form) = AppForm::from_form(&form) {
-                        pair.values.push(PairFormValue::AppForm(Box::new(form)))
-                    } else {
-                        return Err(Error::Syntactic(SyntacticError {
-                            loc: form.loc(),
-                            desc: "unexpected form".into(),
-                        }));
-                    }
+        let first = form.tail[0].clone();
+        let second = form.tail[1].clone();
+
+        match first {
+            FormTailElement::Simple(value) => match value {
+                SimpleValue::Empty(_) => {
+                    pair.first = PairFormValue::Empty(value);
+                }
+                SimpleValue::Atomic(_) => {
+                    pair.first = PairFormValue::Atomic(value);
+                }
+                SimpleValue::ValueKeyword(_) => {
+                    pair.first = PairFormValue::ValueKeyword(value);
+                }
+                SimpleValue::TypeKeyword(_) => {
+                    pair.first = PairFormValue::TypeKeyword(value);
+                }
+                SimpleValue::ValueSymbol(_) => {
+                    pair.first = PairFormValue::ValueSymbol(value);
+                }
+                SimpleValue::TypeSymbol(_) => {
+                    pair.first = PairFormValue::TypeSymbol(value);
+                }
+                SimpleValue::ValuePathSymbol(_) => {
+                    pair.first = PairFormValue::ValuePathSymbol(value);
+                }
+                SimpleValue::TypePathSymbol(_) => {
+                    pair.first = PairFormValue::TypePathSymbol(value);
+                }
+                x => {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: x.loc(),
+                        desc: "unxexpected value".into(),
+                    }));
+                }
+            },
+            FormTailElement::Form(form) => {
+                if let Ok(form) = TypesForm::from_form(&form) {
+                    pair.first = PairFormValue::TypesForm(Box::new(form));
+                } else if let Ok(form) = MapForm::from_form(&form) {
+                    pair.first = PairFormValue::MapForm(Box::new(form));
+                } else if let Ok(form) = VecForm::from_form(&form) {
+                    pair.first = PairFormValue::VecForm(Box::new(form));
+                } else if let Ok(form) = ArrForm::from_form(&form) {
+                    pair.first = PairFormValue::ArrForm(Box::new(form));
+                } else if let Ok(form) = ListForm::from_form(&form) {
+                    pair.first = PairFormValue::ListForm(Box::new(form));
+                } else if let Ok(form) = PairForm::from_form(&form) {
+                    pair.first = PairFormValue::PairForm(Box::new(form));
+                } else if let Ok(form) = FunForm::from_form(&form) {
+                    pair.first = PairFormValue::FunForm(Box::new(form));
+                } else if let Ok(form) = CaseForm::from_form(&form) {
+                    pair.first = PairFormValue::CaseForm(Box::new(form));
+                } else if let Ok(form) = LetForm::from_form(&form) {
+                    pair.first = PairFormValue::LetForm(Box::new(form));
+                } else if let Ok(form) = AppForm::from_form(&form) {
+                    pair.first = PairFormValue::AppForm(Box::new(form));
+                } else {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "unexpected form".into(),
+                    }));
+                }
+            }
+        }
+
+        match second {
+            FormTailElement::Simple(value) => match value {
+                SimpleValue::Empty(_) => {
+                    pair.second = PairFormValue::Empty(value);
+                }
+                SimpleValue::Atomic(_) => {
+                    pair.second = PairFormValue::Atomic(value);
+                }
+                SimpleValue::ValueKeyword(_) => {
+                    pair.second = PairFormValue::ValueKeyword(value);
+                }
+                SimpleValue::TypeKeyword(_) => {
+                    pair.second = PairFormValue::TypeKeyword(value);
+                }
+                SimpleValue::ValueSymbol(_) => {
+                    pair.second = PairFormValue::ValueSymbol(value);
+                }
+                SimpleValue::TypeSymbol(_) => {
+                    pair.second = PairFormValue::TypeSymbol(value);
+                }
+                SimpleValue::ValuePathSymbol(_) => {
+                    pair.second = PairFormValue::ValuePathSymbol(value);
+                }
+                SimpleValue::TypePathSymbol(_) => {
+                    pair.second = PairFormValue::TypePathSymbol(value);
+                }
+                x => {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: x.loc(),
+                        desc: "unxexpected value".into(),
+                    }));
+                }
+            },
+            FormTailElement::Form(form) => {
+                if let Ok(form) = TypesForm::from_form(&form) {
+                    pair.second = PairFormValue::TypesForm(Box::new(form));
+                } else if let Ok(form) = MapForm::from_form(&form) {
+                    pair.second = PairFormValue::MapForm(Box::new(form));
+                } else if let Ok(form) = VecForm::from_form(&form) {
+                    pair.second = PairFormValue::VecForm(Box::new(form));
+                } else if let Ok(form) = ArrForm::from_form(&form) {
+                    pair.second = PairFormValue::ArrForm(Box::new(form));
+                } else if let Ok(form) = ListForm::from_form(&form) {
+                    pair.second = PairFormValue::ListForm(Box::new(form));
+                } else if let Ok(form) = PairForm::from_form(&form) {
+                    pair.second = PairFormValue::PairForm(Box::new(form));
+                } else if let Ok(form) = FunForm::from_form(&form) {
+                    pair.second = PairFormValue::FunForm(Box::new(form));
+                } else if let Ok(form) = CaseForm::from_form(&form) {
+                    pair.second = PairFormValue::CaseForm(Box::new(form));
+                } else if let Ok(form) = LetForm::from_form(&form) {
+                    pair.second = PairFormValue::LetForm(Box::new(form));
+                } else if let Ok(form) = AppForm::from_form(&form) {
+                    pair.second = PairFormValue::AppForm(Box::new(form));
+                } else {
+                    return Err(Error::Syntactic(SyntacticError {
+                        loc: form.loc(),
+                        desc: "unexpected form".into(),
+                    }));
                 }
             }
         }
@@ -409,7 +574,11 @@ impl PairForm {
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        format!("(pair {})", self.values_to_string())
+        format!(
+            "(pair {} {})",
+            self.first.to_string(),
+            self.second.to_string()
+        )
     }
 }
 
@@ -441,14 +610,8 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(
-            form.values
-                .iter()
-                .map(|v| v.to_string())
-                .collect::<Vec<String>>(),
-            vec!["a".to_string(), "A".to_string()]
-        );
-        assert_eq!(form.values_to_string(), "a A".to_string());
+        assert_eq!(form.first.to_string(), "a".to_string());
+        assert_eq!(form.second.to_string(), "A".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(pair moduleX.X y)";
@@ -459,14 +622,8 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(
-            form.values
-                .iter()
-                .map(|v| v.to_string())
-                .collect::<Vec<String>>(),
-            vec!["moduleX.X".to_string(), "y".to_string()]
-        );
-        assert_eq!(form.values_to_string(), "moduleX.X y".to_string());
+        assert_eq!(form.first.to_string(), "moduleX.X".to_string());
+        assert_eq!(form.second.to_string(), "y".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(pair 0 (Fun A B))";
@@ -477,14 +634,8 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(
-            form.values
-                .iter()
-                .map(|v| v.to_string())
-                .collect::<Vec<String>>(),
-            vec!["0".to_string(), "(Fun A B)".to_string()]
-        );
-        assert_eq!(form.values_to_string(), "0 (Fun A B)".to_string());
+        assert_eq!(form.first.to_string(), "0".to_string());
+        assert_eq!(form.second.to_string(), "(Fun A B)".to_string());
         assert_eq!(form.to_string(), s.to_string());
     }
 }
