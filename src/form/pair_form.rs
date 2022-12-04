@@ -16,7 +16,7 @@ use crate::value::SimpleValue;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
-pub enum ProdFormValue {
+pub enum PairFormValue {
     Ignore(SimpleValue),
     Empty(SimpleValue),
     Panic(SimpleValue),
@@ -32,112 +32,112 @@ pub enum ProdFormValue {
     VecForm(Box<VecForm>),
     ArrForm(Box<ArrForm>),
     ListForm(Box<ListForm>),
-    ProdForm(Box<ProdForm>),
+    PairForm(Box<PairForm>),
     FunForm(Box<FunForm>),
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
     AppForm(Box<AppForm>),
 }
 
-impl Default for ProdFormValue {
-    fn default() -> ProdFormValue {
-        ProdFormValue::Empty(SimpleValue::new())
+impl Default for PairFormValue {
+    fn default() -> PairFormValue {
+        PairFormValue::Empty(SimpleValue::new())
     }
 }
 
-impl ProdFormValue {
+impl PairFormValue {
     pub fn file(&self) -> String {
         match self {
-            ProdFormValue::Ignore(ignore) => ignore.file(),
-            ProdFormValue::Empty(empty) => empty.file(),
-            ProdFormValue::Panic(panic) => panic.file(),
-            ProdFormValue::Atomic(atomic) => atomic.file(),
-            ProdFormValue::ValueKeyword(keyword) => keyword.file(),
-            ProdFormValue::TypeKeyword(keyword) => keyword.file(),
-            ProdFormValue::ValueSymbol(symbol) => symbol.file(),
-            ProdFormValue::TypeSymbol(symbol) => symbol.file(),
-            ProdFormValue::ValuePathSymbol(symbol) => symbol.file(),
-            ProdFormValue::TypePathSymbol(symbol) => symbol.file(),
-            ProdFormValue::TypesForm(form) => form.file(),
-            ProdFormValue::MapForm(form) => form.file(),
-            ProdFormValue::VecForm(form) => form.file(),
-            ProdFormValue::ArrForm(form) => form.file(),
-            ProdFormValue::ListForm(form) => form.file(),
-            ProdFormValue::ProdForm(form) => form.file(),
-            ProdFormValue::FunForm(form) => form.file(),
-            ProdFormValue::CaseForm(form) => form.file(),
-            ProdFormValue::LetForm(form) => form.file(),
-            ProdFormValue::AppForm(form) => form.file(),
+            PairFormValue::Ignore(ignore) => ignore.file(),
+            PairFormValue::Empty(empty) => empty.file(),
+            PairFormValue::Panic(panic) => panic.file(),
+            PairFormValue::Atomic(atomic) => atomic.file(),
+            PairFormValue::ValueKeyword(keyword) => keyword.file(),
+            PairFormValue::TypeKeyword(keyword) => keyword.file(),
+            PairFormValue::ValueSymbol(symbol) => symbol.file(),
+            PairFormValue::TypeSymbol(symbol) => symbol.file(),
+            PairFormValue::ValuePathSymbol(symbol) => symbol.file(),
+            PairFormValue::TypePathSymbol(symbol) => symbol.file(),
+            PairFormValue::TypesForm(form) => form.file(),
+            PairFormValue::MapForm(form) => form.file(),
+            PairFormValue::VecForm(form) => form.file(),
+            PairFormValue::ArrForm(form) => form.file(),
+            PairFormValue::ListForm(form) => form.file(),
+            PairFormValue::PairForm(form) => form.file(),
+            PairFormValue::FunForm(form) => form.file(),
+            PairFormValue::CaseForm(form) => form.file(),
+            PairFormValue::LetForm(form) => form.file(),
+            PairFormValue::AppForm(form) => form.file(),
         }
     }
 
     pub fn loc(&self) -> Option<Loc> {
         match self {
-            ProdFormValue::Ignore(ignore) => ignore.loc(),
-            ProdFormValue::Empty(empty) => empty.loc(),
-            ProdFormValue::Panic(panic) => panic.loc(),
-            ProdFormValue::Atomic(atomic) => atomic.loc(),
-            ProdFormValue::ValueKeyword(keyword) => keyword.loc(),
-            ProdFormValue::TypeKeyword(keyword) => keyword.loc(),
-            ProdFormValue::ValueSymbol(symbol) => symbol.loc(),
-            ProdFormValue::TypeSymbol(symbol) => symbol.loc(),
-            ProdFormValue::ValuePathSymbol(symbol) => symbol.loc(),
-            ProdFormValue::TypePathSymbol(symbol) => symbol.loc(),
-            ProdFormValue::TypesForm(form) => form.loc(),
-            ProdFormValue::MapForm(form) => form.loc(),
-            ProdFormValue::VecForm(form) => form.loc(),
-            ProdFormValue::ArrForm(form) => form.loc(),
-            ProdFormValue::ListForm(form) => form.loc(),
-            ProdFormValue::ProdForm(form) => form.loc(),
-            ProdFormValue::FunForm(form) => form.loc(),
-            ProdFormValue::CaseForm(form) => form.loc(),
-            ProdFormValue::LetForm(form) => form.loc(),
-            ProdFormValue::AppForm(form) => form.loc(),
+            PairFormValue::Ignore(ignore) => ignore.loc(),
+            PairFormValue::Empty(empty) => empty.loc(),
+            PairFormValue::Panic(panic) => panic.loc(),
+            PairFormValue::Atomic(atomic) => atomic.loc(),
+            PairFormValue::ValueKeyword(keyword) => keyword.loc(),
+            PairFormValue::TypeKeyword(keyword) => keyword.loc(),
+            PairFormValue::ValueSymbol(symbol) => symbol.loc(),
+            PairFormValue::TypeSymbol(symbol) => symbol.loc(),
+            PairFormValue::ValuePathSymbol(symbol) => symbol.loc(),
+            PairFormValue::TypePathSymbol(symbol) => symbol.loc(),
+            PairFormValue::TypesForm(form) => form.loc(),
+            PairFormValue::MapForm(form) => form.loc(),
+            PairFormValue::VecForm(form) => form.loc(),
+            PairFormValue::ArrForm(form) => form.loc(),
+            PairFormValue::ListForm(form) => form.loc(),
+            PairFormValue::PairForm(form) => form.loc(),
+            PairFormValue::FunForm(form) => form.loc(),
+            PairFormValue::CaseForm(form) => form.loc(),
+            PairFormValue::LetForm(form) => form.loc(),
+            PairFormValue::AppForm(form) => form.loc(),
         }
     }
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            ProdFormValue::Ignore(_) => "_".into(),
-            ProdFormValue::Empty(_) => "()".into(),
-            ProdFormValue::Panic(_) => "panic".into(),
-            ProdFormValue::Atomic(atomic) => atomic.to_string(),
-            ProdFormValue::ValueKeyword(keyword) => keyword.to_string(),
-            ProdFormValue::TypeKeyword(keyword) => keyword.to_string(),
-            ProdFormValue::ValueSymbol(symbol) => symbol.to_string(),
-            ProdFormValue::TypeSymbol(symbol) => symbol.to_string(),
-            ProdFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
-            ProdFormValue::TypePathSymbol(symbol) => symbol.to_string(),
-            ProdFormValue::TypesForm(form) => form.to_string(),
-            ProdFormValue::MapForm(form) => form.to_string(),
-            ProdFormValue::VecForm(form) => form.to_string(),
-            ProdFormValue::ArrForm(form) => form.to_string(),
-            ProdFormValue::ListForm(form) => form.to_string(),
-            ProdFormValue::ProdForm(form) => form.to_string(),
-            ProdFormValue::FunForm(form) => form.to_string(),
-            ProdFormValue::CaseForm(form) => form.to_string(),
-            ProdFormValue::LetForm(form) => form.to_string(),
-            ProdFormValue::AppForm(form) => form.to_string(),
+            PairFormValue::Ignore(_) => "_".into(),
+            PairFormValue::Empty(_) => "()".into(),
+            PairFormValue::Panic(_) => "panic".into(),
+            PairFormValue::Atomic(atomic) => atomic.to_string(),
+            PairFormValue::ValueKeyword(keyword) => keyword.to_string(),
+            PairFormValue::TypeKeyword(keyword) => keyword.to_string(),
+            PairFormValue::ValueSymbol(symbol) => symbol.to_string(),
+            PairFormValue::TypeSymbol(symbol) => symbol.to_string(),
+            PairFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
+            PairFormValue::TypePathSymbol(symbol) => symbol.to_string(),
+            PairFormValue::TypesForm(form) => form.to_string(),
+            PairFormValue::MapForm(form) => form.to_string(),
+            PairFormValue::VecForm(form) => form.to_string(),
+            PairFormValue::ArrForm(form) => form.to_string(),
+            PairFormValue::ListForm(form) => form.to_string(),
+            PairFormValue::PairForm(form) => form.to_string(),
+            PairFormValue::FunForm(form) => form.to_string(),
+            PairFormValue::CaseForm(form) => form.to_string(),
+            PairFormValue::LetForm(form) => form.to_string(),
+            PairFormValue::AppForm(form) => form.to_string(),
         }
     }
 }
 
-impl fmt::Display for ProdFormValue {
+impl fmt::Display for PairFormValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
-pub struct ProdForm {
+pub struct PairForm {
     pub tokens: Box<Tokens>,
-    pub values: Vec<ProdFormValue>,
+    pub values: Vec<PairFormValue>,
 }
 
-impl ProdForm {
-    pub fn new() -> ProdForm {
-        ProdForm::default()
+impl PairForm {
+    pub fn new() -> PairForm {
+        PairForm::default()
     }
 
     pub fn file(&self) -> String {
@@ -159,40 +159,40 @@ impl ProdForm {
     pub fn can_be_parameter(&self) -> bool {
         for value in self.values.iter() {
             match value {
-                ProdFormValue::Ignore(_)
-                | ProdFormValue::Empty(_)
-                | ProdFormValue::Panic(_)
-                | ProdFormValue::Atomic(_)
-                | ProdFormValue::ValueKeyword(_)
-                | ProdFormValue::TypeKeyword(_)
-                | ProdFormValue::TypeSymbol(_)
-                | ProdFormValue::TypePathSymbol(_)
-                | ProdFormValue::FunForm(_)
-                | ProdFormValue::TypesForm(_)
-                | ProdFormValue::CaseForm(_)
-                | ProdFormValue::LetForm(_)
-                | ProdFormValue::AppForm(_) => return false,
-                ProdFormValue::ProdForm(form) => {
+                PairFormValue::Ignore(_)
+                | PairFormValue::Empty(_)
+                | PairFormValue::Panic(_)
+                | PairFormValue::Atomic(_)
+                | PairFormValue::ValueKeyword(_)
+                | PairFormValue::TypeKeyword(_)
+                | PairFormValue::TypeSymbol(_)
+                | PairFormValue::TypePathSymbol(_)
+                | PairFormValue::FunForm(_)
+                | PairFormValue::TypesForm(_)
+                | PairFormValue::CaseForm(_)
+                | PairFormValue::LetForm(_)
+                | PairFormValue::AppForm(_) => return false,
+                PairFormValue::PairForm(form) => {
                     if !form.can_be_parameter() {
                         return false;
                     }
                 }
-                ProdFormValue::MapForm(form) => {
+                PairFormValue::MapForm(form) => {
                     if !form.can_be_parameter() {
                         return false;
                     }
                 }
-                ProdFormValue::ArrForm(form) => {
+                PairFormValue::ArrForm(form) => {
                     if !form.can_be_parameter() {
                         return false;
                     }
                 }
-                ProdFormValue::VecForm(form) => {
+                PairFormValue::VecForm(form) => {
                     if !form.can_be_parameter() {
                         return false;
                     }
                 }
-                ProdFormValue::ListForm(form) => {
+                PairFormValue::ListForm(form) => {
                     if !form.can_be_parameter() {
                         return false;
                     }
@@ -217,34 +217,34 @@ impl ProdForm {
 
         for value in self.values.iter() {
             match value.clone() {
-                ProdFormValue::TypesForm(form) => {
+                PairFormValue::TypesForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ProdFormValue::MapForm(form) => {
+                PairFormValue::MapForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ProdFormValue::VecForm(form) => {
+                PairFormValue::VecForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ProdFormValue::ArrForm(form) => {
+                PairFormValue::ArrForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ProdFormValue::ListForm(form) => {
+                PairFormValue::ListForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ProdFormValue::ProdForm(form) => {
+                PairFormValue::PairForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ProdFormValue::FunForm(form) => {
+                PairFormValue::FunForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ProdFormValue::CaseForm(form) => {
+                PairFormValue::CaseForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ProdFormValue::LetForm(form) => {
+                PairFormValue::LetForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ProdFormValue::AppForm(form) => {
+                PairFormValue::AppForm(form) => {
                     params.extend(form.all_parameters());
                 }
                 _ => {}
@@ -259,46 +259,46 @@ impl ProdForm {
 
         for value in self.values.iter() {
             match value.clone() {
-                ProdFormValue::ValueSymbol(value) => {
+                PairFormValue::ValueSymbol(value) => {
                     vars.push(value);
                 }
-                ProdFormValue::TypeSymbol(value) => {
+                PairFormValue::TypeSymbol(value) => {
                     vars.push(value);
                 }
-                ProdFormValue::ValuePathSymbol(value) => {
+                PairFormValue::ValuePathSymbol(value) => {
                     vars.push(value);
                 }
-                ProdFormValue::TypePathSymbol(value) => {
+                PairFormValue::TypePathSymbol(value) => {
                     vars.push(value);
                 }
-                ProdFormValue::TypesForm(form) => {
+                PairFormValue::TypesForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ProdFormValue::MapForm(form) => {
+                PairFormValue::MapForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ProdFormValue::VecForm(form) => {
+                PairFormValue::VecForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ProdFormValue::ArrForm(form) => {
+                PairFormValue::ArrForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ProdFormValue::ListForm(form) => {
+                PairFormValue::ListForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ProdFormValue::ProdForm(form) => {
+                PairFormValue::PairForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ProdFormValue::FunForm(form) => {
+                PairFormValue::FunForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ProdFormValue::CaseForm(form) => {
+                PairFormValue::CaseForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ProdFormValue::LetForm(form) => {
+                PairFormValue::LetForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ProdFormValue::AppForm(form) => {
+                PairFormValue::AppForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 _ => {}
@@ -308,11 +308,11 @@ impl ProdForm {
         vars
     }
 
-    pub fn from_form(form: &Form) -> Result<ProdForm> {
-        if form.head.to_string() != "prod" {
+    pub fn from_form(form: &Form) -> Result<PairForm> {
+        if form.head.to_string() != "pair" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.head.loc(),
-                desc: "expected a prod keyword".into(),
+                desc: "expected a pair keyword".into(),
             }));
         }
 
@@ -323,35 +323,35 @@ impl ProdForm {
             }));
         }
 
-        let mut prod = ProdForm::new();
-        prod.tokens = form.tokens.clone();
+        let mut pair = PairForm::new();
+        pair.tokens = form.tokens.clone();
 
         for param in form.tail.iter() {
             match param.clone() {
                 FormTailElement::Simple(value) => match value {
                     SimpleValue::Empty(_) => {
-                        prod.values.push(ProdFormValue::Empty(value));
+                        pair.values.push(PairFormValue::Empty(value));
                     }
                     SimpleValue::Atomic(_) => {
-                        prod.values.push(ProdFormValue::Atomic(value));
+                        pair.values.push(PairFormValue::Atomic(value));
                     }
                     SimpleValue::ValueKeyword(_) => {
-                        prod.values.push(ProdFormValue::ValueKeyword(value));
+                        pair.values.push(PairFormValue::ValueKeyword(value));
                     }
                     SimpleValue::TypeKeyword(_) => {
-                        prod.values.push(ProdFormValue::TypeKeyword(value));
+                        pair.values.push(PairFormValue::TypeKeyword(value));
                     }
                     SimpleValue::ValueSymbol(_) => {
-                        prod.values.push(ProdFormValue::ValueSymbol(value));
+                        pair.values.push(PairFormValue::ValueSymbol(value));
                     }
                     SimpleValue::TypeSymbol(_) => {
-                        prod.values.push(ProdFormValue::TypeSymbol(value));
+                        pair.values.push(PairFormValue::TypeSymbol(value));
                     }
                     SimpleValue::ValuePathSymbol(_) => {
-                        prod.values.push(ProdFormValue::ValuePathSymbol(value));
+                        pair.values.push(PairFormValue::ValuePathSymbol(value));
                     }
                     SimpleValue::TypePathSymbol(_) => {
-                        prod.values.push(ProdFormValue::TypePathSymbol(value));
+                        pair.values.push(PairFormValue::TypePathSymbol(value));
                     }
                     x => {
                         return Err(Error::Syntactic(SyntacticError {
@@ -362,25 +362,25 @@ impl ProdForm {
                 },
                 FormTailElement::Form(form) => {
                     if let Ok(form) = TypesForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::TypesForm(Box::new(form)));
+                        pair.values.push(PairFormValue::TypesForm(Box::new(form)));
                     } else if let Ok(form) = MapForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::MapForm(Box::new(form)));
+                        pair.values.push(PairFormValue::MapForm(Box::new(form)));
                     } else if let Ok(form) = VecForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::VecForm(Box::new(form)));
+                        pair.values.push(PairFormValue::VecForm(Box::new(form)));
                     } else if let Ok(form) = ArrForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::ArrForm(Box::new(form)));
+                        pair.values.push(PairFormValue::ArrForm(Box::new(form)));
                     } else if let Ok(form) = ListForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::ListForm(Box::new(form)));
-                    } else if let Ok(form) = ProdForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::ProdForm(Box::new(form)));
+                        pair.values.push(PairFormValue::ListForm(Box::new(form)));
+                    } else if let Ok(form) = PairForm::from_form(&form) {
+                        pair.values.push(PairFormValue::PairForm(Box::new(form)));
                     } else if let Ok(form) = FunForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::FunForm(Box::new(form)));
+                        pair.values.push(PairFormValue::FunForm(Box::new(form)));
                     } else if let Ok(form) = CaseForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::CaseForm(Box::new(form)));
+                        pair.values.push(PairFormValue::CaseForm(Box::new(form)));
                     } else if let Ok(form) = LetForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::LetForm(Box::new(form)));
+                        pair.values.push(PairFormValue::LetForm(Box::new(form)));
                     } else if let Ok(form) = AppForm::from_form(&form) {
-                        prod.values.push(ProdFormValue::AppForm(Box::new(form)))
+                        pair.values.push(PairFormValue::AppForm(Box::new(form)))
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
@@ -391,35 +391,35 @@ impl ProdForm {
             }
         }
 
-        Ok(prod)
+        Ok(pair)
     }
 
-    pub fn from_tokens(tokens: &Tokens) -> Result<ProdForm> {
+    pub fn from_tokens(tokens: &Tokens) -> Result<PairForm> {
         let form = Form::from_tokens(tokens)?;
 
-        ProdForm::from_form(&form)
+        PairForm::from_form(&form)
     }
 
     #[allow(clippy::should_implement_trait)]
-    pub fn from_str(s: &str) -> Result<ProdForm> {
+    pub fn from_str(s: &str) -> Result<PairForm> {
         let tokens = Tokens::from_str(s)?;
 
-        ProdForm::from_tokens(&tokens)
+        PairForm::from_tokens(&tokens)
     }
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        format!("(prod {})", self.values_to_string())
+        format!("(pair {})", self.values_to_string())
     }
 }
 
-impl fmt::Display for ProdForm {
+impl fmt::Display for PairForm {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
 
-impl std::str::FromStr for ProdForm {
+impl std::str::FromStr for PairForm {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self> {
@@ -430,12 +430,12 @@ impl std::str::FromStr for ProdForm {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn prod_form_from_str() {
-        use super::ProdForm;
+    fn pair_form_from_str() {
+        use super::PairForm;
 
-        let mut s = "(prod a A)";
+        let mut s = "(pair a A)";
 
-        let mut res = ProdForm::from_str(s);
+        let mut res = PairForm::from_str(s);
 
         assert!(res.is_ok());
 
@@ -451,9 +451,9 @@ mod tests {
         assert_eq!(form.values_to_string(), "a A".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(prod moduleX.X y)";
+        s = "(pair moduleX.X y)";
 
-        res = ProdForm::from_str(s);
+        res = PairForm::from_str(s);
 
         assert!(res.is_ok());
 
@@ -469,9 +469,9 @@ mod tests {
         assert_eq!(form.values_to_string(), "moduleX.X y".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(prod 0 (Fun A B))";
+        s = "(pair 0 (Fun A B))";
 
-        res = ProdForm::from_str(s);
+        res = PairForm::from_str(s);
 
         assert!(res.is_ok());
 

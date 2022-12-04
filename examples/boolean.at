@@ -3,10 +3,10 @@
 
   (import std.io _ printf)
 
-  (attrs True (map (prod asSize 1)))
+  (attrs True (map (pair asSize 1)))
   (type True Atomic)
 
-  (attrs True (map (prod asSize 0)))
+  (attrs True (map (pair asSize 0)))
   (type False Atomic)
 
   (type Bool (Sum True False))

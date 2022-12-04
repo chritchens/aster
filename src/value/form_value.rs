@@ -12,7 +12,7 @@ use crate::form::LetForm;
 use crate::form::ListForm;
 use crate::form::MapForm;
 use crate::form::ModuleForm;
-use crate::form::ProdForm;
+use crate::form::PairForm;
 use crate::form::SigForm;
 use crate::form::TypeForm;
 use crate::form::TypesForm;
@@ -41,7 +41,7 @@ pub enum FormValue {
     Vec(Box<VecForm>),
     Arr(Box<ArrForm>),
     List(Box<ListForm>),
-    Prod(Box<ProdForm>),
+    Pair(Box<PairForm>),
     Types(Box<TypesForm>),
 }
 
@@ -74,7 +74,7 @@ impl FormValue {
             FormValue::Vec(form) => form.file(),
             FormValue::Arr(form) => form.file(),
             FormValue::List(form) => form.file(),
-            FormValue::Prod(form) => form.file(),
+            FormValue::Pair(form) => form.file(),
             FormValue::Types(form) => form.file(),
         }
     }
@@ -97,7 +97,7 @@ impl FormValue {
             FormValue::Vec(form) => form.loc(),
             FormValue::Arr(form) => form.loc(),
             FormValue::List(form) => form.loc(),
-            FormValue::Prod(form) => form.loc(),
+            FormValue::Pair(form) => form.loc(),
             FormValue::Types(form) => form.loc(),
         }
     }
@@ -121,7 +121,7 @@ impl FormValue {
             FormValue::Vec(form) => form.to_string(),
             FormValue::Arr(form) => form.to_string(),
             FormValue::List(form) => form.to_string(),
-            FormValue::Prod(form) => form.to_string(),
+            FormValue::Pair(form) => form.to_string(),
             FormValue::Types(form) => form.to_string(),
         }
     }
@@ -172,8 +172,8 @@ impl FormValue {
             FormValue::Arr(Box::new(form))
         } else if let Ok(form) = ListForm::from_form(form) {
             FormValue::List(Box::new(form))
-        } else if let Ok(form) = ProdForm::from_form(form) {
-            FormValue::Prod(Box::new(form))
+        } else if let Ok(form) = PairForm::from_form(form) {
+            FormValue::Pair(Box::new(form))
         } else if let Ok(form) = TypesForm::from_form(form) {
             FormValue::Types(Box::new(form))
         } else {

@@ -1,6 +1,6 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormTailElement};
-use crate::form::prod_form::ProdForm;
+use crate::form::pair_form::PairForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -11,7 +11,7 @@ use std::fmt;
 pub enum MapFormValue {
     Ignore(SimpleValue),
     Empty(SimpleValue),
-    ProdForm(Box<ProdForm>),
+    PairForm(Box<PairForm>),
 }
 
 impl Default for MapFormValue {
@@ -25,7 +25,7 @@ impl MapFormValue {
         match self {
             MapFormValue::Ignore(ignore) => ignore.file(),
             MapFormValue::Empty(empty) => empty.file(),
-            MapFormValue::ProdForm(form) => form.file(),
+            MapFormValue::PairForm(form) => form.file(),
         }
     }
 
@@ -33,7 +33,7 @@ impl MapFormValue {
         match self {
             MapFormValue::Ignore(ignore) => ignore.loc(),
             MapFormValue::Empty(empty) => empty.loc(),
-            MapFormValue::ProdForm(form) => form.loc(),
+            MapFormValue::PairForm(form) => form.loc(),
         }
     }
 
@@ -42,7 +42,7 @@ impl MapFormValue {
         match self {
             MapFormValue::Ignore(_) => "_".into(),
             MapFormValue::Empty(_) => "()".into(),
-            MapFormValue::ProdForm(form) => form.to_string(),
+            MapFormValue::PairForm(form) => form.to_string(),
         }
     }
 }
@@ -86,7 +86,7 @@ impl MapForm {
                 MapFormValue::Ignore(_) | MapFormValue::Empty(_) => {
                     return false;
                 }
-                MapFormValue::ProdForm(form) => {
+                MapFormValue::PairForm(form) => {
                     if !form.can_be_parameter() {
                         return false;
                     }
@@ -109,7 +109,7 @@ impl MapForm {
         let mut params = vec![];
 
         for value in self.values.iter() {
-            if let MapFormValue::ProdForm(form) = value.clone() {
+            if let MapFormValue::PairForm(form) = value.clone() {
                 params.extend(form.all_parameters());
             }
         }
@@ -121,7 +121,7 @@ impl MapForm {
         let mut vars = vec![];
 
         for value in self.values.iter() {
-            if let MapFormValue::ProdForm(form) = value.clone() {
+            if let MapFormValue::PairForm(form) = value.clone() {
                 vars.extend(form.all_variables());
             }
         }
@@ -172,12 +172,12 @@ impl MapForm {
                     }
                 },
                 FormTailElement::Form(form) => {
-                    if let Ok(form) = ProdForm::from_form(&form) {
-                        map.values.push(MapFormValue::ProdForm(Box::new(form)));
+                    if let Ok(form) = PairForm::from_form(&form) {
+                        map.values.push(MapFormValue::PairForm(Box::new(form)));
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
-                            desc: "expected a product form".into(),
+                            desc: "expected a pair form".into(),
                         }));
                     }
                 }
@@ -244,7 +244,7 @@ mod tests {
         assert_eq!(form.values_to_string(), "()".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(map (prod a A))";
+        s = "(map (pair a A))";
 
         res = MapForm::from_str(s);
 
@@ -257,12 +257,12 @@ mod tests {
                 .iter()
                 .map(|v| v.to_string())
                 .collect::<Vec<String>>(),
-            vec!["(prod a A)".to_string()]
+            vec!["(pair a A)".to_string()]
         );
-        assert_eq!(form.values_to_string(), "(prod a A)".to_string());
+        assert_eq!(form.values_to_string(), "(pair a A)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(map (prod moduleX.X y))";
+        s = "(map (pair moduleX.X y))";
 
         res = MapForm::from_str(s);
 
@@ -275,12 +275,12 @@ mod tests {
                 .iter()
                 .map(|v| v.to_string())
                 .collect::<Vec<String>>(),
-            vec!["(prod moduleX.X y)".to_string()]
+            vec!["(pair moduleX.X y)".to_string()]
         );
-        assert_eq!(form.values_to_string(), "(prod moduleX.X y)".to_string());
+        assert_eq!(form.values_to_string(), "(pair moduleX.X y)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(map (prod moduleX.X y) (prod math.+ default))";
+        s = "(map (pair moduleX.X y) (pair math.+ default))";
 
         res = MapForm::from_str(s);
 
@@ -294,13 +294,13 @@ mod tests {
                 .map(|v| v.to_string())
                 .collect::<Vec<String>>(),
             vec![
-                "(prod moduleX.X y)".to_string(),
-                "(prod math.+ default)".to_string()
+                "(pair moduleX.X y)".to_string(),
+                "(pair math.+ default)".to_string()
             ]
         );
         assert_eq!(
             form.values_to_string(),
-            "(prod moduleX.X y) (prod math.+ default)".to_string()
+            "(pair moduleX.X y) (pair math.+ default)".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
     }

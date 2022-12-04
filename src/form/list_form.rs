@@ -6,7 +6,7 @@ use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::map_form::MapForm;
-use crate::form::prod_form::ProdForm;
+use crate::form::pair_form::PairForm;
 use crate::form::types_form::TypesForm;
 use crate::form::vec_form::VecForm;
 use crate::loc::Loc;
@@ -32,7 +32,7 @@ pub enum ListFormValue {
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
     AppForm(Box<AppForm>),
-    ProdForm(Box<ProdForm>),
+    PairForm(Box<PairForm>),
     ArrForm(Box<ArrForm>),
     VecForm(Box<VecForm>),
     MapForm(Box<MapForm>),
@@ -63,7 +63,7 @@ impl ListFormValue {
             ListFormValue::CaseForm(form) => form.file(),
             ListFormValue::LetForm(form) => form.file(),
             ListFormValue::AppForm(form) => form.file(),
-            ListFormValue::ProdForm(form) => form.file(),
+            ListFormValue::PairForm(form) => form.file(),
             ListFormValue::ArrForm(form) => form.file(),
             ListFormValue::VecForm(form) => form.file(),
             ListFormValue::MapForm(form) => form.file(),
@@ -88,7 +88,7 @@ impl ListFormValue {
             ListFormValue::CaseForm(form) => form.loc(),
             ListFormValue::LetForm(form) => form.loc(),
             ListFormValue::AppForm(form) => form.loc(),
-            ListFormValue::ProdForm(form) => form.loc(),
+            ListFormValue::PairForm(form) => form.loc(),
             ListFormValue::ArrForm(form) => form.loc(),
             ListFormValue::VecForm(form) => form.loc(),
             ListFormValue::MapForm(form) => form.loc(),
@@ -114,7 +114,7 @@ impl ListFormValue {
             ListFormValue::CaseForm(form) => form.to_string(),
             ListFormValue::LetForm(form) => form.to_string(),
             ListFormValue::AppForm(form) => form.to_string(),
-            ListFormValue::ProdForm(form) => form.to_string(),
+            ListFormValue::PairForm(form) => form.to_string(),
             ListFormValue::ArrForm(form) => form.to_string(),
             ListFormValue::VecForm(form) => form.to_string(),
             ListFormValue::MapForm(form) => form.to_string(),
@@ -171,7 +171,7 @@ impl ListForm {
                 | ListFormValue::CaseForm(_)
                 | ListFormValue::LetForm(_)
                 | ListFormValue::AppForm(_) => return false,
-                ListFormValue::ProdForm(form) => {
+                ListFormValue::PairForm(form) => {
                     if !form.can_be_parameter() {
                         return false;
                     }
@@ -231,7 +231,7 @@ impl ListForm {
                 ListFormValue::AppForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ListFormValue::ProdForm(form) => {
+                ListFormValue::PairForm(form) => {
                     params.extend(form.all_parameters());
                 }
                 ListFormValue::ArrForm(form) => {
@@ -285,7 +285,7 @@ impl ListForm {
                 ListFormValue::AppForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ListFormValue::ProdForm(form) => {
+                ListFormValue::PairForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 ListFormValue::ArrForm(form) => {
@@ -365,8 +365,8 @@ impl ListForm {
                 FormTailElement::Form(form) => {
                     if let Ok(form) = TypesForm::from_form(&form) {
                         list.values.push(ListFormValue::TypesForm(Box::new(form)));
-                    } else if let Ok(form) = ProdForm::from_form(&form) {
-                        list.values.push(ListFormValue::ProdForm(Box::new(form)));
+                    } else if let Ok(form) = PairForm::from_form(&form) {
+                        list.values.push(ListFormValue::PairForm(Box::new(form)));
                     } else if let Ok(form) = ArrForm::from_form(&form) {
                         list.values.push(ListFormValue::ArrForm(Box::new(form)));
                     } else if let Ok(form) = MapForm::from_form(&form) {

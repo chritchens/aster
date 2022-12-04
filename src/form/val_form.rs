@@ -4,7 +4,7 @@ use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
-use crate::form::prod_form::ProdForm;
+use crate::form::pair_form::PairForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_value_symbol;
@@ -18,7 +18,7 @@ pub enum ValFormValue {
     Panic(SimpleValue),
     Atomic(SimpleValue),
     ValueSymbol(SimpleValue),
-    ProdForm(Box<ProdForm>),
+    PairForm(Box<PairForm>),
     FunForm(Box<FunForm>),
     LetForm(Box<LetForm>),
     AppForm(Box<AppForm>),
@@ -38,7 +38,7 @@ impl ValFormValue {
             ValFormValue::Panic(panic) => panic.file(),
             ValFormValue::Atomic(atomic) => atomic.file(),
             ValFormValue::ValueSymbol(symbol) => symbol.file(),
-            ValFormValue::ProdForm(form) => form.file(),
+            ValFormValue::PairForm(form) => form.file(),
             ValFormValue::FunForm(form) => form.file(),
             ValFormValue::LetForm(form) => form.file(),
             ValFormValue::AppForm(form) => form.file(),
@@ -52,7 +52,7 @@ impl ValFormValue {
             ValFormValue::Panic(panic) => panic.loc(),
             ValFormValue::Atomic(atomic) => atomic.loc(),
             ValFormValue::ValueSymbol(symbol) => symbol.loc(),
-            ValFormValue::ProdForm(form) => form.loc(),
+            ValFormValue::PairForm(form) => form.loc(),
             ValFormValue::FunForm(form) => form.loc(),
             ValFormValue::LetForm(form) => form.loc(),
             ValFormValue::AppForm(form) => form.loc(),
@@ -67,7 +67,7 @@ impl ValFormValue {
             ValFormValue::Panic(_) => "panic".into(),
             ValFormValue::Atomic(atomic) => atomic.to_string(),
             ValFormValue::ValueSymbol(symbol) => symbol.to_string(),
-            ValFormValue::ProdForm(form) => form.to_string(),
+            ValFormValue::PairForm(form) => form.to_string(),
             ValFormValue::FunForm(form) => form.to_string(),
             ValFormValue::LetForm(form) => form.to_string(),
             ValFormValue::AppForm(form) => form.to_string(),
@@ -130,9 +130,9 @@ impl ValForm {
         }
     }
 
-    pub fn is_product_form(&self) -> bool {
+    pub fn is_pair_form(&self) -> bool {
         match self.value {
-            ValFormValue::ProdForm(_) => true,
+            ValFormValue::PairForm(_) => true,
             _ => false,
         }
     }
@@ -169,7 +169,7 @@ impl ValForm {
         self.is_empty_literal()
             || self.is_atomic()
             || self.is_value_symbol()
-            || self.is_product_form()
+            || self.is_pair_form()
             || self.is_function_form()
             || self.is_case_form()
             || (self.is_let_form() && is_value_symbol(&self.name.to_string()))
@@ -180,7 +180,7 @@ impl ValForm {
         let mut params = vec![];
 
         match self.value.clone() {
-            ValFormValue::ProdForm(form) => {
+            ValFormValue::PairForm(form) => {
                 params.extend(form.all_parameters());
             }
             ValFormValue::FunForm(form) => {
@@ -208,7 +208,7 @@ impl ValForm {
             ValFormValue::ValueSymbol(value) => {
                 vars.push(value);
             }
-            ValFormValue::ProdForm(form) => {
+            ValFormValue::PairForm(form) => {
                 vars.extend(form.all_variables());
             }
             ValFormValue::FunForm(form) => {
@@ -368,9 +368,9 @@ impl ValForm {
             },
 
             FormTailElement::Form(form) => match form.head.to_string().as_str() {
-                "prod" => {
-                    let form = ProdForm::from_form(&form)?;
-                    val.value = ValFormValue::ProdForm(Box::new(form));
+                "pair" => {
+                    let form = PairForm::from_form(&form)?;
+                    val.value = ValFormValue::PairForm(Box::new(form));
                 }
                 "fun" => {
                     let form = FunForm::from_form(&form)?;
@@ -495,7 +495,7 @@ mod tests {
         assert!(form.is_application_form());
         assert!(form.is_value());
 
-        s = "(val p (prod a (prod b c)))";
+        s = "(val p (pair a (pair b c)))";
 
         res = ValForm::from_str(s);
 
@@ -504,12 +504,12 @@ mod tests {
         form = res.unwrap();
 
         assert_eq!(form.name.to_string(), "p".to_string());
-        assert_eq!(form.value.to_string(), "(prod a (prod b c))".to_string());
+        assert_eq!(form.value.to_string(), "(pair a (pair b c))".to_string());
         assert_eq!(form.to_string(), s.to_string());
-        assert!(form.is_product_form());
+        assert!(form.is_pair_form());
         assert!(form.is_value());
 
-        s = "(val p (prod a (prod (f x y 10) 11)))";
+        s = "(val p (pair a (pair (f x y 10) 11)))";
 
         res = ValForm::from_str(s);
 
@@ -520,10 +520,10 @@ mod tests {
         assert_eq!(form.name.to_string(), "p".to_string());
         assert_eq!(
             form.value.to_string(),
-            "(prod a (prod (f x y 10) 11))".to_string()
+            "(pair a (pair (f x y 10) 11))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
-        assert!(form.is_product_form());
+        assert!(form.is_pair_form());
         assert!(form.is_value());
 
         s = "(val err (let (type StringError String) (unwrap \"error\")))";

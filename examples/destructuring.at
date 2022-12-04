@@ -1,8 +1,8 @@
 (module main (block 
-  # An example of parameter destructuring (only with prod, list, arr, vec and map forms)
+  # An example of parameter destructuring (only with pair, list, arr, vec and map forms)
 
   (import std.io _ priln)
 
-  (sig main (Fun IO (Prod String String) IO))
-  (val main (fun io (prod nameA nameB)
-    (println io "Hello {} and {}!" (prod nameA nameB))))))
+  (sig main (Fun IO (Pair String String) IO))
+  (val main (fun io (pair nameA nameB)
+    (println io "Hello {} and {}!" (pair nameA nameB))))))

@@ -4,11 +4,11 @@ use std::convert;
 use std::fmt;
 
 pub const KEYWORDS: [&str; 57] = [
-    "module", "block", "_", "builtin", "import", "export", "val", "type", "atomic", "prod", "list",
+    "module", "block", "_", "builtin", "import", "export", "val", "type", "atomic", "pair", "list",
     "arr", "vec", "map", "sig", "fun", "attrs", "app", "case", "id", "default", "match", "others",
     "size", "load", "store", "ref", "deref", "cast", "dup", "drop", "panic", "Builtin", "Empty",
     "Atomic", "UInt", "Int", "Float", "Size", "Pointer", "Ref", "Char", "String", "Mem", "Path",
-    "IO", "Ctx", "Sum", "Prod", "List", "Arr", "Vec", "Map", "Sig", "Fun", "Attrs", "Type",
+    "IO", "Ctx", "Sum", "Pair", "List", "Arr", "Vec", "Map", "Sig", "Fun", "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -40,7 +40,7 @@ pub enum Keyword {
     Val,
     Type,
     Atomic,
-    Prod,
+    Pair,
     List,
     Arr,
     Vec,
@@ -79,7 +79,7 @@ pub enum Keyword {
     IOT,
     CtxT,
     SumT,
-    ProdT,
+    PairT,
     ListT,
     ArrT,
     VecT,
@@ -102,7 +102,7 @@ impl fmt::Display for Keyword {
             Keyword::Val => write!(f, "val"),
             Keyword::Type => write!(f, "type"),
             Keyword::Atomic => write!(f, "atomic"),
-            Keyword::Prod => write!(f, "prod"),
+            Keyword::Pair => write!(f, "pair"),
             Keyword::List => write!(f, "list"),
             Keyword::Arr => write!(f, "arr"),
             Keyword::Vec => write!(f, "vec"),
@@ -141,7 +141,7 @@ impl fmt::Display for Keyword {
             Keyword::IOT => write!(f, "IO"),
             Keyword::CtxT => write!(f, "Ctx"),
             Keyword::SumT => write!(f, "Sum"),
-            Keyword::ProdT => write!(f, "Prod"),
+            Keyword::PairT => write!(f, "Pair"),
             Keyword::ListT => write!(f, "List"),
             Keyword::ArrT => write!(f, "Arr"),
             Keyword::VecT => write!(f, "Vec"),
@@ -167,7 +167,7 @@ impl Keyword {
             "val" => Ok(Keyword::Val),
             "type" => Ok(Keyword::Type),
             "atomic" => Ok(Keyword::Atomic),
-            "prod" => Ok(Keyword::Prod),
+            "pair" => Ok(Keyword::Pair),
             "list" => Ok(Keyword::List),
             "arr" => Ok(Keyword::Arr),
             "vec" => Ok(Keyword::Vec),
@@ -206,7 +206,7 @@ impl Keyword {
             "IO" => Ok(Keyword::IOT),
             "Ctx" => Ok(Keyword::CtxT),
             "Sum" => Ok(Keyword::SumT),
-            "Prod" => Ok(Keyword::ProdT),
+            "Pair" => Ok(Keyword::PairT),
             "List" => Ok(Keyword::ListT),
             "Arr" => Ok(Keyword::ArrT),
             "Vec" => Ok(Keyword::VecT),

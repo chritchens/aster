@@ -3,7 +3,7 @@ use crate::form::app_form::AppForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
-use crate::form::prod_form::ProdForm;
+use crate::form::pair_form::PairForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -180,7 +180,7 @@ pub enum CaseFormMatchAction {
     ValueKeyword(SimpleValue),
     ValueSymbol(SimpleValue),
     ValuePathSymbol(SimpleValue),
-    ProdForm(Box<ProdForm>),
+    PairForm(Box<PairForm>),
     FunForm(Box<FunForm>),
     LetForm(Box<LetForm>),
 }
@@ -195,7 +195,7 @@ impl CaseFormMatchAction {
             CaseFormMatchAction::ValueKeyword(keyword) => keyword.file(),
             CaseFormMatchAction::ValueSymbol(symbol) => symbol.file(),
             CaseFormMatchAction::ValuePathSymbol(symbol) => symbol.file(),
-            CaseFormMatchAction::ProdForm(form) => form.file(),
+            CaseFormMatchAction::PairForm(form) => form.file(),
             CaseFormMatchAction::FunForm(form) => form.file(),
             CaseFormMatchAction::LetForm(form) => form.file(),
         }
@@ -210,7 +210,7 @@ impl CaseFormMatchAction {
             CaseFormMatchAction::ValueKeyword(keyword) => keyword.loc(),
             CaseFormMatchAction::ValueSymbol(symbol) => symbol.loc(),
             CaseFormMatchAction::ValuePathSymbol(symbol) => symbol.loc(),
-            CaseFormMatchAction::ProdForm(form) => form.loc(),
+            CaseFormMatchAction::PairForm(form) => form.loc(),
             CaseFormMatchAction::FunForm(form) => form.loc(),
             CaseFormMatchAction::LetForm(form) => form.loc(),
         }
@@ -226,7 +226,7 @@ impl CaseFormMatchAction {
             CaseFormMatchAction::ValueKeyword(keyword) => keyword.to_string(),
             CaseFormMatchAction::ValueSymbol(symbol) => symbol.to_string(),
             CaseFormMatchAction::ValuePathSymbol(symbol) => symbol.to_string(),
-            CaseFormMatchAction::ProdForm(form) => form.to_string(),
+            CaseFormMatchAction::PairForm(form) => form.to_string(),
             CaseFormMatchAction::FunForm(form) => form.to_string(),
             CaseFormMatchAction::LetForm(form) => form.to_string(),
         }
@@ -269,7 +269,7 @@ impl CaseFormMatch {
         let mut params = vec![];
 
         match self.action.clone() {
-            CaseFormMatchAction::ProdForm(form) => {
+            CaseFormMatchAction::PairForm(form) => {
                 params.extend(form.all_parameters());
             }
             CaseFormMatchAction::FunForm(form) => {
@@ -294,7 +294,7 @@ impl CaseFormMatch {
             CaseFormMatchAction::ValuePathSymbol(value) => {
                 vars.push(value);
             }
-            CaseFormMatchAction::ProdForm(form) => {
+            CaseFormMatchAction::PairForm(form) => {
                 vars.extend(form.all_variables());
             }
             CaseFormMatchAction::FunForm(form) => {
@@ -396,8 +396,8 @@ impl CaseFormMatch {
                 }
             },
             FormTailElement::Form(form) => {
-                if let Ok(form) = ProdForm::from_form(&form) {
-                    case_match.action = CaseFormMatchAction::ProdForm(Box::new(form));
+                if let Ok(form) = PairForm::from_form(&form) {
+                    case_match.action = CaseFormMatchAction::PairForm(Box::new(form));
                 } else if let Ok(form) = FunForm::from_form(&form) {
                     case_match.action = CaseFormMatchAction::FunForm(Box::new(form));
                 } else if let Ok(form) = LetForm::from_form(&form) {

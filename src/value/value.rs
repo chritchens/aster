@@ -142,11 +142,11 @@ mod tests {
         (block
             (import std.io _ printf)
             (import std.math _ +)
-            (export printProd)
+            (export printPair)
 
-            (sig printProd (Fun IO (Prod Int Char) IO))
-            (val printProd (fun io (prod a b)
-                (printf io \"a: {}, b: {}\n\" (prod (+ a 100) b)))))";
+            (sig printPair (Fun IO (Pair Int Char) IO))
+            (val printPair (fun io (pair a b)
+                (printf io \"a: {}, b: {}\n\" (pair (+ a 100) b)))))";
 
         res = Value::from_str(s);
 

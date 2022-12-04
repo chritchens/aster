@@ -433,7 +433,7 @@ mod tests {
         use super::Tokens;
         use crate::token::TokenKind;
 
-        let s = "prod";
+        let s = "pair";
 
         let tokens = Tokens::from_str(s).unwrap();
 

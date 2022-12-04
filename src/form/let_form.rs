@@ -6,7 +6,7 @@ use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::import_form::ImportForm;
-use crate::form::prod_form::ProdForm;
+use crate::form::pair_form::PairForm;
 use crate::form::sig_form::SigForm;
 use crate::form::type_form::TypeForm;
 use crate::form::val_form::ValForm;
@@ -267,8 +267,8 @@ impl LetForm {
                     }
                 },
                 FormTailElement::Form(form) => {
-                    if let Ok(form) = ProdForm::from_form(&form) {
-                        let_form.value = LetFormValue::ProdForm(Box::new(form));
+                    if let Ok(form) = PairForm::from_form(&form) {
+                        let_form.value = LetFormValue::PairForm(Box::new(form));
                     } else if let Ok(form) = FunForm::from_form(&form) {
                         let_form.value = LetFormValue::FunForm(Box::new(form));
                     } else if let Ok(form) = LetForm::from_form(&form) {
@@ -351,8 +351,8 @@ impl LetForm {
                     }
                 },
                 FormTailElement::Form(form) => {
-                    if let Ok(form) = ProdForm::from_form(&form) {
-                        let_form.value = LetFormValue::ProdForm(Box::new(form));
+                    if let Ok(form) = PairForm::from_form(&form) {
+                        let_form.value = LetFormValue::PairForm(Box::new(form));
                     } else if let Ok(form) = FunForm::from_form(&form) {
                         let_form.value = LetFormValue::FunForm(Box::new(form));
                     } else if let Ok(form) = LetForm::from_form(&form) {
@@ -455,7 +455,7 @@ mod tests {
             (val res2 (unwrap x)) # will panic
 
             # return as a synonym of `id`
-            (return (prod res res2)))";
+            (return (pair res res2)))";
 
         res = LetForm::from_str(s);
 
@@ -495,7 +495,7 @@ mod tests {
         assert!(form.entry_as_definition(9).unwrap().is_value());
         assert_eq!(
             form.value.to_string(),
-            "(return (prod res res2))".to_string()
+            "(return (pair res res2))".to_string()
         );
     }
 }

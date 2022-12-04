@@ -6,7 +6,7 @@ use crate::form::form::{Form, FormTailElement};
 use crate::form::let_form::LetForm;
 use crate::form::list_form::ListForm;
 use crate::form::map_form::MapForm;
-use crate::form::prod_form::ProdForm;
+use crate::form::pair_form::PairForm;
 use crate::form::vec_form::VecForm;
 use crate::loc::Loc;
 use crate::result::Result;
@@ -22,7 +22,7 @@ pub enum FunFormParameter {
     VecForm(Box<VecForm>),
     ArrForm(Box<ArrForm>),
     ListForm(Box<ListForm>),
-    ProdForm(Box<ProdForm>),
+    PairForm(Box<PairForm>),
 }
 
 impl Default for FunFormParameter {
@@ -40,7 +40,7 @@ impl FunFormParameter {
             FunFormParameter::VecForm(form) => form.file(),
             FunFormParameter::ArrForm(form) => form.file(),
             FunFormParameter::ListForm(form) => form.file(),
-            FunFormParameter::ProdForm(form) => form.file(),
+            FunFormParameter::PairForm(form) => form.file(),
         }
     }
 
@@ -52,7 +52,7 @@ impl FunFormParameter {
             FunFormParameter::VecForm(form) => form.loc(),
             FunFormParameter::ArrForm(form) => form.loc(),
             FunFormParameter::ListForm(form) => form.loc(),
-            FunFormParameter::ProdForm(form) => form.loc(),
+            FunFormParameter::PairForm(form) => form.loc(),
         }
     }
 
@@ -65,7 +65,7 @@ impl FunFormParameter {
             FunFormParameter::VecForm(form) => form.to_string(),
             FunFormParameter::ArrForm(form) => form.to_string(),
             FunFormParameter::ListForm(form) => form.to_string(),
-            FunFormParameter::ProdForm(form) => form.to_string(),
+            FunFormParameter::PairForm(form) => form.to_string(),
         }
     }
 }
@@ -87,7 +87,7 @@ pub enum FunFormBody {
     VecForm(Box<VecForm>),
     ArrForm(Box<ArrForm>),
     ListForm(Box<ListForm>),
-    ProdForm(Box<ProdForm>),
+    PairForm(Box<PairForm>),
     AppForm(Box<AppForm>),
     LetForm(Box<LetForm>),
     CaseForm(Box<CaseForm>),
@@ -112,7 +112,7 @@ impl FunFormBody {
             FunFormBody::VecForm(form) => form.file(),
             FunFormBody::ArrForm(form) => form.file(),
             FunFormBody::ListForm(form) => form.file(),
-            FunFormBody::ProdForm(form) => form.file(),
+            FunFormBody::PairForm(form) => form.file(),
             FunFormBody::AppForm(form) => form.file(),
             FunFormBody::LetForm(form) => form.file(),
             FunFormBody::CaseForm(form) => form.file(),
@@ -131,7 +131,7 @@ impl FunFormBody {
             FunFormBody::VecForm(form) => form.loc(),
             FunFormBody::ArrForm(form) => form.loc(),
             FunFormBody::ListForm(form) => form.loc(),
-            FunFormBody::ProdForm(form) => form.loc(),
+            FunFormBody::PairForm(form) => form.loc(),
             FunFormBody::AppForm(form) => form.loc(),
             FunFormBody::LetForm(form) => form.loc(),
             FunFormBody::CaseForm(form) => form.loc(),
@@ -151,7 +151,7 @@ impl FunFormBody {
             FunFormBody::VecForm(form) => form.to_string(),
             FunFormBody::ArrForm(form) => form.to_string(),
             FunFormBody::ListForm(form) => form.to_string(),
-            FunFormBody::ProdForm(form) => form.to_string(),
+            FunFormBody::PairForm(form) => form.to_string(),
             FunFormBody::AppForm(form) => form.to_string(),
             FunFormBody::LetForm(form) => form.to_string(),
             FunFormBody::CaseForm(form) => form.to_string(),
@@ -214,7 +214,7 @@ impl FunForm {
                 FunFormParameter::ListForm(form) => {
                     params.extend(form.all_variables());
                 }
-                FunFormParameter::ProdForm(form) => {
+                FunFormParameter::PairForm(form) => {
                     params.extend(form.all_variables());
                 }
                 _ => {}
@@ -234,7 +234,7 @@ impl FunForm {
             FunFormBody::ArrForm(form) => {
                 params.extend(form.all_parameters());
             }
-            FunFormBody::ProdForm(form) => {
+            FunFormBody::PairForm(form) => {
                 params.extend(form.all_parameters());
             }
             FunFormBody::AppForm(form) => {
@@ -277,7 +277,7 @@ impl FunForm {
             FunFormBody::ListForm(form) => {
                 vars.extend(form.all_variables());
             }
-            FunFormBody::ProdForm(form) => {
+            FunFormBody::PairForm(form) => {
                 vars.extend(form.all_variables());
             }
             FunFormBody::AppForm(form) => {
@@ -430,16 +430,16 @@ impl FunForm {
 
                         self.parameters
                             .push(FunFormParameter::ListForm(Box::new(form)));
-                    } else if let Ok(form) = ProdForm::from_form(&form) {
+                    } else if let Ok(form) = PairForm::from_form(&form) {
                         if !form.can_be_parameter() {
                             return Err(Error::Syntactic(SyntacticError {
                                 loc: form.loc(),
-                                desc: "expected a symbolic prod form".into(),
+                                desc: "expected a symbolic pair form".into(),
                             }));
                         }
 
                         self.parameters
-                            .push(FunFormParameter::ProdForm(Box::new(form)));
+                            .push(FunFormParameter::PairForm(Box::new(form)));
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
@@ -505,16 +505,16 @@ impl FunForm {
 
                                 self.parameters
                                     .push(FunFormParameter::ListForm(Box::new(form)));
-                            } else if let Ok(form) = ProdForm::from_form(&form) {
+                            } else if let Ok(form) = PairForm::from_form(&form) {
                                 if !form.can_be_parameter() {
                                     return Err(Error::Syntactic(SyntacticError {
                                         loc: form.loc(),
-                                        desc: "expected a symbolic prod form".into(),
+                                        desc: "expected a symbolic pair form".into(),
                                     }));
                                 }
 
                                 self.parameters
-                                    .push(FunFormParameter::ProdForm(Box::new(form)));
+                                    .push(FunFormParameter::PairForm(Box::new(form)));
                             } else {
                                 return Err(Error::Syntactic(SyntacticError {
                                     loc: form.loc(),
@@ -562,8 +562,8 @@ impl FunForm {
                 }
             },
             FormTailElement::Form(form) => {
-                if let Ok(form) = ProdForm::from_form(&form) {
-                    self.body = FunFormBody::ProdForm(Box::new(form));
+                if let Ok(form) = PairForm::from_form(&form) {
+                    self.body = FunFormBody::PairForm(Box::new(form));
                 } else if let Ok(form) = LetForm::from_form(&form) {
                     self.body = FunFormBody::LetForm(Box::new(form));
                 } else if let Ok(form) = CaseForm::from_form(&form) {
@@ -688,7 +688,7 @@ mod tests {
         assert_eq!(form.body.to_string(), "moduleX.x".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(fun a (prod b c) (math.+ a b c))";
+        s = "(fun a (pair b c) (math.+ a b c))";
 
         res = FunForm::from_str(s);
 
@@ -696,7 +696,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.parameters_to_string(), "a (prod b c)".to_string());
+        assert_eq!(form.parameters_to_string(), "a (pair b c)".to_string());
         assert_eq!(form.body.to_string(), "(math.+ a b c)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
@@ -712,7 +712,7 @@ mod tests {
         assert_eq!(form.body.to_string(), "(math.+ a b c)".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(fun (map (prod a b) (prod c d)) (math.+ a b c d))";
+        s = "(fun (map (pair a b) (pair c d)) (math.+ a b c d))";
 
         res = FunForm::from_str(s);
 
@@ -722,7 +722,7 @@ mod tests {
 
         assert_eq!(
             form.parameters_to_string(),
-            "(map (prod a b) (prod c d))".to_string()
+            "(map (pair a b) (pair c d))".to_string()
         );
         assert_eq!(form.body.to_string(), "(math.+ a b c d)".to_string());
         assert_eq!(form.to_string(), s.to_string());

@@ -260,7 +260,7 @@ mod tests {
         assert_eq!(form.tail_to_string(), "Empty Empty");
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(Prod (Fun A B) (Prod Char C))";
+        s = "(Pair (Fun A B) (Pair Char C))";
 
         res = TypesForm::from_str(s);
 
@@ -268,8 +268,8 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.head.to_string(), "Prod".to_string());
-        assert_eq!(form.tail_to_string(), "(Fun A B) (Prod Char C)");
+        assert_eq!(form.head.to_string(), "Pair".to_string());
+        assert_eq!(form.tail_to_string(), "(Fun A B) (Pair Char C)");
         assert_eq!(form.to_string(), s.to_string());
     }
 }

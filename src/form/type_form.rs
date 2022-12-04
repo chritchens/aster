@@ -242,7 +242,7 @@ mod tests {
         assert_eq!(form.value.to_string(), "X".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(type T (Fun moduleX.X Char (Prod A B)))";
+        s = "(type T (Fun moduleX.X Char (Pair A B)))";
 
         res = TypeForm::from_str(s);
 
@@ -254,7 +254,7 @@ mod tests {
         assert!(form.is_types_form());
         assert_eq!(
             form.value.to_string(),
-            "(Fun moduleX.X Char (Prod A B))".to_string()
+            "(Fun moduleX.X Char (Pair A B))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
     }

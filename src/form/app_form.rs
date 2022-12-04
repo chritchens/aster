@@ -3,7 +3,7 @@ use crate::form::case_form::CaseForm;
 use crate::form::form::{Form, FormTailElement};
 use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
-use crate::form::prod_form::ProdForm;
+use crate::form::pair_form::PairForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
@@ -18,7 +18,7 @@ pub enum AppFormValue {
     Atomic(SimpleValue),
     ValueSymbol(SimpleValue),
     ValuePathSymbol(SimpleValue),
-    ProdForm(Box<ProdForm>),
+    PairForm(Box<PairForm>),
     FunForm(Box<FunForm>),
     LetForm(Box<LetForm>),
     CaseForm(Box<CaseForm>),
@@ -40,7 +40,7 @@ impl AppFormValue {
             AppFormValue::Atomic(atomic) => atomic.file(),
             AppFormValue::ValueSymbol(symbol) => symbol.file(),
             AppFormValue::ValuePathSymbol(symbol) => symbol.file(),
-            AppFormValue::ProdForm(form) => form.file(),
+            AppFormValue::PairForm(form) => form.file(),
             AppFormValue::FunForm(form) => form.file(),
             AppFormValue::LetForm(form) => form.file(),
             AppFormValue::CaseForm(form) => form.file(),
@@ -56,7 +56,7 @@ impl AppFormValue {
             AppFormValue::Atomic(atomic) => atomic.loc(),
             AppFormValue::ValueSymbol(symbol) => symbol.loc(),
             AppFormValue::ValuePathSymbol(symbol) => symbol.loc(),
-            AppFormValue::ProdForm(form) => form.loc(),
+            AppFormValue::PairForm(form) => form.loc(),
             AppFormValue::FunForm(form) => form.loc(),
             AppFormValue::LetForm(form) => form.loc(),
             AppFormValue::CaseForm(form) => form.loc(),
@@ -68,7 +68,7 @@ impl AppFormValue {
         let mut params = vec![];
 
         match self.clone() {
-            AppFormValue::ProdForm(form) => {
+            AppFormValue::PairForm(form) => {
                 params.extend(form.all_parameters());
             }
             AppFormValue::FunForm(form) => {
@@ -99,7 +99,7 @@ impl AppFormValue {
             AppFormValue::ValuePathSymbol(value) => {
                 vars.push(value);
             }
-            AppFormValue::ProdForm(form) => {
+            AppFormValue::PairForm(form) => {
                 vars.extend(form.all_variables());
             }
             AppFormValue::FunForm(form) => {
@@ -129,7 +129,7 @@ impl AppFormValue {
             AppFormValue::Atomic(atomic) => atomic.to_string(),
             AppFormValue::ValueSymbol(symbol) => symbol.to_string(),
             AppFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
-            AppFormValue::ProdForm(form) => form.to_string(),
+            AppFormValue::PairForm(form) => form.to_string(),
             AppFormValue::FunForm(form) => form.to_string(),
             AppFormValue::LetForm(form) => form.to_string(),
             AppFormValue::CaseForm(form) => form.to_string(),
@@ -230,8 +230,8 @@ impl AppForm {
                     }
                 },
                 FormTailElement::Form(form) => {
-                    if let Ok(form) = ProdForm::from_form(&form) {
-                        self.variables.push(AppFormValue::ProdForm(Box::new(form)));
+                    if let Ok(form) = PairForm::from_form(&form) {
+                        self.variables.push(AppFormValue::PairForm(Box::new(form)));
                     } else if let Ok(form) = FunForm::from_form(&form) {
                         self.variables.push(AppFormValue::FunForm(Box::new(form)));
                     } else if let Ok(form) = LetForm::from_form(&form) {

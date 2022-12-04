@@ -287,7 +287,7 @@ mod tests {
         assert_eq!(form.values_to_string(), "moduleX.X".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
-        s = "(attrs x (map (prod union a) (prod moduleA.A Type)))";
+        s = "(attrs x (map (pair union a) (pair moduleA.A Type)))";
 
         res = AttrsForm::from_str(s);
 
@@ -299,7 +299,7 @@ mod tests {
         assert!(form.is_value_attributes());
         assert_eq!(
             form.values_to_string(),
-            "(map (prod union a) (prod moduleA.A Type))".to_string()
+            "(map (pair union a) (pair moduleA.A Type))".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
     }

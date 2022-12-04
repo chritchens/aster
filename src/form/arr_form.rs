@@ -6,7 +6,7 @@ use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::list_form::ListForm;
 use crate::form::map_form::MapForm;
-use crate::form::prod_form::ProdForm;
+use crate::form::pair_form::PairForm;
 use crate::form::types_form::TypesForm;
 use crate::form::vec_form::VecForm;
 use crate::loc::Loc;
@@ -32,7 +32,7 @@ pub enum ArrFormValue {
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
     AppForm(Box<AppForm>),
-    ProdForm(Box<ProdForm>),
+    PairForm(Box<PairForm>),
     ListForm(Box<ListForm>),
     VecForm(Box<VecForm>),
     MapForm(Box<MapForm>),
@@ -63,7 +63,7 @@ impl ArrFormValue {
             ArrFormValue::CaseForm(form) => form.file(),
             ArrFormValue::LetForm(form) => form.file(),
             ArrFormValue::AppForm(form) => form.file(),
-            ArrFormValue::ProdForm(form) => form.file(),
+            ArrFormValue::PairForm(form) => form.file(),
             ArrFormValue::ListForm(form) => form.file(),
             ArrFormValue::VecForm(form) => form.file(),
             ArrFormValue::MapForm(form) => form.file(),
@@ -88,7 +88,7 @@ impl ArrFormValue {
             ArrFormValue::CaseForm(form) => form.loc(),
             ArrFormValue::LetForm(form) => form.loc(),
             ArrFormValue::AppForm(form) => form.loc(),
-            ArrFormValue::ProdForm(form) => form.loc(),
+            ArrFormValue::PairForm(form) => form.loc(),
             ArrFormValue::ListForm(form) => form.loc(),
             ArrFormValue::VecForm(form) => form.loc(),
             ArrFormValue::MapForm(form) => form.loc(),
@@ -114,7 +114,7 @@ impl ArrFormValue {
             ArrFormValue::CaseForm(form) => form.to_string(),
             ArrFormValue::LetForm(form) => form.to_string(),
             ArrFormValue::AppForm(form) => form.to_string(),
-            ArrFormValue::ProdForm(form) => form.to_string(),
+            ArrFormValue::PairForm(form) => form.to_string(),
             ArrFormValue::ListForm(form) => form.to_string(),
             ArrFormValue::VecForm(form) => form.to_string(),
             ArrFormValue::MapForm(form) => form.to_string(),
@@ -171,7 +171,7 @@ impl ArrForm {
                 | ArrFormValue::CaseForm(_)
                 | ArrFormValue::LetForm(_)
                 | ArrFormValue::AppForm(_) => return false,
-                ArrFormValue::ProdForm(form) => {
+                ArrFormValue::PairForm(form) => {
                     if !form.can_be_parameter() {
                         return false;
                     }
@@ -231,7 +231,7 @@ impl ArrForm {
                 ArrFormValue::AppForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                ArrFormValue::ProdForm(form) => {
+                ArrFormValue::PairForm(form) => {
                     params.extend(form.all_parameters());
                 }
                 ArrFormValue::ListForm(form) => {
@@ -285,7 +285,7 @@ impl ArrForm {
                 ArrFormValue::AppForm(form) => {
                     vars.extend(form.all_variables());
                 }
-                ArrFormValue::ProdForm(form) => {
+                ArrFormValue::PairForm(form) => {
                     vars.extend(form.all_variables());
                 }
                 ArrFormValue::ListForm(form) => {
@@ -365,8 +365,8 @@ impl ArrForm {
                 FormTailElement::Form(form) => {
                     if let Ok(form) = TypesForm::from_form(&form) {
                         arr.values.push(ArrFormValue::TypesForm(Box::new(form)));
-                    } else if let Ok(form) = ProdForm::from_form(&form) {
-                        arr.values.push(ArrFormValue::ProdForm(Box::new(form)));
+                    } else if let Ok(form) = PairForm::from_form(&form) {
+                        arr.values.push(ArrFormValue::PairForm(Box::new(form)));
                     } else if let Ok(form) = ListForm::from_form(&form) {
                         arr.values.push(ArrFormValue::ListForm(Box::new(form)));
                     } else if let Ok(form) = VecForm::from_form(&form) {
