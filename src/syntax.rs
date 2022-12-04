@@ -29,7 +29,7 @@ pub fn is_ignore_keyword(s: &str) -> bool {
     s == IGNORE
 }
 
-#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
 pub enum Keyword {
     Module,
     Block,

@@ -10,7 +10,7 @@ use crate::token::Tokens;
 use crate::value::SimpleValue;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum CaseFormVariable {
     Empty(SimpleValue),
     Atomic(SimpleValue),
@@ -109,7 +109,7 @@ impl fmt::Display for CaseFormVariable {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum CaseFormMatchCase {
     Empty(SimpleValue),
     Atomic(SimpleValue),
@@ -171,7 +171,7 @@ impl Default for CaseFormMatchCase {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum CaseFormMatchAction {
     Ignore(SimpleValue),
     Empty(SimpleValue),
@@ -245,7 +245,7 @@ impl fmt::Display for CaseFormMatchAction {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct CaseFormMatch {
     pub tokens: Box<Tokens>,
     pub case: CaseFormMatchCase,
@@ -443,7 +443,7 @@ impl fmt::Display for CaseFormMatch {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct CaseForm {
     pub tokens: Box<Tokens>,
     pub variable: CaseFormVariable,

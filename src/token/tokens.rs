@@ -18,7 +18,7 @@ use std::iter;
 use std::ops;
 use std::path::Path;
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct Tokens(Vec<Token>);
 
 impl Tokens {

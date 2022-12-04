@@ -7,7 +7,7 @@ use crate::token::Tokens;
 use crate::value::SimpleValue;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum AttrsFormValue {
     Empty(SimpleValue),
     Panic(SimpleValue),
@@ -73,7 +73,7 @@ impl fmt::Display for AttrsFormValue {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct AttrsForm {
     pub tokens: Box<Tokens>,
     pub name: SimpleValue,

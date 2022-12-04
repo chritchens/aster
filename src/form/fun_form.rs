@@ -14,7 +14,7 @@ use crate::token::Tokens;
 use crate::value::SimpleValue;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum FunFormParameter {
     Empty(SimpleValue),
     ValueSymbol(SimpleValue),
@@ -76,7 +76,7 @@ impl fmt::Display for FunFormParameter {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum FunFormBody {
     Empty(SimpleValue),
     Panic(SimpleValue),
@@ -166,7 +166,7 @@ impl fmt::Display for FunFormBody {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct FunForm {
     pub tokens: Box<Tokens>,
     pub parameters: Vec<FunFormParameter>,

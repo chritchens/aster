@@ -6,7 +6,7 @@ use crate::token::Tokens;
 use crate::value::SimpleValue;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum TypesFormTailElement {
     Ignore(SimpleValue),
     Empty(SimpleValue),
@@ -68,7 +68,7 @@ impl fmt::Display for TypesFormTailElement {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct TypesForm {
     pub tokens: Box<Tokens>,
     pub head: SimpleValue,

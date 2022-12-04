@@ -13,7 +13,7 @@ use crate::token::Tokens;
 use crate::value::SimpleValue;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum BlockFormEntry {
     Empty(SimpleValue),
     ImportForm(Box<ImportForm>),
@@ -77,7 +77,7 @@ impl fmt::Display for BlockFormEntry {
 
 pub type BlockFormValue = AppFormValue;
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct BlockForm {
     pub tokens: Box<Tokens>,
     pub entries: Vec<BlockFormEntry>,

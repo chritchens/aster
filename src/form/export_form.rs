@@ -7,7 +7,7 @@ use crate::token::Tokens;
 use crate::value::SimpleValue;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum ExportFormDef {
     Empty(SimpleValue),
     ValueSymbol(SimpleValue),
@@ -53,7 +53,7 @@ impl fmt::Display for ExportFormDef {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct ExportForm {
     pub tokens: Box<Tokens>,
     pub defs: Vec<ExportFormDef>,

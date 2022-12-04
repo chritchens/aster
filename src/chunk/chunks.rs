@@ -9,7 +9,7 @@ use std::fmt;
 use std::iter;
 use std::ops;
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct CharChunks {
     pub files: Vec<String>,
     pub content: Vec<CharChunk>,
@@ -171,7 +171,7 @@ impl convert::From<String> for CharChunks {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct StringChunks {
     pub files: Vec<String>,
     pub content: Vec<StringChunk>,

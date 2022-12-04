@@ -1,7 +1,7 @@
 use crate::loc::Loc;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct CharChunk {
     pub loc: Loc,
     pub content: char,
@@ -24,7 +24,7 @@ impl fmt::Display for CharChunk {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct StringChunk {
     pub loc: Loc,
     pub content: String,

@@ -7,7 +7,7 @@ use crate::token::{TokenKind, Tokens};
 use crate::value::SimpleValue;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum FormTailElement {
     Simple(SimpleValue),
     Form(Box<Form>),
@@ -43,7 +43,7 @@ impl fmt::Display for FormTailElement {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct Form {
     pub tokens: Box<Tokens>,
     pub head: SimpleValue,

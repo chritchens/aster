@@ -8,7 +8,7 @@ use crate::token::Tokens;
 use crate::value::SimpleValue;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum ModuleFormTypeParameter {
     Empty(SimpleValue),
     Symbol(SimpleValue),
@@ -50,7 +50,7 @@ impl fmt::Display for ModuleFormTypeParameter {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum ModuleFormBlock {
     Empty(SimpleValue),
     Form(Box<BlockForm>),
@@ -92,7 +92,7 @@ impl fmt::Display for ModuleFormBlock {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct ModuleForm {
     pub tokens: Box<Tokens>,
     pub name: SimpleValue,

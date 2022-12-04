@@ -6,7 +6,7 @@ use crate::token::{Token, Tokens};
 use crate::value::{FormValue, SimpleValue};
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum Value {
     Simple(SimpleValue),
     Form(Box<FormValue>),

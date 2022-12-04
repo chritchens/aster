@@ -5,7 +5,7 @@ use crate::syntax::is_value_keyword;
 use crate::token::{Token, TokenKind};
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum SimpleValue {
     Ignore(Token),
     Empty(Token),

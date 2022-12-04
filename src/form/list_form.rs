@@ -15,7 +15,7 @@ use crate::token::Tokens;
 use crate::value::SimpleValue;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum ListFormValue {
     Ignore(SimpleValue),
     Empty(SimpleValue),
@@ -129,7 +129,7 @@ impl fmt::Display for ListFormValue {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct ListForm {
     pub tokens: Box<Tokens>,
     pub values: Vec<ListFormValue>,

@@ -23,7 +23,7 @@ use crate::result::Result;
 use crate::token::Tokens;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum FormValue {
     Module(Box<ModuleForm>),
     Block(Box<BlockForm>),

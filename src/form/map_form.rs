@@ -1,62 +1,63 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormTailElement};
-use crate::form::pair_form::PairForm;
+use crate::form::pair_form::{PairForm, PairFormValue};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
 use crate::value::SimpleValue;
+use std::collections::BTreeMap;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub enum MapFormValue {
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
+pub enum MapFormEntry {
     Ignore(SimpleValue),
     Empty(SimpleValue),
     PairForm(Box<PairForm>),
 }
 
-impl Default for MapFormValue {
-    fn default() -> MapFormValue {
-        MapFormValue::Empty(SimpleValue::new())
+impl Default for MapFormEntry {
+    fn default() -> MapFormEntry {
+        MapFormEntry::Empty(SimpleValue::new())
     }
 }
 
-impl MapFormValue {
+impl MapFormEntry {
     pub fn file(&self) -> String {
         match self {
-            MapFormValue::Ignore(ignore) => ignore.file(),
-            MapFormValue::Empty(empty) => empty.file(),
-            MapFormValue::PairForm(form) => form.file(),
+            MapFormEntry::Ignore(ignore) => ignore.file(),
+            MapFormEntry::Empty(empty) => empty.file(),
+            MapFormEntry::PairForm(form) => form.file(),
         }
     }
 
     pub fn loc(&self) -> Option<Loc> {
         match self {
-            MapFormValue::Ignore(ignore) => ignore.loc(),
-            MapFormValue::Empty(empty) => empty.loc(),
-            MapFormValue::PairForm(form) => form.loc(),
+            MapFormEntry::Ignore(ignore) => ignore.loc(),
+            MapFormEntry::Empty(empty) => empty.loc(),
+            MapFormEntry::PairForm(form) => form.loc(),
         }
     }
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         match self {
-            MapFormValue::Ignore(_) => "_".into(),
-            MapFormValue::Empty(_) => "()".into(),
-            MapFormValue::PairForm(form) => form.to_string(),
+            MapFormEntry::Ignore(_) => "_".into(),
+            MapFormEntry::Empty(_) => "()".into(),
+            MapFormEntry::PairForm(form) => form.to_string(),
         }
     }
 }
 
-impl fmt::Display for MapFormValue {
+impl fmt::Display for MapFormEntry {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct MapForm {
     pub tokens: Box<Tokens>,
-    pub values: Vec<MapFormValue>,
+    pub entries: Vec<MapFormEntry>,
 }
 
 impl MapForm {
@@ -73,20 +74,113 @@ impl MapForm {
     }
 
     pub fn len(&self) -> usize {
-        self.values.len()
+        if self.is_empty() {
+            0
+        } else {
+            self.entries.len()
+        }
+    }
+
+    pub fn is_ignore_literal(&self) -> bool {
+        if self.entries.len() != 1 {
+            return false;
+        }
+
+        match self.entries[0] {
+            MapFormEntry::Ignore(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_empty_literal(&self) -> bool {
+        if self.entries.len() != 1 {
+            return false;
+        }
+
+        match self.entries[0] {
+            MapFormEntry::Empty(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_proper_map(&self) -> bool {
+        match self.entries[0] {
+            MapFormEntry::Empty(_) | MapFormEntry::Ignore(_) => false,
+            _ => true,
+        }
     }
 
     pub fn is_empty(&self) -> bool {
-        self.values.is_empty()
+        self.entries.is_empty() || self.is_empty_literal()
+    }
+
+    pub fn as_map(&self) -> Result<BTreeMap<PairFormValue, PairFormValue>> {
+        let mut map = BTreeMap::new();
+
+        if self.len() == 1 {
+            match self.entries[0].clone() {
+                MapFormEntry::Empty(_) | MapFormEntry::Ignore(_) => {}
+                MapFormEntry::PairForm(form) => {
+                    map.insert(form.first.clone(), form.second.clone());
+                }
+            }
+        } else {
+            for entry in self.entries.iter() {
+                match entry {
+                    MapFormEntry::Empty(_) | MapFormEntry::Ignore(_) => {
+                        return Err(Error::Syntactic(SyntacticError {
+                            loc: entry.loc(),
+                            desc: "unexpected map entry".into(),
+                        }));
+                    }
+                    MapFormEntry::PairForm(form) => {
+                        map.insert(form.first.clone(), form.second.clone());
+                    }
+                }
+            }
+        }
+
+        Ok(map)
+    }
+
+    pub fn get_from_pair_form_value_key(
+        &self,
+        key: &PairFormValue,
+    ) -> Result<Option<PairFormValue>> {
+        Ok(self.as_map()?.get(key).map(|v| v.to_owned()))
+    }
+
+    pub fn get(&self, key: &str) -> Result<Option<PairFormValue>> {
+        for entry in self.as_map()?.iter() {
+            if entry.0.to_string() == key {
+                return Ok(Some(entry.1.to_owned()));
+            }
+        }
+
+        Ok(None)
+    }
+
+    pub fn contains_from_pair_form_value_key(&self, key: &PairFormValue) -> Result<bool> {
+        Ok(self.as_map()?.contains_key(key))
+    }
+
+    pub fn contains(&self, key: &str) -> Result<bool> {
+        for entry in self.as_map()?.iter() {
+            if entry.0.to_string() == key {
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
     }
 
     pub fn can_be_parameter(&self) -> bool {
-        for value in self.values.iter() {
-            match value {
-                MapFormValue::Ignore(_) | MapFormValue::Empty(_) => {
+        for entry in self.entries.iter() {
+            match entry {
+                MapFormEntry::Ignore(_) | MapFormEntry::Empty(_) => {
                     return false;
                 }
-                MapFormValue::PairForm(form) => {
+                MapFormEntry::PairForm(form) => {
                     if !form.can_be_parameter() {
                         return false;
                     }
@@ -97,8 +191,8 @@ impl MapForm {
         true
     }
 
-    pub fn values_to_string(&self) -> String {
-        self.values
+    pub fn entries_to_string(&self) -> String {
+        self.entries
             .iter()
             .map(|v| v.to_string())
             .collect::<Vec<String>>()
@@ -108,8 +202,8 @@ impl MapForm {
     pub fn all_parameters(&self) -> Vec<SimpleValue> {
         let mut params = vec![];
 
-        for value in self.values.iter() {
-            if let MapFormValue::PairForm(form) = value.clone() {
+        for entry in self.entries.iter() {
+            if let MapFormEntry::PairForm(form) = entry.clone() {
                 params.extend(form.all_parameters());
             }
         }
@@ -120,8 +214,8 @@ impl MapForm {
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         let mut vars = vec![];
 
-        for value in self.values.iter() {
-            if let MapFormValue::PairForm(form) = value.clone() {
+        for entry in self.entries.iter() {
+            if let MapFormEntry::PairForm(form) = entry.clone() {
                 vars.extend(form.all_variables());
             }
         }
@@ -140,7 +234,7 @@ impl MapForm {
         if form.tail.is_empty() {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
-                desc: "expected at least one value".into(),
+                desc: "expected at least one entry".into(),
             }));
         }
 
@@ -151,7 +245,7 @@ impl MapForm {
             match param.clone() {
                 FormTailElement::Simple(value) => match value {
                     SimpleValue::Ignore(_) => {
-                        map.values.push(MapFormValue::Ignore(value));
+                        map.entries.push(MapFormEntry::Ignore(value));
                     }
                     SimpleValue::Empty(_) => {
                         if form.tail.len() > 1 {
@@ -162,7 +256,7 @@ impl MapForm {
                             }));
                         }
 
-                        map.values.push(MapFormValue::Empty(value));
+                        map.entries.push(MapFormEntry::Empty(value));
                     }
                     x => {
                         return Err(Error::Syntactic(SyntacticError {
@@ -173,7 +267,7 @@ impl MapForm {
                 },
                 FormTailElement::Form(form) => {
                     if let Ok(form) = PairForm::from_form(&form) {
-                        map.values.push(MapFormValue::PairForm(Box::new(form)));
+                        map.entries.push(MapFormEntry::PairForm(Box::new(form)));
                     } else {
                         return Err(Error::Syntactic(SyntacticError {
                             loc: form.loc(),
@@ -202,7 +296,7 @@ impl MapForm {
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        format!("(map {})", self.values_to_string())
+        format!("(map {})", self.entries_to_string())
     }
 }
 
@@ -234,14 +328,24 @@ mod tests {
 
         let mut form = res.unwrap();
 
-        assert_eq!(
-            form.values
-                .iter()
-                .map(|v| v.to_string())
-                .collect::<Vec<String>>(),
-            vec!["()".to_string()]
-        );
-        assert_eq!(form.values_to_string(), "()".to_string());
+        assert!(form.is_empty());
+        assert!(form.is_empty_literal());
+        assert_eq!(form.len(), 0);
+        assert_eq!(form.entries_to_string(), "()".to_string());
+        assert_eq!(form.to_string(), s.to_string());
+
+        s = "(map _)";
+
+        res = MapForm::from_str(s);
+
+        assert!(res.is_ok());
+
+        form = res.unwrap();
+
+        assert!(!form.is_empty());
+        assert!(form.is_ignore_literal());
+        assert_eq!(form.len(), 1);
+        assert_eq!(form.entries_to_string(), "_".to_string());
         assert_eq!(form.to_string(), s.to_string());
 
         s = "(map (pair a A))";
@@ -252,15 +356,13 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(
-            form.values
-                .iter()
-                .map(|v| v.to_string())
-                .collect::<Vec<String>>(),
-            vec!["(pair a A)".to_string()]
-        );
-        assert_eq!(form.values_to_string(), "(pair a A)".to_string());
+        assert_eq!(form.len(), 1);
+        assert!(form.is_proper_map());
+        assert_eq!(form.entries_to_string(), "(pair a A)".to_string());
         assert_eq!(form.to_string(), s.to_string());
+        assert!(form.contains("a").is_ok());
+        assert!(form.contains("a").unwrap());
+        assert_eq!(form.get("a").unwrap().unwrap().to_string(), "A".to_string());
 
         s = "(map (pair moduleX.X y))";
 
@@ -270,15 +372,16 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(
-            form.values
-                .iter()
-                .map(|v| v.to_string())
-                .collect::<Vec<String>>(),
-            vec!["(pair moduleX.X y)".to_string()]
-        );
-        assert_eq!(form.values_to_string(), "(pair moduleX.X y)".to_string());
+        assert_eq!(form.len(), 1);
+        assert!(form.is_proper_map());
+        assert_eq!(form.entries_to_string(), "(pair moduleX.X y)".to_string());
         assert_eq!(form.to_string(), s.to_string());
+        assert!(form.contains("moduleX.X").is_ok());
+        assert!(form.contains("moduleX.X").unwrap());
+        assert_eq!(
+            form.get("moduleX.X").unwrap().unwrap().to_string(),
+            "y".to_string()
+        );
 
         s = "(map (pair moduleX.X y) (pair math.+ default))";
 
@@ -288,8 +391,10 @@ mod tests {
 
         form = res.unwrap();
 
+        assert_eq!(form.len(), 2);
+        assert!(form.is_proper_map());
         assert_eq!(
-            form.values
+            form.entries
                 .iter()
                 .map(|v| v.to_string())
                 .collect::<Vec<String>>(),
@@ -299,9 +404,21 @@ mod tests {
             ]
         );
         assert_eq!(
-            form.values_to_string(),
+            form.entries_to_string(),
             "(pair moduleX.X y) (pair math.+ default)".to_string()
         );
         assert_eq!(form.to_string(), s.to_string());
+        assert!(form.contains("moduleX.X").is_ok());
+        assert!(form.contains("moduleX.X").unwrap());
+        assert_eq!(
+            form.get("moduleX.X").unwrap().unwrap().to_string(),
+            "y".to_string()
+        );
+        assert!(form.contains("math.+").is_ok());
+        assert!(form.contains("math.+").unwrap());
+        assert_eq!(
+            form.get("math.+").unwrap().unwrap().to_string(),
+            "default".to_string()
+        );
     }
 }

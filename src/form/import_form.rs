@@ -8,7 +8,7 @@ use crate::token::Tokens;
 use crate::value::SimpleValue;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum ImportFormTypeVariable {
     Ignore(SimpleValue),
     Empty(SimpleValue),
@@ -70,7 +70,7 @@ impl fmt::Display for ImportFormTypeVariable {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum ImportFormDef {
     Ignore(SimpleValue),
     Empty(SimpleValue),
@@ -120,7 +120,7 @@ impl fmt::Display for ImportFormDef {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct ImportForm {
     pub tokens: Box<Tokens>,
     pub module: SimpleValue,

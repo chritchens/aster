@@ -3,7 +3,7 @@ use crate::loc::Loc;
 use crate::syntax::EMPTY;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
 pub enum TokenKind {
     Comment,
     DocComment,
@@ -28,7 +28,7 @@ impl Default for TokenKind {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct Token {
     pub kind: TokenKind,
     pub chunks: StringChunks,

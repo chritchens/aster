@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct Loc {
     pub file: Option<String>,
     pub line: usize,

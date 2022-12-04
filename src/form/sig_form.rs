@@ -9,7 +9,7 @@ use std::fmt;
 
 pub type SigFormValue = TypesFormTailElement;
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct SigForm {
     pub tokens: Box<Tokens>,
     pub name: SimpleValue,

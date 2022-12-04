@@ -10,7 +10,7 @@ use crate::token::Tokens;
 use crate::value::SimpleValue;
 use std::fmt;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum AppFormValue {
     Ignore(SimpleValue),
     Empty(SimpleValue),
@@ -144,7 +144,7 @@ impl fmt::Display for AppFormValue {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Default)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct AppForm {
     pub tokens: Box<Tokens>,
     pub name: SimpleValue,
