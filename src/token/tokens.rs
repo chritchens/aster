@@ -546,7 +546,7 @@ mod tests {
         assert_eq!(tokens.len(), 1);
         assert_eq!(tokens[0].kind, TokenKind::ValueSymbol);
 
-        s = "sum!";
+        s = "enum!";
 
         tokens = Tokens::from_str(s).unwrap();
 

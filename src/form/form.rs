@@ -312,7 +312,7 @@ mod tests {
         );
         assert!(form.is_types_form());
 
-        s = "(Sum A B c.C Char)";
+        s = "(Enum A B c.C Char)";
 
         res = Form::from_str(s);
 
@@ -320,7 +320,7 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.head.to_string(), "Sum".to_string());
+        assert_eq!(form.head.to_string(), "Enum".to_string());
         assert_eq!(
             form.tail
                 .iter()

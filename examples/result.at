@@ -1,7 +1,7 @@
 (module result (list T E) (block 
   #! An example on how Result and unwrap can be implemented.
             
-  (type Result (Sum T E))
+  (type Result (Enum T E))
   
   (sig unwrap (Fun (Result T E) T))
   (val unwrap (fun res 

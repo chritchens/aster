@@ -338,7 +338,7 @@ mod tests {
 
         s = "
         (module x (list T E) (block
-            (type Result (Sum T E))
+            (type Result (Enum T E))
             
             (sig unwrap (Fun (Result T E) T))
             (val unwrap (fun res 
@@ -361,7 +361,7 @@ mod tests {
         assert_eq!(form.block_entries().len(), 3);
         assert_eq!(
             block_entries[0].to_string(),
-            "(type Result (Sum T E))".to_string()
+            "(type Result (Enum T E))".to_string()
         );
         assert_eq!(
             block_entries[1].to_string(),

@@ -362,7 +362,7 @@ mod tests {
             (import res () Result)
 
             (attrs Result union)
-            (type Result (Sum T E))
+            (type Result (Enum T E))
 
             (attrs unwrap inline)
             (sig unwrap (Fun (Result T E) T))

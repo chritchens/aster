@@ -8,7 +8,7 @@ pub const KEYWORDS: [&str; 57] = [
     "arr", "vec", "map", "sig", "fun", "attrs", "app", "case", "id", "default", "match", "others",
     "size", "load", "store", "ref", "deref", "cast", "dup", "drop", "panic", "Builtin", "Empty",
     "Atomic", "UInt", "Int", "Float", "Size", "Pointer", "Ref", "Char", "String", "Mem", "Path",
-    "IO", "Ctx", "Sum", "Pair", "List", "Arr", "Vec", "Map", "Sig", "Fun", "Attrs", "Type",
+    "IO", "Ctx", "Enum", "Pair", "List", "Arr", "Vec", "Map", "Sig", "Fun", "Attrs", "Type",
 ];
 
 pub fn is_keyword(s: &str) -> bool {
@@ -78,7 +78,7 @@ pub enum Keyword {
     PathT,
     IOT,
     CtxT,
-    SumT,
+    EnumT,
     PairT,
     ListT,
     ArrT,
@@ -140,7 +140,7 @@ impl fmt::Display for Keyword {
             Keyword::PathT => write!(f, "Path"),
             Keyword::IOT => write!(f, "IO"),
             Keyword::CtxT => write!(f, "Ctx"),
-            Keyword::SumT => write!(f, "Sum"),
+            Keyword::EnumT => write!(f, "Enum"),
             Keyword::PairT => write!(f, "Pair"),
             Keyword::ListT => write!(f, "List"),
             Keyword::ArrT => write!(f, "Arr"),
@@ -205,7 +205,7 @@ impl Keyword {
             "Path" => Ok(Keyword::PathT),
             "IO" => Ok(Keyword::IOT),
             "Ctx" => Ok(Keyword::CtxT),
-            "Sum" => Ok(Keyword::SumT),
+            "Enum" => Ok(Keyword::EnumT),
             "Pair" => Ok(Keyword::PairT),
             "List" => Ok(Keyword::ListT),
             "Arr" => Ok(Keyword::ArrT),

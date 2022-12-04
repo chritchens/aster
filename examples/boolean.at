@@ -9,7 +9,7 @@
   (attrs True (map (pair asSize 0)))
   (type False Atomic)
 
-  (type Bool (Sum True False))
+  (type Bool (Enum True False))
 
   (sig true True)
   (val true atomic)
