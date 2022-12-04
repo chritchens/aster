@@ -361,7 +361,7 @@ mod tests {
         (block
             (import res () Result)
 
-            (attrs Result union)
+            (attrs Result asCUnion)
             (type Result (Enum T E))
 
             (attrs unwrap inline)
@@ -394,7 +394,7 @@ mod tests {
         assert!(form.entry_as_import(0).is_some());
         assert_eq!(
             form.entries[1].to_string(),
-            "(attrs Result union)".to_string()
+            "(attrs Result asCUnion)".to_string()
         );
         assert!(form.entry_as_attributes(1).is_some());
         assert!(form.entry_as_attributes(1).unwrap().is_type_attributes());
