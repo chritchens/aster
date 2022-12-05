@@ -190,9 +190,8 @@ impl ImportForm {
                             let simple_type = Type::from_simple_value(&value)?;
                             self.type_variables.push(simple_type);
                         }
-                        ListFormValue::TypesForm(form) => {
-                            let form_type = Type::from_form(&form.as_form())?;
-                            self.type_variables.push(form_type);
+                        ListFormValue::Type(form) => {
+                            self.type_variables.push(*form.clone());
                         }
                         _ => {
                             return Err(Error::Syntactic(SyntacticError {

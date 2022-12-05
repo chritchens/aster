@@ -15,7 +15,6 @@ pub mod module_form;
 pub mod pair_form;
 pub mod sig_form;
 pub mod type_form;
-pub mod types_form;
 pub mod val_form;
 pub mod vec_form;
 
@@ -35,6 +34,5 @@ pub use module_form::*;
 pub use pair_form::*;
 pub use sig_form::*;
 pub use type_form::*;
-pub use types_form::*;
 pub use val_form::*;
 pub use vec_form::*;

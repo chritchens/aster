@@ -7,11 +7,11 @@ use crate::form::let_form::LetForm;
 use crate::form::list_form::ListForm;
 use crate::form::map_form::MapForm;
 use crate::form::pair_form::PairForm;
-use crate::form::types_form::TypesForm;
 use crate::form::vec_form::VecForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
+use crate::types::Type;
 use crate::value::SimpleValue;
 use std::fmt;
 
@@ -27,7 +27,7 @@ pub enum ArrFormValue {
     TypeSymbol(SimpleValue),
     ValuePathSymbol(SimpleValue),
     TypePathSymbol(SimpleValue),
-    TypesForm(Box<TypesForm>),
+    Type(Box<Type>),
     FunForm(Box<FunForm>),
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
@@ -58,7 +58,7 @@ impl ArrFormValue {
             ArrFormValue::TypeSymbol(symbol) => symbol.file(),
             ArrFormValue::ValuePathSymbol(symbol) => symbol.file(),
             ArrFormValue::TypePathSymbol(symbol) => symbol.file(),
-            ArrFormValue::TypesForm(form) => form.file(),
+            ArrFormValue::Type(form) => form.file(),
             ArrFormValue::FunForm(form) => form.file(),
             ArrFormValue::CaseForm(form) => form.file(),
             ArrFormValue::LetForm(form) => form.file(),
@@ -83,7 +83,7 @@ impl ArrFormValue {
             ArrFormValue::TypeSymbol(symbol) => symbol.loc(),
             ArrFormValue::ValuePathSymbol(symbol) => symbol.loc(),
             ArrFormValue::TypePathSymbol(symbol) => symbol.loc(),
-            ArrFormValue::TypesForm(form) => form.loc(),
+            ArrFormValue::Type(form) => form.loc(),
             ArrFormValue::FunForm(form) => form.loc(),
             ArrFormValue::CaseForm(form) => form.loc(),
             ArrFormValue::LetForm(form) => form.loc(),
@@ -109,7 +109,7 @@ impl ArrFormValue {
             ArrFormValue::TypeSymbol(symbol) => symbol.to_string(),
             ArrFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
             ArrFormValue::TypePathSymbol(symbol) => symbol.to_string(),
-            ArrFormValue::TypesForm(form) => form.to_string(),
+            ArrFormValue::Type(form) => form.to_string(),
             ArrFormValue::FunForm(form) => form.to_string(),
             ArrFormValue::CaseForm(form) => form.to_string(),
             ArrFormValue::LetForm(form) => form.to_string(),
@@ -167,7 +167,7 @@ impl ArrForm {
                 | ArrFormValue::TypeSymbol(_)
                 | ArrFormValue::TypePathSymbol(_)
                 | ArrFormValue::FunForm(_)
-                | ArrFormValue::TypesForm(_)
+                | ArrFormValue::Type(_)
                 | ArrFormValue::CaseForm(_)
                 | ArrFormValue::LetForm(_)
                 | ArrFormValue::AppForm(_) => return false,
@@ -216,7 +216,7 @@ impl ArrForm {
 
         for value in self.values.iter() {
             match value.clone() {
-                ArrFormValue::TypesForm(form) => {
+                ArrFormValue::Type(form) => {
                     params.extend(form.all_parameters());
                 }
                 ArrFormValue::FunForm(form) => {
@@ -270,7 +270,7 @@ impl ArrForm {
                 ArrFormValue::TypePathSymbol(value) => {
                     vars.push(value);
                 }
-                ArrFormValue::TypesForm(form) => {
+                ArrFormValue::Type(form) => {
                     vars.extend(form.all_variables());
                 }
                 ArrFormValue::FunForm(form) => {
@@ -363,8 +363,8 @@ impl ArrForm {
                     }
                 },
                 FormTailElement::Form(form) => {
-                    if let Ok(form) = TypesForm::from_form(&form) {
-                        arr.values.push(ArrFormValue::TypesForm(Box::new(form)));
+                    if let Ok(form) = Type::from_form(&form) {
+                        arr.values.push(ArrFormValue::Type(Box::new(form)));
                     } else if let Ok(form) = PairForm::from_form(&form) {
                         arr.values.push(ArrFormValue::PairForm(Box::new(form)));
                     } else if let Ok(form) = ListForm::from_form(&form) {

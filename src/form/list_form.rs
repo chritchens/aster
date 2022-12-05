@@ -7,11 +7,11 @@ use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::map_form::MapForm;
 use crate::form::pair_form::PairForm;
-use crate::form::types_form::TypesForm;
 use crate::form::vec_form::VecForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
+use crate::types::Type;
 use crate::value::SimpleValue;
 use std::fmt;
 
@@ -27,7 +27,7 @@ pub enum ListFormValue {
     TypeSymbol(SimpleValue),
     ValuePathSymbol(SimpleValue),
     TypePathSymbol(SimpleValue),
-    TypesForm(Box<TypesForm>),
+    Type(Box<Type>),
     FunForm(Box<FunForm>),
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
@@ -58,7 +58,7 @@ impl ListFormValue {
             ListFormValue::TypeSymbol(symbol) => symbol.file(),
             ListFormValue::ValuePathSymbol(symbol) => symbol.file(),
             ListFormValue::TypePathSymbol(symbol) => symbol.file(),
-            ListFormValue::TypesForm(form) => form.file(),
+            ListFormValue::Type(form) => form.file(),
             ListFormValue::FunForm(form) => form.file(),
             ListFormValue::CaseForm(form) => form.file(),
             ListFormValue::LetForm(form) => form.file(),
@@ -83,7 +83,7 @@ impl ListFormValue {
             ListFormValue::TypeSymbol(symbol) => symbol.loc(),
             ListFormValue::ValuePathSymbol(symbol) => symbol.loc(),
             ListFormValue::TypePathSymbol(symbol) => symbol.loc(),
-            ListFormValue::TypesForm(form) => form.loc(),
+            ListFormValue::Type(form) => form.loc(),
             ListFormValue::FunForm(form) => form.loc(),
             ListFormValue::CaseForm(form) => form.loc(),
             ListFormValue::LetForm(form) => form.loc(),
@@ -109,7 +109,7 @@ impl ListFormValue {
             ListFormValue::TypeSymbol(symbol) => symbol.to_string(),
             ListFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
             ListFormValue::TypePathSymbol(symbol) => symbol.to_string(),
-            ListFormValue::TypesForm(form) => form.to_string(),
+            ListFormValue::Type(form) => form.to_string(),
             ListFormValue::FunForm(form) => form.to_string(),
             ListFormValue::CaseForm(form) => form.to_string(),
             ListFormValue::LetForm(form) => form.to_string(),
@@ -167,7 +167,7 @@ impl ListForm {
                 | ListFormValue::TypeSymbol(_)
                 | ListFormValue::TypePathSymbol(_)
                 | ListFormValue::FunForm(_)
-                | ListFormValue::TypesForm(_)
+                | ListFormValue::Type(_)
                 | ListFormValue::CaseForm(_)
                 | ListFormValue::LetForm(_)
                 | ListFormValue::AppForm(_) => return false,
@@ -216,7 +216,7 @@ impl ListForm {
 
         for value in self.values.iter() {
             match value.clone() {
-                ListFormValue::TypesForm(form) => {
+                ListFormValue::Type(form) => {
                     params.extend(form.all_parameters());
                 }
                 ListFormValue::FunForm(form) => {
@@ -270,7 +270,7 @@ impl ListForm {
                 ListFormValue::TypePathSymbol(value) => {
                     vars.push(value);
                 }
-                ListFormValue::TypesForm(form) => {
+                ListFormValue::Type(form) => {
                     vars.extend(form.all_variables());
                 }
                 ListFormValue::FunForm(form) => {
@@ -363,8 +363,8 @@ impl ListForm {
                     }
                 },
                 FormTailElement::Form(form) => {
-                    if let Ok(form) = TypesForm::from_form(&form) {
-                        list.values.push(ListFormValue::TypesForm(Box::new(form)));
+                    if let Ok(form) = Type::from_form(&form) {
+                        list.values.push(ListFormValue::Type(Box::new(form)));
                     } else if let Ok(form) = PairForm::from_form(&form) {
                         list.values.push(ListFormValue::PairForm(Box::new(form)));
                     } else if let Ok(form) = ArrForm::from_form(&form) {

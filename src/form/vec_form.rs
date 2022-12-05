@@ -8,10 +8,10 @@ use crate::form::let_form::LetForm;
 use crate::form::list_form::ListForm;
 use crate::form::map_form::MapForm;
 use crate::form::pair_form::PairForm;
-use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
+use crate::types::Type;
 use crate::value::SimpleValue;
 use std::fmt;
 
@@ -27,7 +27,7 @@ pub enum VecFormValue {
     TypeSymbol(SimpleValue),
     ValuePathSymbol(SimpleValue),
     TypePathSymbol(SimpleValue),
-    TypesForm(Box<TypesForm>),
+    Type(Box<Type>),
     FunForm(Box<FunForm>),
     CaseForm(Box<CaseForm>),
     LetForm(Box<LetForm>),
@@ -58,7 +58,7 @@ impl VecFormValue {
             VecFormValue::TypeSymbol(symbol) => symbol.file(),
             VecFormValue::ValuePathSymbol(symbol) => symbol.file(),
             VecFormValue::TypePathSymbol(symbol) => symbol.file(),
-            VecFormValue::TypesForm(form) => form.file(),
+            VecFormValue::Type(form) => form.file(),
             VecFormValue::FunForm(form) => form.file(),
             VecFormValue::CaseForm(form) => form.file(),
             VecFormValue::LetForm(form) => form.file(),
@@ -83,7 +83,7 @@ impl VecFormValue {
             VecFormValue::TypeSymbol(symbol) => symbol.loc(),
             VecFormValue::ValuePathSymbol(symbol) => symbol.loc(),
             VecFormValue::TypePathSymbol(symbol) => symbol.loc(),
-            VecFormValue::TypesForm(form) => form.loc(),
+            VecFormValue::Type(form) => form.loc(),
             VecFormValue::FunForm(form) => form.loc(),
             VecFormValue::CaseForm(form) => form.loc(),
             VecFormValue::LetForm(form) => form.loc(),
@@ -109,7 +109,7 @@ impl VecFormValue {
             VecFormValue::TypeSymbol(symbol) => symbol.to_string(),
             VecFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
             VecFormValue::TypePathSymbol(symbol) => symbol.to_string(),
-            VecFormValue::TypesForm(form) => form.to_string(),
+            VecFormValue::Type(form) => form.to_string(),
             VecFormValue::FunForm(form) => form.to_string(),
             VecFormValue::CaseForm(form) => form.to_string(),
             VecFormValue::LetForm(form) => form.to_string(),
@@ -167,7 +167,7 @@ impl VecForm {
                 | VecFormValue::TypeSymbol(_)
                 | VecFormValue::TypePathSymbol(_)
                 | VecFormValue::FunForm(_)
-                | VecFormValue::TypesForm(_)
+                | VecFormValue::Type(_)
                 | VecFormValue::CaseForm(_)
                 | VecFormValue::LetForm(_)
                 | VecFormValue::AppForm(_) => return false,
@@ -216,7 +216,7 @@ impl VecForm {
 
         for value in self.values.iter() {
             match value.clone() {
-                VecFormValue::TypesForm(form) => {
+                VecFormValue::Type(form) => {
                     params.extend(form.all_parameters());
                 }
                 VecFormValue::FunForm(form) => {
@@ -270,7 +270,7 @@ impl VecForm {
                 VecFormValue::TypePathSymbol(value) => {
                     vars.push(value);
                 }
-                VecFormValue::TypesForm(form) => {
+                VecFormValue::Type(form) => {
                     vars.extend(form.all_variables());
                 }
                 VecFormValue::FunForm(form) => {
@@ -363,8 +363,8 @@ impl VecForm {
                     }
                 },
                 FormTailElement::Form(form) => {
-                    if let Ok(form) = TypesForm::from_form(&form) {
-                        vec.values.push(VecFormValue::TypesForm(Box::new(form)));
+                    if let Ok(form) = Type::from_form(&form) {
+                        vec.values.push(VecFormValue::Type(Box::new(form)));
                     } else if let Ok(form) = PairForm::from_form(&form) {
                         vec.values.push(VecFormValue::PairForm(Box::new(form)));
                     } else if let Ok(form) = ListForm::from_form(&form) {

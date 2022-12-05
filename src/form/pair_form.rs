@@ -7,11 +7,11 @@ use crate::form::fun_form::FunForm;
 use crate::form::let_form::LetForm;
 use crate::form::list_form::ListForm;
 use crate::form::map_form::MapForm;
-use crate::form::types_form::TypesForm;
 use crate::form::vec_form::VecForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
+use crate::types::Type;
 use crate::value::SimpleValue;
 use std::fmt;
 
@@ -27,7 +27,7 @@ pub enum PairFormValue {
     TypeSymbol(SimpleValue),
     ValuePathSymbol(SimpleValue),
     TypePathSymbol(SimpleValue),
-    TypesForm(Box<TypesForm>),
+    Type(Box<Type>),
     MapForm(Box<MapForm>),
     VecForm(Box<VecForm>),
     ArrForm(Box<ArrForm>),
@@ -58,7 +58,7 @@ impl PairFormValue {
             PairFormValue::TypeSymbol(symbol) => symbol.file(),
             PairFormValue::ValuePathSymbol(symbol) => symbol.file(),
             PairFormValue::TypePathSymbol(symbol) => symbol.file(),
-            PairFormValue::TypesForm(form) => form.file(),
+            PairFormValue::Type(form) => form.file(),
             PairFormValue::MapForm(form) => form.file(),
             PairFormValue::VecForm(form) => form.file(),
             PairFormValue::ArrForm(form) => form.file(),
@@ -83,7 +83,7 @@ impl PairFormValue {
             PairFormValue::TypeSymbol(symbol) => symbol.loc(),
             PairFormValue::ValuePathSymbol(symbol) => symbol.loc(),
             PairFormValue::TypePathSymbol(symbol) => symbol.loc(),
-            PairFormValue::TypesForm(form) => form.loc(),
+            PairFormValue::Type(form) => form.loc(),
             PairFormValue::MapForm(form) => form.loc(),
             PairFormValue::VecForm(form) => form.loc(),
             PairFormValue::ArrForm(form) => form.loc(),
@@ -109,7 +109,7 @@ impl PairFormValue {
             PairFormValue::TypeSymbol(symbol) => symbol.to_string(),
             PairFormValue::ValuePathSymbol(symbol) => symbol.to_string(),
             PairFormValue::TypePathSymbol(symbol) => symbol.to_string(),
-            PairFormValue::TypesForm(form) => form.to_string(),
+            PairFormValue::Type(form) => form.to_string(),
             PairFormValue::MapForm(form) => form.to_string(),
             PairFormValue::VecForm(form) => form.to_string(),
             PairFormValue::ArrForm(form) => form.to_string(),
@@ -160,7 +160,7 @@ impl PairForm {
             | PairFormValue::TypeSymbol(_)
             | PairFormValue::TypePathSymbol(_)
             | PairFormValue::FunForm(_)
-            | PairFormValue::TypesForm(_)
+            | PairFormValue::Type(_)
             | PairFormValue::CaseForm(_)
             | PairFormValue::LetForm(_)
             | PairFormValue::AppForm(_) => return false,
@@ -202,7 +202,7 @@ impl PairForm {
             | PairFormValue::TypeSymbol(_)
             | PairFormValue::TypePathSymbol(_)
             | PairFormValue::FunForm(_)
-            | PairFormValue::TypesForm(_)
+            | PairFormValue::Type(_)
             | PairFormValue::CaseForm(_)
             | PairFormValue::LetForm(_)
             | PairFormValue::AppForm(_) => return false,
@@ -241,7 +241,7 @@ impl PairForm {
         let mut params = vec![];
 
         match self.first.clone() {
-            PairFormValue::TypesForm(form) => {
+            PairFormValue::Type(form) => {
                 params.extend(form.all_parameters());
             }
             PairFormValue::MapForm(form) => {
@@ -275,7 +275,7 @@ impl PairForm {
         }
 
         match self.second.clone() {
-            PairFormValue::TypesForm(form) => {
+            PairFormValue::Type(form) => {
                 params.extend(form.all_parameters());
             }
             PairFormValue::MapForm(form) => {
@@ -327,7 +327,7 @@ impl PairForm {
             PairFormValue::TypePathSymbol(value) => {
                 vars.push(value);
             }
-            PairFormValue::TypesForm(form) => {
+            PairFormValue::Type(form) => {
                 vars.extend(form.all_variables());
             }
             PairFormValue::MapForm(form) => {
@@ -373,7 +373,7 @@ impl PairForm {
             PairFormValue::TypePathSymbol(value) => {
                 vars.push(value);
             }
-            PairFormValue::TypesForm(form) => {
+            PairFormValue::Type(form) => {
                 vars.extend(form.all_variables());
             }
             PairFormValue::MapForm(form) => {
@@ -464,8 +464,8 @@ impl PairForm {
                 }
             },
             FormTailElement::Form(form) => {
-                if let Ok(form) = TypesForm::from_form(&form) {
-                    pair.first = PairFormValue::TypesForm(Box::new(form));
+                if let Ok(form) = Type::from_form(&form) {
+                    pair.first = PairFormValue::Type(Box::new(form));
                 } else if let Ok(form) = MapForm::from_form(&form) {
                     pair.first = PairFormValue::MapForm(Box::new(form));
                 } else if let Ok(form) = VecForm::from_form(&form) {
@@ -527,8 +527,8 @@ impl PairForm {
                 }
             },
             FormTailElement::Form(form) => {
-                if let Ok(form) = TypesForm::from_form(&form) {
-                    pair.second = PairFormValue::TypesForm(Box::new(form));
+                if let Ok(form) = Type::from_form(&form) {
+                    pair.second = PairFormValue::Type(Box::new(form));
                 } else if let Ok(form) = MapForm::from_form(&form) {
                     pair.second = PairFormValue::MapForm(Box::new(form));
                 } else if let Ok(form) = VecForm::from_form(&form) {
