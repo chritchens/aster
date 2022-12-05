@@ -169,7 +169,7 @@ impl fmt::Display for SimpleType {
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct EnumType {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub elements: Vec<Type>,
 }
 
@@ -200,6 +200,7 @@ impl EnumType {
         }
 
         let mut enum_type = EnumType::new();
+        enum_type.tokens = form.tokens.clone();
 
         for elem in form.tail.iter() {
             let elem_type = parse_types_form_tail_element(elem)?;
@@ -261,7 +262,7 @@ impl iter::IntoIterator for EnumType {
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct PairType {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub first: Box<Type>,
     pub second: Box<Type>,
 }
@@ -300,6 +301,7 @@ impl PairType {
         }
 
         let mut pair_type = PairType::new();
+        pair_type.tokens = form.tokens.clone();
 
         let first = form.tail[0].clone();
         let second = form.tail[1].clone();
@@ -336,7 +338,7 @@ impl fmt::Display for PairType {
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct ListType {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub elements: Vec<Type>,
 }
 
@@ -367,6 +369,7 @@ impl ListType {
         }
 
         let mut list_type = ListType::new();
+        list_type.tokens = form.tokens.clone();
 
         for elem in form.tail.iter() {
             let elem_type = parse_types_form_tail_element(elem)?;
@@ -428,7 +431,7 @@ impl iter::IntoIterator for ListType {
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct ArrType {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub elements: Vec<Type>,
 }
 
@@ -459,6 +462,7 @@ impl ArrType {
         }
 
         let mut arr_type = ArrType::new();
+        arr_type.tokens = form.tokens.clone();
 
         for elem in form.tail.iter() {
             let elem_type = parse_types_form_tail_element(elem)?;
@@ -520,7 +524,7 @@ impl iter::IntoIterator for ArrType {
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct VecType {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub elements: Vec<Type>,
 }
 
@@ -551,6 +555,7 @@ impl VecType {
         }
 
         let mut vec_type = VecType::new();
+        vec_type.tokens = form.tokens.clone();
 
         for elem in form.tail.iter() {
             let elem_type = parse_types_form_tail_element(elem)?;
@@ -612,7 +617,7 @@ impl iter::IntoIterator for VecType {
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct MapType {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub entries: Vec<PairType>,
 }
 
@@ -643,6 +648,7 @@ impl MapType {
         }
 
         let mut map_type = MapType::new();
+        map_type.tokens = form.tokens.clone();
 
         for entry in form.tail.iter() {
             let entry_pair = PairType::from_str(&entry.to_string())?;
@@ -704,7 +710,7 @@ impl iter::IntoIterator for MapType {
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct FunType {
-    pub tokens: Tokens,
+    pub tokens: Box<Tokens>,
     pub parameters: Vec<Type>,
     pub body: Box<Type>,
 }
@@ -751,6 +757,7 @@ impl FunType {
         }
 
         let mut fun_type = FunType::new();
+        fun_type.tokens = form.tokens.clone();
 
         let len = form.tail.len();
 
