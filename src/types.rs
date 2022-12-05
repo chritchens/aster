@@ -2,6 +2,7 @@ use crate::chunk::StringChunks;
 use crate::error::{Error, SyntacticError};
 use crate::form::Form;
 use crate::form::{TypesForm, TypesFormTailElement};
+use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::{Token, TokenKind, Tokens};
 use crate::value::SimpleValue;
@@ -78,6 +79,78 @@ impl Default for SimpleType {
 impl SimpleType {
     pub fn new() -> SimpleType {
         SimpleType::default()
+    }
+
+    pub fn token(&self) -> Token {
+        match self {
+            SimpleType::Builtin(value) => value.token(),
+            SimpleType::Ignore(value) => value.token(),
+            SimpleType::Empty(value) => value.token(),
+            SimpleType::Atomic(value) => value.token(),
+            SimpleType::UInt(value) => value.token(),
+            SimpleType::Int(value) => value.token(),
+            SimpleType::Float(value) => value.token(),
+            SimpleType::Size(value) => value.token(),
+            SimpleType::Pointer(value) => value.token(),
+            SimpleType::Ref(value) => value.token(),
+            SimpleType::Char(value) => value.token(),
+            SimpleType::String(value) => value.token(),
+            SimpleType::Mem(value) => value.token(),
+            SimpleType::Path(value) => value.token(),
+            SimpleType::IO(value) => value.token(),
+            SimpleType::Ctx(value) => value.token(),
+            SimpleType::Type(value) => value.token(),
+            SimpleType::Symbol(value) => value.token(),
+            SimpleType::PathSymbol(value) => value.token(),
+        }
+    }
+
+    pub fn file(&self) -> String {
+        match self {
+            SimpleType::Builtin(value) => value.file(),
+            SimpleType::Ignore(value) => value.file(),
+            SimpleType::Empty(value) => value.file(),
+            SimpleType::Atomic(value) => value.file(),
+            SimpleType::UInt(value) => value.file(),
+            SimpleType::Int(value) => value.file(),
+            SimpleType::Float(value) => value.file(),
+            SimpleType::Size(value) => value.file(),
+            SimpleType::Pointer(value) => value.file(),
+            SimpleType::Ref(value) => value.file(),
+            SimpleType::Char(value) => value.file(),
+            SimpleType::String(value) => value.file(),
+            SimpleType::Mem(value) => value.file(),
+            SimpleType::Path(value) => value.file(),
+            SimpleType::IO(value) => value.file(),
+            SimpleType::Ctx(value) => value.file(),
+            SimpleType::Type(value) => value.file(),
+            SimpleType::Symbol(value) => value.file(),
+            SimpleType::PathSymbol(value) => value.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            SimpleType::Builtin(value) => value.loc(),
+            SimpleType::Ignore(value) => value.loc(),
+            SimpleType::Empty(value) => value.loc(),
+            SimpleType::Atomic(value) => value.loc(),
+            SimpleType::UInt(value) => value.loc(),
+            SimpleType::Int(value) => value.loc(),
+            SimpleType::Float(value) => value.loc(),
+            SimpleType::Size(value) => value.loc(),
+            SimpleType::Pointer(value) => value.loc(),
+            SimpleType::Ref(value) => value.loc(),
+            SimpleType::Char(value) => value.loc(),
+            SimpleType::String(value) => value.loc(),
+            SimpleType::Mem(value) => value.loc(),
+            SimpleType::Path(value) => value.loc(),
+            SimpleType::IO(value) => value.loc(),
+            SimpleType::Ctx(value) => value.loc(),
+            SimpleType::Type(value) => value.loc(),
+            SimpleType::Symbol(value) => value.loc(),
+            SimpleType::PathSymbol(value) => value.loc(),
+        }
     }
 
     #[allow(clippy::should_implement_trait)]
@@ -178,6 +251,14 @@ impl EnumType {
         EnumType::default()
     }
 
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
+    }
+
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<EnumType> {
         let form = Form::from_str(s)?;
@@ -272,6 +353,14 @@ impl PairType {
         PairType::default()
     }
 
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
+    }
+
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<PairType> {
         let form = Form::from_str(s)?;
@@ -345,6 +434,14 @@ pub struct ListType {
 impl ListType {
     pub fn new() -> ListType {
         ListType::default()
+    }
+
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
     }
 
     #[allow(clippy::should_implement_trait)]
@@ -440,6 +537,14 @@ impl ArrType {
         ArrType::default()
     }
 
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
+    }
+
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<ArrType> {
         let form = Form::from_str(s)?;
@@ -531,6 +636,14 @@ pub struct VecType {
 impl VecType {
     pub fn new() -> VecType {
         VecType::default()
+    }
+
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
     }
 
     #[allow(clippy::should_implement_trait)]
@@ -626,6 +739,14 @@ impl MapType {
         MapType::default()
     }
 
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
+    }
+
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<MapType> {
         let form = Form::from_str(s)?;
@@ -718,6 +839,14 @@ pub struct FunType {
 impl FunType {
     pub fn new() -> FunType {
         FunType::default()
+    }
+
+    pub fn file(&self) -> String {
+        self.tokens[0].file()
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        self.tokens[0].loc()
     }
 
     pub fn parameters_to_string(&self) -> String {
@@ -817,6 +946,32 @@ impl Default for Type {
 impl Type {
     pub fn new() -> Type {
         Type::default()
+    }
+
+    pub fn file(&self) -> String {
+        match self {
+            Type::Simple(simple_type) => simple_type.file(),
+            Type::Enum(enum_type) => enum_type.file(),
+            Type::Pair(pair_type) => pair_type.file(),
+            Type::List(list_type) => list_type.file(),
+            Type::Arr(arr_type) => arr_type.file(),
+            Type::Vec(vec_type) => vec_type.file(),
+            Type::Map(map_type) => map_type.file(),
+            Type::Fun(fun_type) => fun_type.file(),
+        }
+    }
+
+    pub fn loc(&self) -> Option<Loc> {
+        match self {
+            Type::Simple(simple_type) => simple_type.loc(),
+            Type::Enum(enum_type) => enum_type.loc(),
+            Type::Pair(pair_type) => pair_type.loc(),
+            Type::List(list_type) => list_type.loc(),
+            Type::Arr(arr_type) => arr_type.loc(),
+            Type::Vec(vec_type) => vec_type.loc(),
+            Type::Map(map_type) => map_type.loc(),
+            Type::Fun(fun_type) => fun_type.loc(),
+        }
     }
 
     #[allow(clippy::should_implement_trait)]
