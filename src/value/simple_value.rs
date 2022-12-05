@@ -2,7 +2,7 @@ use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_value_keyword;
-use crate::token::{Token, TokenKind};
+use crate::token::{Token, TokenKind, Tokens};
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
@@ -75,6 +75,26 @@ impl SimpleValue {
         }
     }
 
+    #[allow(clippy::should_implement_trait)]
+    pub fn from_str(s: &str) -> Result<SimpleValue> {
+        let tokens = Tokens::from_str(s)?;
+
+        if tokens.len() != 1 {
+            let loc = if tokens.is_empty() {
+                None
+            } else {
+                tokens[0].loc()
+            };
+
+            return Err(Error::Syntactic(SyntacticError {
+                loc,
+                desc: "expected one token".into(),
+            }));
+        }
+
+        SimpleValue::from_token(&tokens[0])
+    }
+
     pub fn from_token(token: &Token) -> Result<SimpleValue> {
         let token = token.to_owned();
 
@@ -126,5 +146,13 @@ impl SimpleValue {
 impl fmt::Display for SimpleValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
+    }
+}
+
+impl std::str::FromStr for SimpleValue {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        Self::from_str(s)
     }
 }
