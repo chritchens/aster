@@ -340,7 +340,7 @@ mod tests {
         (module x (list T E) (block
             (type Result (Enum T E))
             
-            (sig unwrap (Fun (Result T E) T))
+            (sig unwrap (Fun Result T))
             (val unwrap (fun res 
                 (case res 
                     (match t id)
@@ -365,7 +365,7 @@ mod tests {
         );
         assert_eq!(
             block_entries[1].to_string(),
-            "(sig unwrap (Fun (Result T E) T))".to_string()
+            "(sig unwrap (Fun Result T))".to_string()
         );
         assert_eq!(
             block_entries[2].to_string(),
