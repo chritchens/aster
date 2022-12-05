@@ -358,27 +358,15 @@ mod tests {
         );
 
         s = "
-        (block
-            (import res () Result)
+        (block 
+            (export (list Result unwrap))
 
             (attrs Result asCUnion)
             (type Result (Enum T E))
 
             (attrs unwrap inline)
-            (sig unwrap (Fun (Result T E) T))
-            (val unwrap (fun res (case res (match T id) (match E panic))))
-
-            (type StringError String)
-            (type StringResult (Result String StringResult))
-
-            (sig res String)
-            (val res (unwrap \"res\"))
-
-            (sig x StringError)
-            (val x \"res2\")
-
-            (sig res2 String)
-            (val res2 (unwrap x)))";
+            (sig unwrap (Fun Result T))
+            (val unwrap (fun res (case res (match T id) (match E panic)))))";
 
         res = BlockForm::from_str(s);
 
@@ -386,12 +374,12 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.entries.len(), 14);
+        assert_eq!(form.entries.len(), 6);
         assert_eq!(
             form.entries[0].to_string(),
-            "(import res () Result)".to_string()
+            "(export (list Result unwrap))".to_string()
         );
-        assert!(form.entry_as_import(0).is_some());
+        assert!(form.entry_as_export(0).is_some());
         assert_eq!(
             form.entries[1].to_string(),
             "(attrs Result asCUnion)".to_string()
@@ -410,11 +398,5 @@ mod tests {
         );
         assert!(form.entry_as_definition(5).unwrap().is_function_form());
         assert!(form.entry_as_definition(5).unwrap().is_value());
-        assert_eq!(
-            form.entries[9].to_string(),
-            "(val res (unwrap \"res\"))".to_string()
-        );
-        assert!(form.entry_as_definition(9).unwrap().is_application_form());
-        assert!(form.entry_as_definition(9).unwrap().is_value());
     }
 }

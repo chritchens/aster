@@ -1,19 +1,17 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormTailElement};
-use crate::form::types_form::{TypesForm, TypesFormTailElement};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
+use crate::types::{SimpleType, Type};
 use crate::value::SimpleValue;
 use std::fmt;
-
-pub type TypeFormValue = TypesFormTailElement;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Default)]
 pub struct TypeForm {
     pub tokens: Box<Tokens>,
     pub name: SimpleValue,
-    pub value: TypeFormValue,
+    pub value: Box<Type>,
 }
 
 impl TypeForm {
@@ -30,37 +28,49 @@ impl TypeForm {
     }
 
     pub fn is_empty_type(&self) -> bool {
-        match self.value {
-            TypeFormValue::Empty(_) => true,
+        match self.value.as_ref() {
+            Type::Simple(simple_type) => match simple_type {
+                SimpleType::Empty(_) => true,
+                _ => false,
+            },
             _ => false,
         }
     }
 
     pub fn is_atomic_type(&self) -> bool {
-        match self.value {
-            TypeFormValue::Atomic(_) => true,
+        match self.value.as_ref() {
+            Type::Simple(simple_type) => match simple_type {
+                SimpleType::Atomic(_) => true,
+                _ => false,
+            },
             _ => false,
         }
     }
 
     pub fn is_type_keyword(&self) -> bool {
-        match self.value {
-            TypeFormValue::Keyword(_) => true,
+        match self.value.as_ref() {
+            Type::Simple(simple_type) => match simple_type {
+                SimpleType::Symbol(_) | SimpleType::PathSymbol(_) => false,
+                _ => true,
+            },
             _ => false,
         }
     }
 
     pub fn is_type_symbol(&self) -> bool {
-        match self.value {
-            TypeFormValue::Symbol(_) => true,
+        match self.value.as_ref() {
+            Type::Simple(simple_type) => match simple_type {
+                SimpleType::Symbol(_) | SimpleType::PathSymbol(_) => true,
+                _ => false,
+            },
             _ => false,
         }
     }
 
     pub fn is_types_form(&self) -> bool {
-        match self.value {
-            TypeFormValue::Form(_) => true,
-            _ => false,
+        match self.value.as_ref() {
+            Type::Simple(_) => false,
+            _ => true,
         }
     }
 
@@ -111,40 +121,11 @@ impl TypeForm {
         }
 
         match form.tail[1].clone() {
-            FormTailElement::Simple(value) => match value.clone() {
-                SimpleValue::TypeKeyword(keyword) => match keyword.to_string().as_str() {
-                    "Empty" => {
-                        type_form.value = TypeFormValue::Empty(value);
-                    }
-                    "Atomic" => {
-                        type_form.value = TypeFormValue::Atomic(value);
-                    }
-                    _ => {
-                        type_form.value = TypeFormValue::Keyword(value);
-                    }
-                },
-                SimpleValue::TypeSymbol(_) => {
-                    type_form.value = TypeFormValue::Symbol(value);
-                }
-                SimpleValue::TypePathSymbol(_) => {
-                    type_form.value = TypeFormValue::PathSymbol(value);
-                }
-                x => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: x.loc(),
-                        desc: "unexpected value".into(),
-                    }));
-                }
-            },
+            FormTailElement::Simple(value) => {
+                type_form.value = Box::new(Type::from_simple_value(&value)?);
+            }
             FormTailElement::Form(form) => {
-                if let Ok(form) = TypesForm::from_form(&form) {
-                    type_form.value = TypeFormValue::Form(Box::new(form));
-                } else {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a form of types".into(),
-                    }));
-                }
+                type_form.value = Box::new(Type::from_form(&form)?);
             }
         }
 

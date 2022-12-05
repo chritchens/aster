@@ -435,17 +435,8 @@ mod tests {
 
         s = "
         (let
-            (import res () Result)
-
-            (attrs Result asCUnion)
-            (type Result (Enum T E))
-
-            (attrs unwrap inline)
-            (sig unwrap (Fun (Result T E) T))
-            (val unwrap (fun res (case res (match T id) (match E panic))))
-
             (type StringError String)
-            (type StringResult (Result String StringResult))
+            (import result (list String StringError) (list Result unwrap))
 
             (sig res String)
             (val res (unwrap \"res\"))
@@ -463,36 +454,15 @@ mod tests {
 
         form = res.unwrap();
 
-        assert_eq!(form.entries.len(), 14);
-        assert_eq!(
-            form.entries[0].to_string(),
-            "(import res () Result)".to_string()
-        );
-        assert!(form.entry_as_import(0).is_some());
+        assert_eq!(form.entries.len(), 8);
         assert_eq!(
             form.entries[1].to_string(),
-            "(attrs Result asCUnion)".to_string()
+            "(import result (list String StringError) (list Result unwrap))".to_string()
         );
-        assert!(form.entry_as_attributes(1).is_some());
-        assert!(form.entry_as_attributes(1).unwrap().is_type_attributes());
-        assert_eq!(
-            form.entries[3].to_string(),
-            "(attrs unwrap inline)".to_string()
-        );
-        assert!(form.entry_as_attributes(3).is_some());
-        assert!(form.entry_as_attributes(3).unwrap().is_value_attributes());
-        assert_eq!(
-            form.entries[5].to_string(),
-            "(val unwrap (fun res (case res (match T id) (match E panic))))".to_string()
-        );
-        assert!(form.entry_as_definition(5).unwrap().is_function_form());
-        assert!(form.entry_as_definition(5).unwrap().is_value());
-        assert_eq!(
-            form.entries[9].to_string(),
-            "(val res (unwrap \"res\"))".to_string()
-        );
-        assert!(form.entry_as_definition(9).unwrap().is_application_form());
-        assert!(form.entry_as_definition(9).unwrap().is_value());
+        assert!(form.entry_as_import(1).is_some());
+        assert_eq!(form.entries[2].to_string(), "(sig res String)".to_string());
+        assert!(form.entry_as_signature(2).is_some());
+        assert!(form.entry_as_signature(2).unwrap().is_type_keyword());
         assert_eq!(
             form.value.to_string(),
             "(return (pair res res2))".to_string()
