@@ -3,7 +3,7 @@
             
   (type Result (Enum T E))
   
-  (sig unwrap (Fun (Result T E) T))
+  (sig unwrap (Fun Result T))
   (val unwrap (fun res 
     (case res 
       (match t id)
