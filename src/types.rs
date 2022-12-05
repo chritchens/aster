@@ -1,7 +1,6 @@
 use crate::chunk::StringChunks;
 use crate::error::{Error, SyntacticError};
-use crate::form::Form;
-use crate::form::{TypesForm, TypesFormTailElement};
+use crate::form::{Form, FormTailElement};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::{Token, TokenKind, Tokens};
@@ -10,33 +9,13 @@ use std::fmt;
 use std::iter;
 use std::ops;
 
-fn parse_types_form_tail_element(elem: &TypesFormTailElement) -> Result<Type> {
+fn parse_form_tail_element(elem: &FormTailElement) -> Result<Type> {
     let elem_type = match elem.clone() {
-        TypesFormTailElement::Ignore(value) => {
+        FormTailElement::Simple(value) => {
             let simple_type = SimpleType::from_simple_value(&value)?;
             Type::Simple(simple_type)
         }
-        TypesFormTailElement::Empty(value) => {
-            let simple_type = SimpleType::from_simple_value(&value)?;
-            Type::Simple(simple_type)
-        }
-        TypesFormTailElement::Atomic(value) => {
-            let simple_type = SimpleType::from_simple_value(&value)?;
-            Type::Simple(simple_type)
-        }
-        TypesFormTailElement::Keyword(value) => {
-            let simple_type = SimpleType::from_simple_value(&value)?;
-            Type::Simple(simple_type)
-        }
-        TypesFormTailElement::Symbol(value) => {
-            let simple_type = SimpleType::from_simple_value(&value)?;
-            Type::Simple(simple_type)
-        }
-        TypesFormTailElement::PathSymbol(value) => {
-            let simple_type = SimpleType::from_simple_value(&value)?;
-            Type::Simple(simple_type)
-        }
-        TypesFormTailElement::Form(form) => Type::from_types_form(&form)?,
+        FormTailElement::Form(form) => Type::from_form(form.as_ref())?,
     };
 
     Ok(elem_type)
@@ -267,12 +246,6 @@ impl EnumType {
     }
 
     pub fn from_form(form: &Form) -> Result<EnumType> {
-        let form = TypesForm::from_form(form)?;
-
-        EnumType::from_types_form(&form)
-    }
-
-    pub fn from_types_form(form: &TypesForm) -> Result<EnumType> {
         if form.head.to_string() != "Enum" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.head.loc(),
@@ -284,7 +257,7 @@ impl EnumType {
         enum_type.tokens = form.tokens.clone();
 
         for elem in form.tail.iter() {
-            let elem_type = parse_types_form_tail_element(elem)?;
+            let elem_type = parse_form_tail_element(elem)?;
             enum_type.elements.push(elem_type);
         }
 
@@ -369,12 +342,6 @@ impl PairType {
     }
 
     pub fn from_form(form: &Form) -> Result<PairType> {
-        let form = TypesForm::from_form(form)?;
-
-        PairType::from_types_form(&form)
-    }
-
-    pub fn from_types_form(form: &TypesForm) -> Result<PairType> {
         if form.head.to_string() != "Pair" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.head.loc(),
@@ -395,8 +362,8 @@ impl PairType {
         let first = form.tail[0].clone();
         let second = form.tail[1].clone();
 
-        pair_type.first = Box::new(parse_types_form_tail_element(&first)?);
-        pair_type.second = Box::new(parse_types_form_tail_element(&second)?);
+        pair_type.first = Box::new(parse_form_tail_element(&first)?);
+        pair_type.second = Box::new(parse_form_tail_element(&second)?);
 
         Ok(pair_type)
     }
@@ -452,12 +419,6 @@ impl ListType {
     }
 
     pub fn from_form(form: &Form) -> Result<ListType> {
-        let form = TypesForm::from_form(form)?;
-
-        ListType::from_types_form(&form)
-    }
-
-    pub fn from_types_form(form: &TypesForm) -> Result<ListType> {
         if form.head.to_string() != "List" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.head.loc(),
@@ -469,7 +430,7 @@ impl ListType {
         list_type.tokens = form.tokens.clone();
 
         for elem in form.tail.iter() {
-            let elem_type = parse_types_form_tail_element(elem)?;
+            let elem_type = parse_form_tail_element(elem)?;
             list_type.elements.push(elem_type);
         }
 
@@ -553,12 +514,6 @@ impl ArrType {
     }
 
     pub fn from_form(form: &Form) -> Result<ArrType> {
-        let form = TypesForm::from_form(form)?;
-
-        ArrType::from_types_form(&form)
-    }
-
-    pub fn from_types_form(form: &TypesForm) -> Result<ArrType> {
         if form.head.to_string() != "Arr" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.head.loc(),
@@ -570,7 +525,7 @@ impl ArrType {
         arr_type.tokens = form.tokens.clone();
 
         for elem in form.tail.iter() {
-            let elem_type = parse_types_form_tail_element(elem)?;
+            let elem_type = parse_form_tail_element(elem)?;
             arr_type.elements.push(elem_type);
         }
 
@@ -654,12 +609,6 @@ impl VecType {
     }
 
     pub fn from_form(form: &Form) -> Result<VecType> {
-        let form = TypesForm::from_form(form)?;
-
-        VecType::from_types_form(&form)
-    }
-
-    pub fn from_types_form(form: &TypesForm) -> Result<VecType> {
         if form.head.to_string() != "Vec" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.head.loc(),
@@ -671,7 +620,7 @@ impl VecType {
         vec_type.tokens = form.tokens.clone();
 
         for elem in form.tail.iter() {
-            let elem_type = parse_types_form_tail_element(elem)?;
+            let elem_type = parse_form_tail_element(elem)?;
             vec_type.elements.push(elem_type);
         }
 
@@ -755,12 +704,6 @@ impl MapType {
     }
 
     pub fn from_form(form: &Form) -> Result<MapType> {
-        let form = TypesForm::from_form(form)?;
-
-        MapType::from_types_form(&form)
-    }
-
-    pub fn from_types_form(form: &TypesForm) -> Result<MapType> {
         if form.head.to_string() != "Map" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.head.loc(),
@@ -865,12 +808,6 @@ impl FunType {
     }
 
     pub fn from_form(form: &Form) -> Result<FunType> {
-        let form = TypesForm::from_form(form)?;
-
-        FunType::from_types_form(&form)
-    }
-
-    pub fn from_types_form(form: &TypesForm) -> Result<FunType> {
         if form.head.to_string() != "Fun" {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.head.loc(),
@@ -891,11 +828,11 @@ impl FunType {
         let len = form.tail.len();
 
         for param in form.tail[0..(len - 1)].iter() {
-            let param_type = parse_types_form_tail_element(param)?;
+            let param_type = parse_form_tail_element(param)?;
             fun_type.parameters.push(param_type);
         }
 
-        let body_type = parse_types_form_tail_element(&form.tail[len - 1])?;
+        let body_type = parse_form_tail_element(&form.tail[len - 1])?;
         fun_type.body = Box::new(body_type);
 
         Ok(fun_type)
@@ -981,32 +918,26 @@ impl Type {
         Type::from_form(&form)
     }
 
-    pub fn from_form(form: &Form) -> Result<Type> {
-        let form = TypesForm::from_form(form)?;
-
-        Type::from_types_form(&form)
-    }
-
     pub fn from_simple_value(value: &SimpleValue) -> Result<Type> {
         let simple_type = SimpleType::from_simple_value(value)?;
 
         Ok(Type::Simple(simple_type))
     }
 
-    pub fn from_types_form(form: &TypesForm) -> Result<Type> {
-        let t = if let Ok(enum_type) = EnumType::from_types_form(form) {
+    pub fn from_form(form: &Form) -> Result<Type> {
+        let t = if let Ok(enum_type) = EnumType::from_form(form) {
             Type::Enum(Box::new(enum_type))
-        } else if let Ok(pair_type) = PairType::from_types_form(form) {
+        } else if let Ok(pair_type) = PairType::from_form(form) {
             Type::Pair(Box::new(pair_type))
-        } else if let Ok(list_type) = ListType::from_types_form(form) {
+        } else if let Ok(list_type) = ListType::from_form(form) {
             Type::List(Box::new(list_type))
-        } else if let Ok(arr_type) = ArrType::from_types_form(form) {
+        } else if let Ok(arr_type) = ArrType::from_form(form) {
             Type::Arr(Box::new(arr_type))
-        } else if let Ok(vec_type) = VecType::from_types_form(form) {
+        } else if let Ok(vec_type) = VecType::from_form(form) {
             Type::Vec(Box::new(vec_type))
-        } else if let Ok(map_type) = MapType::from_types_form(form) {
+        } else if let Ok(map_type) = MapType::from_form(form) {
             Type::Map(Box::new(map_type))
-        } else if let Ok(fun_type) = FunType::from_types_form(form) {
+        } else if let Ok(fun_type) = FunType::from_form(form) {
             Type::Fun(Box::new(fun_type))
         } else {
             return Err(Error::Syntactic(SyntacticError {

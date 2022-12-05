@@ -191,7 +191,7 @@ impl ImportForm {
                             self.type_variables.push(simple_type);
                         }
                         ListFormValue::TypesForm(form) => {
-                            let form_type = Type::from_types_form(form)?;
+                            let form_type = Type::from_form(&form.as_form())?;
                             self.type_variables.push(form_type);
                         }
                         _ => {
