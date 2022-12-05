@@ -132,6 +132,43 @@ impl SimpleType {
         }
     }
 
+    pub fn as_simple_value(&self) -> SimpleValue {
+        match self {
+            SimpleType::Builtin(value) => value.clone(),
+            SimpleType::Ignore(value) => value.clone(),
+            SimpleType::Empty(value) => value.clone(),
+            SimpleType::Atomic(value) => value.clone(),
+            SimpleType::UInt(value) => value.clone(),
+            SimpleType::Int(value) => value.clone(),
+            SimpleType::Float(value) => value.clone(),
+            SimpleType::Size(value) => value.clone(),
+            SimpleType::Pointer(value) => value.clone(),
+            SimpleType::Ref(value) => value.clone(),
+            SimpleType::Char(value) => value.clone(),
+            SimpleType::String(value) => value.clone(),
+            SimpleType::Mem(value) => value.clone(),
+            SimpleType::Path(value) => value.clone(),
+            SimpleType::IO(value) => value.clone(),
+            SimpleType::Ctx(value) => value.clone(),
+            SimpleType::Type(value) => value.clone(),
+            SimpleType::Symbol(value) => value.clone(),
+            SimpleType::PathSymbol(value) => value.clone(),
+        }
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let simple_value = self.as_simple_value();
+        let type_var = Type::from_simple_value(&simple_value).unwrap();
+
+        vec![type_var]
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let simple_value = self.as_simple_value();
+
+        vec![simple_value]
+    }
+
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<SimpleType> {
         let value = SimpleValue::from_str(s)?;
@@ -238,6 +275,23 @@ impl EnumType {
         self.tokens[0].loc()
     }
 
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for elem in self.elements.iter() {
+            type_vars.extend(elem.all_type_variables());
+        }
+
+        type_vars
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        self.all_type_variables()
+            .iter()
+            .map(|tv| tv.as_simple_value().unwrap())
+            .collect::<Vec<SimpleValue>>()
+    }
+
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<EnumType> {
         let form = Form::from_str(s)?;
@@ -334,6 +388,22 @@ impl PairType {
         self.tokens[0].loc()
     }
 
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        type_vars.extend(self.first.all_type_variables());
+        type_vars.extend(self.second.all_type_variables());
+
+        type_vars
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        self.all_type_variables()
+            .iter()
+            .map(|tv| tv.as_simple_value().unwrap())
+            .collect::<Vec<SimpleValue>>()
+    }
+
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<PairType> {
         let form = Form::from_str(s)?;
@@ -409,6 +479,23 @@ impl ListType {
 
     pub fn loc(&self) -> Option<Loc> {
         self.tokens[0].loc()
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for elem in self.elements.iter() {
+            type_vars.extend(elem.all_type_variables());
+        }
+
+        type_vars
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        self.all_type_variables()
+            .iter()
+            .map(|tv| tv.as_simple_value().unwrap())
+            .collect::<Vec<SimpleValue>>()
     }
 
     #[allow(clippy::should_implement_trait)]
@@ -506,6 +593,23 @@ impl ArrType {
         self.tokens[0].loc()
     }
 
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for elem in self.elements.iter() {
+            type_vars.extend(elem.all_type_variables());
+        }
+
+        type_vars
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        self.all_type_variables()
+            .iter()
+            .map(|tv| tv.as_simple_value().unwrap())
+            .collect::<Vec<SimpleValue>>()
+    }
+
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<ArrType> {
         let form = Form::from_str(s)?;
@@ -599,6 +703,23 @@ impl VecType {
 
     pub fn loc(&self) -> Option<Loc> {
         self.tokens[0].loc()
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for elem in self.elements.iter() {
+            type_vars.extend(elem.all_type_variables());
+        }
+
+        type_vars
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        self.all_type_variables()
+            .iter()
+            .map(|tv| tv.as_simple_value().unwrap())
+            .collect::<Vec<SimpleValue>>()
     }
 
     #[allow(clippy::should_implement_trait)]
@@ -696,6 +817,23 @@ impl MapType {
         self.tokens[0].loc()
     }
 
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for entry in self.entries.iter() {
+            type_vars.extend(entry.all_type_variables());
+        }
+
+        type_vars
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        self.all_type_variables()
+            .iter()
+            .map(|tv| tv.as_simple_value().unwrap())
+            .collect::<Vec<SimpleValue>>()
+    }
+
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<MapType> {
         let form = Form::from_str(s)?;
@@ -790,6 +928,25 @@ impl FunType {
 
     pub fn loc(&self) -> Option<Loc> {
         self.tokens[0].loc()
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for param in self.parameters.iter() {
+            type_vars.extend(param.all_type_variables());
+        }
+
+        type_vars.extend(self.body.all_type_variables());
+
+        type_vars
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        self.all_type_variables()
+            .iter()
+            .map(|tv| tv.as_simple_value().unwrap())
+            .collect::<Vec<SimpleValue>>()
     }
 
     pub fn parameters_to_string(&self) -> String {
@@ -911,12 +1068,35 @@ impl Type {
         }
     }
 
+    pub fn as_simple_value(&self) -> Option<SimpleValue> {
+        match self {
+            Type::Simple(simple_type) => Some(simple_type.as_simple_value()),
+            _ => None,
+        }
+    }
+
     pub fn all_parameters(&self) -> Vec<SimpleValue> {
         vec![]
     }
 
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        match self {
+            Type::Simple(simple_type) => simple_type.all_type_variables(),
+            Type::Enum(enum_type) => enum_type.all_type_variables(),
+            Type::Pair(pair_type) => pair_type.all_type_variables(),
+            Type::List(list_type) => list_type.all_type_variables(),
+            Type::Arr(arr_type) => arr_type.all_type_variables(),
+            Type::Vec(vec_type) => vec_type.all_type_variables(),
+            Type::Map(map_type) => map_type.all_type_variables(),
+            Type::Fun(fun_type) => fun_type.all_type_variables(),
+        }
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
-        vec![]
+        self.all_type_variables()
+            .iter()
+            .map(|tv| tv.as_simple_value().unwrap())
+            .collect::<Vec<SimpleValue>>()
     }
 
     #[allow(clippy::should_implement_trait)]
