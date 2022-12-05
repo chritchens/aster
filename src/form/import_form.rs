@@ -1,74 +1,12 @@
 use crate::error::{Error, SyntacticError};
 use crate::form::form::{Form, FormTailElement};
 use crate::form::list_form::{ListForm, ListFormValue};
-use crate::form::types_form::TypesForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
+use crate::types::Type;
 use crate::value::SimpleValue;
 use std::fmt;
-
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
-pub enum ImportFormTypeVariable {
-    Ignore(SimpleValue),
-    Empty(SimpleValue),
-    Atomic(SimpleValue),
-    Keyword(SimpleValue),
-    Symbol(SimpleValue),
-    PathSymbol(SimpleValue),
-    Form(Box<TypesForm>),
-}
-
-impl Default for ImportFormTypeVariable {
-    fn default() -> ImportFormTypeVariable {
-        ImportFormTypeVariable::Empty(SimpleValue::new())
-    }
-}
-
-impl ImportFormTypeVariable {
-    pub fn file(&self) -> String {
-        match self {
-            ImportFormTypeVariable::Ignore(ignore) => ignore.file(),
-            ImportFormTypeVariable::Empty(empty) => empty.file(),
-            ImportFormTypeVariable::Atomic(atomic) => atomic.file(),
-            ImportFormTypeVariable::Keyword(keyword) => keyword.file(),
-            ImportFormTypeVariable::Symbol(symbol) => symbol.file(),
-            ImportFormTypeVariable::PathSymbol(symbol) => symbol.file(),
-            ImportFormTypeVariable::Form(form) => form.file(),
-        }
-    }
-
-    pub fn loc(&self) -> Option<Loc> {
-        match self {
-            ImportFormTypeVariable::Ignore(ignore) => ignore.loc(),
-            ImportFormTypeVariable::Empty(empty) => empty.loc(),
-            ImportFormTypeVariable::Atomic(atomic) => atomic.loc(),
-            ImportFormTypeVariable::Keyword(keyword) => keyword.loc(),
-            ImportFormTypeVariable::Symbol(symbol) => symbol.loc(),
-            ImportFormTypeVariable::PathSymbol(symbol) => symbol.loc(),
-            ImportFormTypeVariable::Form(form) => form.loc(),
-        }
-    }
-
-    #[allow(clippy::inherent_to_string_shadow_display)]
-    pub fn to_string(&self) -> String {
-        match self {
-            ImportFormTypeVariable::Ignore(_) => "_".into(),
-            ImportFormTypeVariable::Empty(_) => "()".into(),
-            ImportFormTypeVariable::Atomic(_) => "Atomic".into(),
-            ImportFormTypeVariable::Keyword(keyword) => keyword.to_string(),
-            ImportFormTypeVariable::Symbol(symbol) => symbol.to_string(),
-            ImportFormTypeVariable::PathSymbol(symbol) => symbol.to_string(),
-            ImportFormTypeVariable::Form(form) => form.to_string(),
-        }
-    }
-}
-
-impl fmt::Display for ImportFormTypeVariable {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
-}
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
 pub enum ImportFormDef {
@@ -125,7 +63,7 @@ pub struct ImportForm {
     pub tokens: Box<Tokens>,
     pub module: SimpleValue,
     pub qualifier: Option<SimpleValue>,
-    pub type_variables: Vec<ImportFormTypeVariable>,
+    pub type_variables: Vec<Type>,
     pub defs: Vec<ImportFormDef>,
 }
 
@@ -144,8 +82,9 @@ impl ImportForm {
 
     pub fn type_variables_to_string(&self) -> String {
         match self.type_variables.len() {
+            0 => "()".into(),
             1 => self.type_variables[0].to_string(),
-            x if x > 1 => format!(
+            _ => format!(
                 "(list {})",
                 self.type_variables
                     .iter()
@@ -153,7 +92,6 @@ impl ImportForm {
                     .collect::<Vec<String>>()
                     .join(" ")
             ),
-            _ => "".to_string(),
         }
     }
 
@@ -225,66 +163,44 @@ impl ImportForm {
 
     fn parse_type_variables(&mut self, form: &Form, idx: usize) -> Result<()> {
         match form.tail[idx].clone() {
-            FormTailElement::Simple(value) => match value {
-                SimpleValue::Ignore(_) => {
-                    self.type_variables
-                        .push(ImportFormTypeVariable::Ignore(value));
+            FormTailElement::Simple(value) => {
+                if value.to_string() != "()" {
+                    let simple_type = Type::from_simple_value(&value)?;
+                    self.type_variables.push(simple_type);
                 }
-                SimpleValue::Empty(_) => {
-                    self.type_variables
-                        .push(ImportFormTypeVariable::Empty(value));
-                }
-                SimpleValue::TypeKeyword(_) => {
-                    self.type_variables
-                        .push(ImportFormTypeVariable::Keyword(value));
-                }
-                SimpleValue::TypeSymbol(_) => {
-                    self.type_variables
-                        .push(ImportFormTypeVariable::Symbol(value));
-                }
-                SimpleValue::TypePathSymbol(_) => {
-                    self.type_variables
-                        .push(ImportFormTypeVariable::PathSymbol(value));
-                }
-                x => {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: x.loc(),
-                        desc: "unexpected type variable".into(),
-                    }));
-                }
-            },
+            }
             FormTailElement::Form(form) => {
-                if let Ok(list) = ListForm::from_form(&form) {
-                    for value in list.values.iter() {
-                        match value.clone() {
-                            ListFormValue::TypeKeyword(keyword) => {
-                                self.type_variables
-                                    .push(ImportFormTypeVariable::Keyword(keyword));
-                            }
-                            ListFormValue::TypeSymbol(symbol) => {
-                                self.type_variables
-                                    .push(ImportFormTypeVariable::Symbol(symbol));
-                            }
-                            ListFormValue::TypePathSymbol(symbol) => {
-                                self.type_variables
-                                    .push(ImportFormTypeVariable::PathSymbol(symbol));
-                            }
-                            ListFormValue::TypesForm(form) => {
-                                self.type_variables.push(ImportFormTypeVariable::Form(form));
-                            }
-                            x => {
-                                return Err(Error::Syntactic(SyntacticError {
-                                    loc: x.loc(),
-                                    desc: "expected a type".into(),
-                                }));
-                            }
+                let list_form = ListForm::from_form(&form)?;
+
+                for value in list_form.values.iter() {
+                    match value {
+                        ListFormValue::Ignore(value) => {
+                            let simple_type = Type::from_simple_value(&value)?;
+                            self.type_variables.push(simple_type);
+                        }
+                        ListFormValue::TypeKeyword(value) => {
+                            let simple_type = Type::from_simple_value(&value)?;
+                            self.type_variables.push(simple_type);
+                        }
+                        ListFormValue::TypeSymbol(value) => {
+                            let simple_type = Type::from_simple_value(&value)?;
+                            self.type_variables.push(simple_type);
+                        }
+                        ListFormValue::TypePathSymbol(value) => {
+                            let simple_type = Type::from_simple_value(&value)?;
+                            self.type_variables.push(simple_type);
+                        }
+                        ListFormValue::TypesForm(form) => {
+                            let form_type = Type::from_types_form(form)?;
+                            self.type_variables.push(form_type);
+                        }
+                        _ => {
+                            return Err(Error::Syntactic(SyntacticError {
+                                loc: value.loc(),
+                                desc: "unexpected value".into(),
+                            }));
                         }
                     }
-                } else {
-                    return Err(Error::Syntactic(SyntacticError {
-                        loc: form.loc(),
-                        desc: "expected a list of types".into(),
-                    }));
                 }
             }
         }

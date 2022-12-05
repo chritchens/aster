@@ -204,7 +204,7 @@ impl SimpleType {
     pub fn to_string(&self) -> String {
         match self {
             SimpleType::Builtin(_) => "Builtin".into(),
-            SimpleType::Ignore(_) => "Ignore".into(),
+            SimpleType::Ignore(_) => "_".into(),
             SimpleType::Empty(_) => "Empty".into(),
             SimpleType::Atomic(_) => "Atomic".into(),
             SimpleType::UInt(_) => "UInt".into(),
