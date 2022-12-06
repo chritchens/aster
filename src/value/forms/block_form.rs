@@ -1,15 +1,15 @@
 use crate::error::{Error, SyntacticError};
-use crate::form::app_form::AppFormValue;
-use crate::form::attrs_form::AttrsForm;
-use crate::form::export_form::ExportForm;
-use crate::form::form::{Form, FormTailElement};
-use crate::form::import_form::ImportForm;
-use crate::form::sig_form::SigForm;
-use crate::form::type_form::TypeForm;
-use crate::form::val_form::ValForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
+use crate::value::forms::app_form::AppFormValue;
+use crate::value::forms::attrs_form::AttrsForm;
+use crate::value::forms::export_form::ExportForm;
+use crate::value::forms::form::{Form, FormTailElement};
+use crate::value::forms::import_form::ImportForm;
+use crate::value::forms::sig_form::SigForm;
+use crate::value::forms::type_form::TypeForm;
+use crate::value::forms::val_form::ValForm;
 use crate::value::SimpleValue;
 use std::fmt;
 

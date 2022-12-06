@@ -1,9 +1,9 @@
 use crate::chunk::StringChunks;
 use crate::error::{Error, SyntacticError};
-use crate::form::{Form, FormTailElement};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::{Token, TokenKind, Tokens};
+use crate::value::forms::{Form, FormTailElement};
 use crate::value::SimpleValue;
 use std::fmt;
 use std::iter;

@@ -1,8 +1,8 @@
 use crate::error::Error;
-use crate::form::Form;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::{Token, Tokens};
+use crate::value::forms::Form;
 use crate::value::{FormValue, SimpleValue};
 use std::fmt;
 

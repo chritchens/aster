@@ -4,7 +4,6 @@ pub mod attrs_form;
 pub mod block_form;
 pub mod case_form;
 pub mod export_form;
-#[allow(clippy::module_inception)]
 pub mod form;
 pub mod fun_form;
 pub mod import_form;

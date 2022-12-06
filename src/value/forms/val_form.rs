@@ -1,14 +1,14 @@
 use crate::error::{Error, SemanticError, SyntacticError};
-use crate::form::app_form::AppForm;
-use crate::form::case_form::CaseForm;
-use crate::form::form::{Form, FormTailElement};
-use crate::form::fun_form::FunForm;
-use crate::form::let_form::LetForm;
-use crate::form::pair_form::PairForm;
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::syntax::is_value_symbol;
 use crate::token::Tokens;
+use crate::value::forms::app_form::AppForm;
+use crate::value::forms::case_form::CaseForm;
+use crate::value::forms::form::{Form, FormTailElement};
+use crate::value::forms::fun_form::FunForm;
+use crate::value::forms::let_form::LetForm;
+use crate::value::forms::pair_form::PairForm;
 use crate::value::SimpleValue;
 use std::fmt;
 
