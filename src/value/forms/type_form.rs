@@ -78,8 +78,12 @@ impl TypeForm {
         vec![]
     }
 
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        self.value.all_type_variables()
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
-        vec![]
+        self.value.all_variables()
     }
 
     pub fn from_form(form: &Form) -> Result<TypeForm> {
