@@ -6,6 +6,7 @@ repository = "https://github.com/chritchens/aster"
 readme = "README.md"
 keywords = ["development"]
 license = "MIT OR Apache-2.0"
+rust-version = "1.65"
 edition = "2018"
 
 [dependencies]
