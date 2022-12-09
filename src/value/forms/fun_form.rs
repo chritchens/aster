@@ -602,9 +602,9 @@ impl FunForm {
         let mut fun = FunForm::new();
         fun.tokens = form.tokens.clone();
 
-        fun.parse_params(&form)?;
+        fun.parse_params(form)?;
 
-        fun.parse_body(&form)?;
+        fun.parse_body(form)?;
 
         Ok(fun)
     }

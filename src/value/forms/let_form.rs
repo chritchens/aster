@@ -291,21 +291,21 @@ impl LetForm {
             for param in form.tail[0..(len - 1)].iter().clone() {
                 match param {
                     FormTailElement::Form(form) => {
-                        if let Ok(form) = ImportForm::from_form(&form) {
+                        if let Ok(form) = ImportForm::from_form(form) {
                             let_form
                                 .entries
                                 .push(LetFormEntry::ImportForm(Box::new(form)));
-                        } else if let Ok(form) = AttrsForm::from_form(&form) {
+                        } else if let Ok(form) = AttrsForm::from_form(form) {
                             let_form
                                 .entries
                                 .push(LetFormEntry::AttrsForm(Box::new(form)));
-                        } else if let Ok(form) = TypeForm::from_form(&form) {
+                        } else if let Ok(form) = TypeForm::from_form(form) {
                             let_form
                                 .entries
                                 .push(LetFormEntry::TypeForm(Box::new(form)));
-                        } else if let Ok(form) = SigForm::from_form(&form) {
+                        } else if let Ok(form) = SigForm::from_form(form) {
                             let_form.entries.push(LetFormEntry::SigForm(Box::new(form)));
-                        } else if let Ok(form) = ValForm::from_form(&form) {
+                        } else if let Ok(form) = ValForm::from_form(form) {
                             let_form.entries.push(LetFormEntry::ValForm(Box::new(form)));
                         } else {
                             return Err(Error::Syntactic(SyntacticError {

@@ -258,27 +258,27 @@ impl BlockForm {
         for param in form.tail.iter().clone() {
             match param {
                 FormTailElement::Form(form) => {
-                    if let Ok(form) = ImportForm::from_form(&form) {
+                    if let Ok(form) = ImportForm::from_form(form) {
                         block_form
                             .entries
                             .push(BlockFormEntry::ImportForm(Box::new(form)));
-                    } else if let Ok(form) = ExportForm::from_form(&form) {
+                    } else if let Ok(form) = ExportForm::from_form(form) {
                         block_form
                             .entries
                             .push(BlockFormEntry::ExportForm(Box::new(form)));
-                    } else if let Ok(form) = AttrsForm::from_form(&form) {
+                    } else if let Ok(form) = AttrsForm::from_form(form) {
                         block_form
                             .entries
                             .push(BlockFormEntry::AttrsForm(Box::new(form)));
-                    } else if let Ok(form) = TypeForm::from_form(&form) {
+                    } else if let Ok(form) = TypeForm::from_form(form) {
                         block_form
                             .entries
                             .push(BlockFormEntry::TypeForm(Box::new(form)));
-                    } else if let Ok(form) = SigForm::from_form(&form) {
+                    } else if let Ok(form) = SigForm::from_form(form) {
                         block_form
                             .entries
                             .push(BlockFormEntry::SigForm(Box::new(form)));
-                    } else if let Ok(form) = ValForm::from_form(&form) {
+                    } else if let Ok(form) = ValForm::from_form(form) {
                         block_form
                             .entries
                             .push(BlockFormEntry::ValForm(Box::new(form)));

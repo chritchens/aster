@@ -86,10 +86,7 @@ impl ModuleForm {
     }
 
     pub fn block_is_empty(&self) -> bool {
-        match self.block.clone() {
-            ModuleFormBlock::Empty(_) => true,
-            _ => false,
-        }
+        matches!(self.block, ModuleFormBlock::Empty(_))
     }
 
     pub fn type_parameters_to_string(&self) -> String {
@@ -181,7 +178,7 @@ impl ModuleForm {
 
         let len = form.tail.len();
 
-        if len < 2 || len > 3 {
+        if !(2..=3).contains(&len) {
             return Err(Error::Syntactic(SyntacticError {
                 loc: form.loc(),
                 desc: "expected a name, optional type parameters and a list of forms".into(),

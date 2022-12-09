@@ -287,7 +287,7 @@ impl AppForm {
             }
         }
 
-        app.parse_variables(&form)?;
+        app.parse_variables(form)?;
 
         Ok(app)
     }

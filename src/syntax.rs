@@ -435,9 +435,7 @@ pub fn is_symbol(s: &str) -> bool {
 
         s.chars().all(is_symbol_punctuation)
     } else if is_path {
-        if s.split(SYMBOL_PATH_SEPARATOR)
-            .any(|segment| is_keyword(segment))
-        {
+        if s.split(SYMBOL_PATH_SEPARATOR).any(is_keyword) {
             return false;
         }
 
@@ -496,13 +494,13 @@ pub fn symbol_with_qualifier(s: &str, qualifier: &str) -> String {
 }
 
 pub fn is_type_path_symbol(s: &str) -> bool {
-    let unqualified = symbol_name(&s);
+    let unqualified = symbol_name(s);
 
     is_type_symbol(&unqualified)
 }
 
 pub fn is_value_path_symbol(s: &str) -> bool {
-    let unqualified = symbol_name(&s);
+    let unqualified = symbol_name(s);
 
     is_value_symbol(&unqualified)
 }

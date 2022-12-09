@@ -440,11 +440,7 @@ impl PairType {
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        format!(
-            "(Pair {} {})",
-            self.first.to_string(),
-            self.second.to_string()
-        )
+        format!("(Pair {} {})", self.first, self.second)
     }
 }
 
@@ -997,11 +993,7 @@ impl FunType {
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        format!(
-            "(Fun {} {})",
-            self.parameters_to_string(),
-            self.body.to_string()
-        )
+        format!("(Fun {} {})", self.parameters_to_string(), self.body)
     }
 }
 

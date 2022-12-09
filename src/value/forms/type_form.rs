@@ -28,50 +28,35 @@ impl TypeForm {
     }
 
     pub fn is_empty_type(&self) -> bool {
-        match self.value.as_ref() {
-            Type::Simple(simple_type) => match simple_type {
-                SimpleType::Empty(_) => true,
-                _ => false,
-            },
-            _ => false,
-        }
+        matches!(self.value.as_ref(), Type::Simple(SimpleType::Empty(_)))
     }
 
     pub fn is_atomic_type(&self) -> bool {
-        match self.value.as_ref() {
-            Type::Simple(simple_type) => match simple_type {
-                SimpleType::Atomic(_) => true,
-                _ => false,
-            },
-            _ => false,
-        }
+        matches!(self.value.as_ref(), Type::Simple(SimpleType::Atomic(_)))
     }
 
     pub fn is_type_keyword(&self) -> bool {
         match self.value.as_ref() {
-            Type::Simple(simple_type) => match simple_type {
-                SimpleType::Symbol(_) | SimpleType::PathSymbol(_) => false,
-                _ => true,
-            },
+            Type::Simple(simple_type) => !matches!(
+                simple_type,
+                SimpleType::Symbol(_) | SimpleType::PathSymbol(_)
+            ),
             _ => false,
         }
     }
 
     pub fn is_type_symbol(&self) -> bool {
         match self.value.as_ref() {
-            Type::Simple(simple_type) => match simple_type {
-                SimpleType::Symbol(_) | SimpleType::PathSymbol(_) => true,
-                _ => false,
-            },
+            Type::Simple(simple_type) => matches!(
+                simple_type,
+                SimpleType::Symbol(_) | SimpleType::PathSymbol(_)
+            ),
             _ => false,
         }
     }
 
     pub fn is_types_form(&self) -> bool {
-        match self.value.as_ref() {
-            Type::Simple(_) => false,
-            _ => true,
-        }
+        !matches!(self.value.as_ref(), Type::Simple(_))
     }
 
     pub fn all_parameters(&self) -> Vec<SimpleValue> {
@@ -151,7 +136,7 @@ impl TypeForm {
 
     #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
-        format!("(type {} {})", self.name, self.value.to_string(),)
+        format!("(type {} {})", self.name, self.value)
     }
 }
 

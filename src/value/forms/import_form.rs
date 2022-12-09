@@ -175,19 +175,19 @@ impl ImportForm {
                 for value in list_form.values.iter() {
                     match value {
                         ListFormValue::Ignore(value) => {
-                            let simple_type = Type::from_simple_value(&value)?;
+                            let simple_type = Type::from_simple_value(value)?;
                             self.type_variables.push(simple_type);
                         }
                         ListFormValue::TypeKeyword(value) => {
-                            let simple_type = Type::from_simple_value(&value)?;
+                            let simple_type = Type::from_simple_value(value)?;
                             self.type_variables.push(simple_type);
                         }
                         ListFormValue::TypeSymbol(value) => {
-                            let simple_type = Type::from_simple_value(&value)?;
+                            let simple_type = Type::from_simple_value(value)?;
                             self.type_variables.push(simple_type);
                         }
                         ListFormValue::TypePathSymbol(value) => {
-                            let simple_type = Type::from_simple_value(&value)?;
+                            let simple_type = Type::from_simple_value(value)?;
                             self.type_variables.push(simple_type);
                         }
                         ListFormValue::Type(form) => {
@@ -309,16 +309,16 @@ impl ImportForm {
         if len > 1 {
             match len {
                 2 => {
-                    import.parse_type_variables(&form, 1)?;
+                    import.parse_type_variables(form, 1)?;
                 }
                 3 => {
-                    import.parse_type_variables(&form, 1)?;
-                    import.parse_defs(&form, 2)?;
+                    import.parse_type_variables(form, 1)?;
+                    import.parse_defs(form, 2)?;
                 }
                 4 => {
-                    import.parse_type_variables(&form, 1)?;
-                    import.parse_defs(&form, 2)?;
-                    import.parse_qualifier(&form, 3)?;
+                    import.parse_type_variables(form, 1)?;
+                    import.parse_defs(form, 2)?;
+                    import.parse_qualifier(form, 3)?;
                 }
                 _ => unreachable!(),
             }

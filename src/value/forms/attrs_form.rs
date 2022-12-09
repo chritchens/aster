@@ -94,17 +94,11 @@ impl AttrsForm {
     }
 
     pub fn is_type_attributes(&self) -> bool {
-        match self.name {
-            SimpleValue::TypeSymbol(_) => true,
-            _ => false,
-        }
+        matches!(self.name, SimpleValue::TypeSymbol(_))
     }
 
     pub fn is_value_attributes(&self) -> bool {
-        match self.name {
-            SimpleValue::ValueSymbol(_) => true,
-            _ => false,
-        }
+        matches!(self.name, SimpleValue::ValueSymbol(_))
     }
 
     pub fn values_to_string(&self) -> String {

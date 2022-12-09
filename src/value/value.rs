@@ -38,17 +38,11 @@ impl Value {
     }
 
     pub fn is_simple(&self) -> bool {
-        match self {
-            Value::Simple(_) => true,
-            _ => false,
-        }
+        matches!(self, Value::Simple(_))
     }
 
     pub fn is_form(&self) -> bool {
-        match self {
-            Value::Form(_) => true,
-            _ => false,
-        }
+        matches!(self, Value::Form(_))
     }
 
     #[allow(clippy::inherent_to_string_shadow_display)]

@@ -103,66 +103,39 @@ impl ValForm {
     }
 
     pub fn is_empty_literal(&self) -> bool {
-        match self.value {
-            ValFormValue::Empty(_) => true,
-            _ => false,
-        }
+        matches!(self.value, ValFormValue::Empty(_))
     }
 
     pub fn is_panic(&self) -> bool {
-        match self.value {
-            ValFormValue::Panic(_) => true,
-            _ => false,
-        }
+        matches!(self.value, ValFormValue::Panic(_))
     }
 
     pub fn is_atomic(&self) -> bool {
-        match self.value {
-            ValFormValue::Atomic(_) => true,
-            _ => false,
-        }
+        matches!(self.value, ValFormValue::Atomic(_))
     }
 
     pub fn is_value_symbol(&self) -> bool {
-        match self.value {
-            ValFormValue::ValueSymbol(_) => true,
-            _ => false,
-        }
+        matches!(self.value, ValFormValue::ValueSymbol(_))
     }
 
     pub fn is_pair_form(&self) -> bool {
-        match self.value {
-            ValFormValue::PairForm(_) => true,
-            _ => false,
-        }
+        matches!(self.value, ValFormValue::PairForm(_))
     }
 
     pub fn is_function_form(&self) -> bool {
-        match self.value {
-            ValFormValue::FunForm(_) => true,
-            _ => false,
-        }
+        matches!(self.value, ValFormValue::FunForm(_))
     }
 
     pub fn is_application_form(&self) -> bool {
-        match self.value {
-            ValFormValue::AppForm(_) => true,
-            _ => false,
-        }
+        matches!(self.value, ValFormValue::AppForm(_))
     }
 
     pub fn is_let_form(&self) -> bool {
-        match self.value {
-            ValFormValue::LetForm(_) => true,
-            _ => false,
-        }
+        matches!(self.value, ValFormValue::LetForm(_))
     }
 
     pub fn is_case_form(&self) -> bool {
-        match self.value {
-            ValFormValue::CaseForm(_) => true,
-            _ => false,
-        }
+        matches!(self.value, ValFormValue::CaseForm(_))
     }
 
     pub fn is_value(&self) -> bool {

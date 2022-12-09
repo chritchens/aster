@@ -86,10 +86,7 @@ impl MapForm {
             return false;
         }
 
-        match self.entries[0] {
-            MapFormEntry::Ignore(_) => true,
-            _ => false,
-        }
+        matches!(self.entries[0], MapFormEntry::Ignore(_))
     }
 
     pub fn is_empty_literal(&self) -> bool {
@@ -97,17 +94,14 @@ impl MapForm {
             return false;
         }
 
-        match self.entries[0] {
-            MapFormEntry::Empty(_) => true,
-            _ => false,
-        }
+        matches!(self.entries[0], MapFormEntry::Empty(_))
     }
 
     pub fn is_proper_map(&self) -> bool {
-        match self.entries[0] {
-            MapFormEntry::Empty(_) | MapFormEntry::Ignore(_) => false,
-            _ => true,
-        }
+        !matches!(
+            self.entries[0],
+            MapFormEntry::Empty(_) | MapFormEntry::Ignore(_)
+        )
     }
 
     pub fn is_empty(&self) -> bool {
