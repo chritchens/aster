@@ -2,10 +2,10 @@ use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
-use crate::types::Type;
 use crate::value::forms::block_form::{BlockForm, BlockFormEntry};
 use crate::value::forms::form::{Form, FormTailElement};
 use crate::value::forms::list_form::{ListForm, ListFormValue};
+use crate::value::types::Type;
 use crate::value::SimpleValue;
 use std::fmt;
 

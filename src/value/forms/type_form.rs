@@ -2,8 +2,8 @@ use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
-use crate::types::{SimpleType, Type};
 use crate::value::forms::form::{Form, FormTailElement};
+use crate::value::types::{SimpleType, Type};
 use crate::value::SimpleValue;
 use std::fmt;
 

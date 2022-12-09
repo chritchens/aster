@@ -2,7 +2,6 @@ use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
-use crate::types::Type;
 use crate::value::forms::AppForm;
 use crate::value::forms::ArrForm;
 use crate::value::forms::AttrsForm;
@@ -21,6 +20,7 @@ use crate::value::forms::SigForm;
 use crate::value::forms::TypeForm;
 use crate::value::forms::ValForm;
 use crate::value::forms::VecForm;
+use crate::value::types::Type;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]

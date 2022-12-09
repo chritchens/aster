@@ -2,7 +2,6 @@ use crate::error::{Error, SyntacticError};
 use crate::loc::Loc;
 use crate::result::Result;
 use crate::token::Tokens;
-use crate::types::Type;
 use crate::value::forms::app_form::AppForm;
 use crate::value::forms::arr_form::ArrForm;
 use crate::value::forms::case_form::CaseForm;
@@ -12,6 +11,7 @@ use crate::value::forms::let_form::LetForm;
 use crate::value::forms::list_form::ListForm;
 use crate::value::forms::map_form::MapForm;
 use crate::value::forms::pair_form::PairForm;
+use crate::value::types::Type;
 use crate::value::SimpleValue;
 use std::fmt;
 
