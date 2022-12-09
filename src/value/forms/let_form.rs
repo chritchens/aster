@@ -168,15 +168,6 @@ impl LetForm {
                 LetFormEntry::ImportForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                LetFormEntry::AttrsForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                LetFormEntry::TypeForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                LetFormEntry::SigForm(form) => {
-                    params.extend(form.all_parameters());
-                }
                 LetFormEntry::ValForm(form) => {
                     params.push(form.name.clone());
                     params.extend(form.all_parameters());

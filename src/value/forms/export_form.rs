@@ -88,10 +88,6 @@ impl ExportForm {
         }
     }
 
-    pub fn all_parameters(&self) -> Vec<SimpleValue> {
-        vec![]
-    }
-
     pub fn all_value_variables(&self) -> Vec<SimpleValue> {
         let mut value_vars = vec![];
 

@@ -216,9 +216,6 @@ impl ArrForm {
 
         for value in self.values.iter() {
             match value.clone() {
-                ArrFormValue::Type(form) => {
-                    params.extend(form.all_parameters());
-                }
                 ArrFormValue::FunForm(form) => {
                     params.extend(form.all_parameters());
                 }

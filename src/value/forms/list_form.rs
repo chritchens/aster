@@ -216,9 +216,6 @@ impl ListForm {
 
         for value in self.values.iter() {
             match value.clone() {
-                ListFormValue::Type(form) => {
-                    params.extend(form.all_parameters());
-                }
                 ListFormValue::FunForm(form) => {
                     params.extend(form.all_parameters());
                 }

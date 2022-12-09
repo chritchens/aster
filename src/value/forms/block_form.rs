@@ -185,18 +185,6 @@ impl BlockForm {
                 BlockFormEntry::ImportForm(form) => {
                     params.extend(form.all_parameters());
                 }
-                BlockFormEntry::ExportForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                BlockFormEntry::AttrsForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                BlockFormEntry::TypeForm(form) => {
-                    params.extend(form.all_parameters());
-                }
-                BlockFormEntry::SigForm(form) => {
-                    params.extend(form.all_parameters());
-                }
                 BlockFormEntry::ValForm(form) => {
                     params.push(form.name.clone());
                     params.extend(form.all_parameters());

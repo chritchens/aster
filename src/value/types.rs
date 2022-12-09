@@ -1067,10 +1067,6 @@ impl Type {
         }
     }
 
-    pub fn all_parameters(&self) -> Vec<SimpleValue> {
-        vec![]
-    }
-
     pub fn all_type_variables(&self) -> Vec<Type> {
         match self {
             Type::Simple(simple_type) => simple_type.all_type_variables(),

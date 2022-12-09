@@ -216,9 +216,6 @@ impl VecForm {
 
         for value in self.values.iter() {
             match value.clone() {
-                VecFormValue::Type(form) => {
-                    params.extend(form.all_parameters());
-                }
                 VecFormValue::FunForm(form) => {
                     params.extend(form.all_parameters());
                 }

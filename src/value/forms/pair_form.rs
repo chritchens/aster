@@ -241,9 +241,6 @@ impl PairForm {
         let mut params = vec![];
 
         match self.first.clone() {
-            PairFormValue::Type(form) => {
-                params.extend(form.all_parameters());
-            }
             PairFormValue::MapForm(form) => {
                 params.extend(form.all_parameters());
             }
@@ -275,9 +272,6 @@ impl PairForm {
         }
 
         match self.second.clone() {
-            PairFormValue::Type(form) => {
-                params.extend(form.all_parameters());
-            }
             PairFormValue::MapForm(form) => {
                 params.extend(form.all_parameters());
             }

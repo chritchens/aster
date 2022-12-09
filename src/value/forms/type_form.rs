@@ -59,10 +59,6 @@ impl TypeForm {
         !matches!(self.value.as_ref(), Type::Simple(_))
     }
 
-    pub fn all_parameters(&self) -> Vec<SimpleValue> {
-        vec![]
-    }
-
     pub fn all_type_variables(&self) -> Vec<Type> {
         self.value.all_type_variables()
     }
