@@ -5,6 +5,7 @@ use crate::token::Tokens;
 use crate::value::forms::form::{Form, FormTailElement};
 use crate::value::forms::list_form::{ListForm, ListFormValue};
 use crate::value::SimpleValue;
+use crate::value::Type;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
@@ -89,6 +90,30 @@ impl ExportForm {
 
     pub fn all_parameters(&self) -> Vec<SimpleValue> {
         vec![]
+    }
+
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        for def in self.defs.iter() {
+            if let ExportFormDef::ValueSymbol(value) = def.clone() {
+                value_vars.push(value);
+            }
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for def in self.defs.iter() {
+            if let ExportFormDef::TypeSymbol(value) = def.clone() {
+                type_vars.push(Type::from_simple_value(&value).unwrap());
+            }
+        }
+
+        type_vars
     }
 
     pub fn all_variables(&self) -> Vec<SimpleValue> {

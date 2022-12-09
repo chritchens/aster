@@ -11,6 +11,7 @@ use crate::value::forms::sig_form::SigForm;
 use crate::value::forms::type_form::TypeForm;
 use crate::value::forms::val_form::ValForm;
 use crate::value::SimpleValue;
+use crate::value::Type;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
@@ -205,6 +206,57 @@ impl BlockForm {
         }
 
         params
+    }
+
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        for entry in self.entries.iter() {
+            match entry.clone() {
+                BlockFormEntry::ExportForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                BlockFormEntry::AttrsForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                BlockFormEntry::ValForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                _ => {}
+            }
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for entry in self.entries.iter() {
+            match entry.clone() {
+                BlockFormEntry::ImportForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                BlockFormEntry::ExportForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                BlockFormEntry::AttrsForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                BlockFormEntry::TypeForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                BlockFormEntry::SigForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                BlockFormEntry::ValForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                _ => {}
+            }
+        }
+
+        type_vars
     }
 
     pub fn all_variables(&self) -> Vec<SimpleValue> {

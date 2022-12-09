@@ -8,6 +8,7 @@ use crate::value::forms::fun_form::FunForm;
 use crate::value::forms::let_form::LetForm;
 use crate::value::forms::pair_form::PairForm;
 use crate::value::SimpleValue;
+use crate::value::Type;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
@@ -66,6 +67,47 @@ impl CaseFormVariable {
         }
 
         params
+    }
+
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        match self.clone() {
+            CaseFormVariable::ValueSymbol(value) => {
+                value_vars.push(value);
+            }
+            CaseFormVariable::AppForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            CaseFormVariable::LetForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            CaseFormVariable::CaseForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            _ => {}
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        match self.clone() {
+            CaseFormVariable::AppForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            CaseFormVariable::LetForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            CaseFormVariable::CaseForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            _ => {}
+        }
+
+        type_vars
     }
 
     pub fn all_variables(&self) -> Vec<SimpleValue> {
@@ -284,6 +326,50 @@ impl CaseFormMatch {
         params
     }
 
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        match self.action.clone() {
+            CaseFormMatchAction::ValueSymbol(value) => {
+                value_vars.push(value);
+            }
+            CaseFormMatchAction::ValuePathSymbol(value) => {
+                value_vars.push(value);
+            }
+            CaseFormMatchAction::PairForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            CaseFormMatchAction::FunForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            CaseFormMatchAction::LetForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            _ => {}
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        match self.action.clone() {
+            CaseFormMatchAction::PairForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            CaseFormMatchAction::FunForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            CaseFormMatchAction::LetForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            _ => {}
+        }
+
+        type_vars
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         let mut vars = vec![];
 
@@ -488,6 +574,44 @@ impl CaseForm {
         }
 
         params
+    }
+
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        value_vars.extend(self.variable.all_value_variables());
+
+        for branch in self.matches.iter() {
+            let new_value_vars = branch
+                .all_value_variables()
+                .iter()
+                .filter(|bv| !value_vars.iter().any(|v| v.to_string() == bv.to_string()))
+                .map(|v| v.to_owned())
+                .collect::<Vec<SimpleValue>>();
+
+            value_vars.extend(new_value_vars);
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        type_vars.extend(self.variable.all_type_variables());
+
+        for branch in self.matches.iter() {
+            let new_type_vars = branch
+                .all_type_variables()
+                .iter()
+                .filter(|bv| !type_vars.iter().any(|v| v.to_string() == bv.to_string()))
+                .map(|v| v.to_owned())
+                .collect::<Vec<Type>>();
+
+            type_vars.extend(new_type_vars);
+        }
+
+        type_vars
     }
 
     pub fn all_variables(&self) -> Vec<SimpleValue> {

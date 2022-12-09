@@ -5,6 +5,7 @@ use crate::token::Tokens;
 use crate::value::forms::form::{Form, FormTailElement};
 use crate::value::forms::map_form::MapForm;
 use crate::value::SimpleValue;
+use crate::value::Type;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
@@ -65,6 +66,59 @@ impl AttrsFormValue {
             AttrsFormValue::Map(form) => form.to_string(),
         }
     }
+
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        match self {
+            AttrsFormValue::Empty(_)
+            | AttrsFormValue::Panic(_)
+            | AttrsFormValue::Atomic(_)
+            | AttrsFormValue::TypeSymbol(_)
+            | AttrsFormValue::TypePathSymbol(_) => {}
+            AttrsFormValue::ValueSymbol(value) => value_vars.push(value.clone()),
+            AttrsFormValue::ValuePathSymbol(value) => value_vars.push(value.clone()),
+            AttrsFormValue::Map(form) => value_vars.extend(form.all_value_variables()),
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        match self {
+            AttrsFormValue::Empty(_)
+            | AttrsFormValue::Panic(_)
+            | AttrsFormValue::Atomic(_)
+            | AttrsFormValue::ValueSymbol(_)
+            | AttrsFormValue::ValuePathSymbol(_) => {}
+            AttrsFormValue::TypeSymbol(value) => {
+                type_vars.push(Type::from_simple_value(value).unwrap())
+            }
+            AttrsFormValue::TypePathSymbol(value) => {
+                type_vars.push(Type::from_simple_value(value).unwrap())
+            }
+            AttrsFormValue::Map(form) => type_vars.extend(form.all_type_variables()),
+        }
+
+        type_vars
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+
+        match self {
+            AttrsFormValue::Empty(_) | AttrsFormValue::Panic(_) | AttrsFormValue::Atomic(_) => {}
+            AttrsFormValue::ValueSymbol(value) => vars.push(value.clone()),
+            AttrsFormValue::TypeSymbol(value) => vars.push(value.clone()),
+            AttrsFormValue::ValuePathSymbol(value) => vars.push(value.clone()),
+            AttrsFormValue::TypePathSymbol(value) => vars.push(value.clone()),
+            AttrsFormValue::Map(form) => vars.extend(form.all_variables()),
+        }
+
+        vars
+    }
 }
 
 impl fmt::Display for AttrsFormValue {
@@ -113,7 +167,28 @@ impl AttrsForm {
         vec![]
     }
 
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        for value in self.values.iter() {
+            value_vars.extend(value.all_value_variables());
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for value in self.values.iter() {
+            type_vars.extend(value.all_type_variables());
+        }
+
+        type_vars
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
+        // TODO
         vec![]
     }
 

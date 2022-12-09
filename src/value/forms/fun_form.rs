@@ -12,6 +12,7 @@ use crate::value::forms::map_form::MapForm;
 use crate::value::forms::pair_form::PairForm;
 use crate::value::forms::vec_form::VecForm;
 use crate::value::SimpleValue;
+use crate::value::Type;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
@@ -253,6 +254,86 @@ impl FunForm {
         }
 
         params
+    }
+
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        match self.body.clone() {
+            FunFormBody::ValueSymbol(value) => {
+                value_vars.push(value);
+            }
+            FunFormBody::ValuePathSymbol(value) => {
+                value_vars.push(value);
+            }
+            FunFormBody::MapForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            FunFormBody::VecForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            FunFormBody::ArrForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            FunFormBody::ListForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            FunFormBody::PairForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            FunFormBody::AppForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            FunFormBody::LetForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            FunFormBody::CaseForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            FunFormBody::FunForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            _ => {}
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        match self.body.clone() {
+            FunFormBody::MapForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            FunFormBody::VecForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            FunFormBody::ArrForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            FunFormBody::ListForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            FunFormBody::PairForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            FunFormBody::AppForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            FunFormBody::LetForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            FunFormBody::CaseForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            FunFormBody::FunForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            _ => {}
+        }
+
+        type_vars
     }
 
     pub fn all_variables(&self) -> Vec<SimpleValue> {

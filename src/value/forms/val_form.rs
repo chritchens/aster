@@ -10,6 +10,7 @@ use crate::value::forms::fun_form::FunForm;
 use crate::value::forms::let_form::LetForm;
 use crate::value::forms::pair_form::PairForm;
 use crate::value::SimpleValue;
+use crate::value::Type;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
@@ -172,6 +173,59 @@ impl ValForm {
         }
 
         params
+    }
+
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+
+        match self.value.clone() {
+            ValFormValue::ValueSymbol(value) => {
+                vars.push(value);
+            }
+            ValFormValue::PairForm(form) => {
+                vars.extend(form.all_value_variables());
+            }
+            ValFormValue::FunForm(form) => {
+                vars.extend(form.all_value_variables());
+            }
+            ValFormValue::LetForm(form) => {
+                vars.extend(form.all_value_variables());
+            }
+            ValFormValue::AppForm(form) => {
+                vars.extend(form.all_value_variables());
+            }
+            ValFormValue::CaseForm(form) => {
+                vars.extend(form.all_value_variables());
+            }
+            _ => {}
+        }
+
+        vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        match self.value.clone() {
+            ValFormValue::PairForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            ValFormValue::FunForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            ValFormValue::LetForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            ValFormValue::AppForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            ValFormValue::CaseForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            _ => {}
+        }
+
+        type_vars
     }
 
     pub fn all_variables(&self) -> Vec<SimpleValue> {

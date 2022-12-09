@@ -89,6 +89,52 @@ impl ModuleForm {
         matches!(self.block, ModuleFormBlock::Empty(_))
     }
 
+    pub fn all_parameters(&self) -> Vec<SimpleValue> {
+        self.type_parameters
+            .iter()
+            .map(|tp| tp.as_simple_value().unwrap())
+            .collect::<Vec<SimpleValue>>()
+    }
+
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        match self.block.clone() {
+            ModuleFormBlock::Empty(_) => {}
+            ModuleFormBlock::Form(form) => {
+                value_vars = form.all_value_variables();
+            }
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        match self.block.clone() {
+            ModuleFormBlock::Empty(_) => {}
+            ModuleFormBlock::Form(form) => {
+                type_vars = form.all_type_variables();
+            }
+        }
+
+        type_vars
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+
+        match self.block.clone() {
+            ModuleFormBlock::Empty(_) => {}
+            ModuleFormBlock::Form(form) => {
+                vars = form.all_variables();
+            }
+        }
+
+        vars
+    }
+
     pub fn type_parameters_to_string(&self) -> String {
         match self.type_parameters.len() {
             0 => "".into(),

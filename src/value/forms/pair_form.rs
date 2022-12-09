@@ -311,6 +311,172 @@ impl PairForm {
         params
     }
 
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        match self.first.clone() {
+            PairFormValue::ValueSymbol(value) => {
+                value_vars.push(value);
+            }
+            PairFormValue::ValuePathSymbol(value) => {
+                value_vars.push(value);
+            }
+            PairFormValue::MapForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::VecForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::ArrForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::ListForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::PairForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::FunForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::CaseForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::LetForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::AppForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            _ => {}
+        }
+
+        match self.second.clone() {
+            PairFormValue::ValueSymbol(value) => {
+                value_vars.push(value);
+            }
+            PairFormValue::ValuePathSymbol(value) => {
+                value_vars.push(value);
+            }
+            PairFormValue::MapForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::VecForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::ArrForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::ListForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::PairForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::FunForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::CaseForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::LetForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            PairFormValue::AppForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            _ => {}
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        match self.first.clone() {
+            PairFormValue::TypeSymbol(value) => {
+                type_vars.push(Type::from_simple_value(&value).unwrap());
+            }
+            PairFormValue::TypePathSymbol(value) => {
+                type_vars.push(Type::from_simple_value(&value).unwrap());
+            }
+            PairFormValue::Type(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::MapForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::VecForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::ArrForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::ListForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::PairForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::FunForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::CaseForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::LetForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::AppForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            _ => {}
+        }
+
+        match self.second.clone() {
+            PairFormValue::TypeSymbol(value) => {
+                type_vars.push(Type::from_simple_value(&value).unwrap());
+            }
+            PairFormValue::TypePathSymbol(value) => {
+                type_vars.push(Type::from_simple_value(&value).unwrap());
+            }
+            PairFormValue::Type(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::MapForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::VecForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::ArrForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::ListForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::PairForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::FunForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::CaseForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::LetForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            PairFormValue::AppForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            _ => {}
+        }
+
+        type_vars
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         let mut vars = vec![];
 

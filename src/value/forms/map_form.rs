@@ -5,6 +5,7 @@ use crate::token::Tokens;
 use crate::value::forms::form::{Form, FormTailElement};
 use crate::value::forms::pair_form::{PairForm, PairFormValue};
 use crate::value::SimpleValue;
+use crate::value::Type;
 use std::collections::BTreeMap;
 use std::fmt;
 
@@ -45,6 +46,39 @@ impl MapFormEntry {
             MapFormEntry::Empty(_) => "()".into(),
             MapFormEntry::PairForm(form) => form.to_string(),
         }
+    }
+
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        match self {
+            MapFormEntry::Ignore(_) | MapFormEntry::Empty(_) => {}
+            MapFormEntry::PairForm(form) => value_vars.extend(form.all_value_variables()),
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        match self {
+            MapFormEntry::Ignore(_) | MapFormEntry::Empty(_) => {}
+            MapFormEntry::PairForm(form) => type_vars.extend(form.all_type_variables()),
+        }
+
+        type_vars
+    }
+
+    pub fn all_variables(&self) -> Vec<SimpleValue> {
+        let mut vars = vec![];
+
+        match self {
+            MapFormEntry::Ignore(_) | MapFormEntry::Empty(_) => {}
+            MapFormEntry::PairForm(form) => vars.extend(form.all_variables()),
+        }
+
+        vars
     }
 }
 
@@ -205,13 +239,31 @@ impl MapForm {
         params
     }
 
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        for entry in self.entries.iter() {
+            value_vars.extend(entry.all_value_variables());
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for entry in self.entries.iter() {
+            type_vars.extend(entry.all_type_variables());
+        }
+
+        type_vars
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         let mut vars = vec![];
 
         for entry in self.entries.iter() {
-            if let MapFormEntry::PairForm(form) = entry.clone() {
-                vars.extend(form.all_variables());
-            }
+            vars.extend(entry.all_variables());
         }
 
         vars

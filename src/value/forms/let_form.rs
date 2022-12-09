@@ -14,6 +14,7 @@ use crate::value::forms::sig_form::SigForm;
 use crate::value::forms::type_form::TypeForm;
 use crate::value::forms::val_form::ValForm;
 use crate::value::SimpleValue;
+use crate::value::Type;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
@@ -187,6 +188,52 @@ impl LetForm {
         params.extend(self.value.all_parameters());
 
         params
+    }
+
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        for entry in self.entries.iter() {
+            match entry.clone() {
+                LetFormEntry::AttrsForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                LetFormEntry::ValForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                _ => {}
+            }
+        }
+
+        value_vars.extend(self.value.all_value_variables());
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for entry in self.entries.iter() {
+            match entry.clone() {
+                LetFormEntry::AttrsForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                LetFormEntry::TypeForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                LetFormEntry::SigForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                LetFormEntry::ValForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                _ => {}
+            }
+        }
+
+        type_vars.extend(self.value.all_type_variables());
+
+        type_vars
     }
 
     pub fn all_variables(&self) -> Vec<SimpleValue> {

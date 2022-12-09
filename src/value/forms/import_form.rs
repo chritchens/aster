@@ -133,8 +133,15 @@ impl ImportForm {
         params
     }
 
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        self.type_variables.clone()
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
-        vec![]
+        self.type_variables
+            .iter()
+            .map(|tv| tv.as_simple_value().unwrap())
+            .collect::<Vec<SimpleValue>>()
     }
 
     fn parse_qualifier(&mut self, form: &Form, idx: usize) -> Result<()> {

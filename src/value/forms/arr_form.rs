@@ -253,6 +253,99 @@ impl ArrForm {
         params
     }
 
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        for value in self.values.iter() {
+            match value.clone() {
+                ArrFormValue::ValueSymbol(value) => {
+                    value_vars.push(value);
+                }
+                ArrFormValue::ValuePathSymbol(value) => {
+                    value_vars.push(value);
+                }
+                ArrFormValue::FunForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                ArrFormValue::CaseForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                ArrFormValue::LetForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                ArrFormValue::AppForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                ArrFormValue::PairForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                ArrFormValue::ListForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                ArrFormValue::VecForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                ArrFormValue::MapForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                ArrFormValue::ArrForm(form) => {
+                    value_vars.extend(form.all_value_variables());
+                }
+                _ => {}
+            }
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for value in self.values.iter() {
+            match value.clone() {
+                ArrFormValue::TypeSymbol(value) => {
+                    type_vars.push(Type::from_simple_value(&value).unwrap());
+                }
+                ArrFormValue::TypePathSymbol(value) => {
+                    type_vars.push(Type::from_simple_value(&value).unwrap());
+                }
+                ArrFormValue::Type(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                ArrFormValue::FunForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                ArrFormValue::CaseForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                ArrFormValue::LetForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                ArrFormValue::AppForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                ArrFormValue::PairForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                ArrFormValue::ListForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                ArrFormValue::VecForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                ArrFormValue::MapForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                ArrFormValue::ArrForm(form) => {
+                    type_vars.extend(form.all_type_variables());
+                }
+                _ => {}
+            }
+        }
+
+        type_vars
+    }
+
     pub fn all_variables(&self) -> Vec<SimpleValue> {
         let mut vars = vec![];
 

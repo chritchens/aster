@@ -8,6 +8,7 @@ use crate::value::forms::fun_form::FunForm;
 use crate::value::forms::let_form::LetForm;
 use crate::value::forms::pair_form::PairForm;
 use crate::value::SimpleValue;
+use crate::value::Type;
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone)]
@@ -87,6 +88,62 @@ impl AppFormValue {
         }
 
         params
+    }
+
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+
+        match self.clone() {
+            AppFormValue::ValueSymbol(value) => {
+                value_vars.push(value);
+            }
+            AppFormValue::ValuePathSymbol(value) => {
+                value_vars.push(value);
+            }
+            AppFormValue::PairForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            AppFormValue::FunForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            AppFormValue::LetForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            AppFormValue::CaseForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            AppFormValue::AppForm(form) => {
+                value_vars.extend(form.all_value_variables());
+            }
+            _ => {}
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        match self.clone() {
+            AppFormValue::PairForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            AppFormValue::FunForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            AppFormValue::LetForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            AppFormValue::CaseForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            AppFormValue::AppForm(form) => {
+                type_vars.extend(form.all_type_variables());
+            }
+            _ => {}
+        }
+
+        type_vars
     }
 
     pub fn all_variables(&self) -> Vec<SimpleValue> {
@@ -180,6 +237,27 @@ impl AppForm {
         }
 
         params
+    }
+
+    pub fn all_value_variables(&self) -> Vec<SimpleValue> {
+        let mut value_vars = vec![];
+        value_vars.push(self.name.clone());
+
+        for variable in self.variables.iter() {
+            value_vars.extend(variable.all_value_variables());
+        }
+
+        value_vars
+    }
+
+    pub fn all_type_variables(&self) -> Vec<Type> {
+        let mut type_vars = vec![];
+
+        for variable in self.variables.iter() {
+            type_vars.extend(variable.all_type_variables());
+        }
+
+        type_vars
     }
 
     pub fn all_variables(&self) -> Vec<SimpleValue> {
